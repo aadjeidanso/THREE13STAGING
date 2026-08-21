@@ -8124,6 +8124,13 @@ function AdminPortal({ user, onSignOut, onUserUpdated }) {
               )}
             </Box>
             <Stack direction="row" spacing={1} alignItems="center">
+              <IconButton
+                onClick={() => setMobileMenuOpen(true)}
+                sx={{ display: { xs: 'inline-flex', md: 'none' }, border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, color: 'primary.dark' }}
+                aria-label="Open menu"
+              >
+                <MenuOutlined />
+              </IconButton>
               <IconButton onClick={(event) => setNotificationAnchor(event.currentTarget)} sx={{ border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5 }}>
                 <Badge badgeContent={visibleAdminNotifications.length || null} color="secondary" max={99}>
                   <NotificationsOutlined sx={{ color: 'primary.dark' }} />
