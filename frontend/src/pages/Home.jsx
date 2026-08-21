@@ -91,6 +91,7 @@ const navItems = [
   ['Courses', 'courses'],
   ['Testimonials', 'testimonials'],
   ['FAQ', 'faq'],
+  ['Community', null],
   ['Contact', 'contact'],
 ];
 
@@ -138,8 +139,8 @@ const faqs = [
 
 const chatPrompts = [
   {
-    question: 'Which course should I start with?',
-    answer: 'If you are new to IT, start with Network Essentials. If you already understand basic networking, Security Essentials is a strong next step. CISA / IT Audit is best once you have security or compliance context.',
+    question: 'Which courses are offered?',
+    answer: 'Three13 currently offers Network Essentials, Security Essentials, CISA / IT Audit, and AI Essentials for IT Professionals.',
   },
   {
     question: 'How do I enroll?',
@@ -219,7 +220,6 @@ function SectionHeader({ eyebrow, title, body, light = false }) {
     </Box>
   );
 }
-
 export default function Home() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -244,7 +244,6 @@ export default function Home() {
     phone: '',
     password: '',
     confirmPassword: '',
-    courses: [],
     prerequisites: 'no',
     experienceLevel: '',
     learningGoal: '',
@@ -344,11 +343,6 @@ export default function Home() {
       isValid = false;
     }
 
-    if (!formData.courses.length) {
-      setRegistrationStatus({ type: 'error', message: 'Please select at least one course.' });
-      isValid = false;
-    }
-
     setErrors(nextErrors);
     return isValid;
   };
@@ -369,7 +363,7 @@ export default function Home() {
           email: formData.email,
           phone: formData.phone,
           password: formData.password,
-          course_titles: formData.courses,
+          course_titles: courses.map((course) => course.title),
           prerequisites: formData.prerequisites,
           experience_level: formData.experienceLevel,
           learning_goal: formData.learningGoal,
@@ -386,7 +380,6 @@ export default function Home() {
         phone: '',
         password: '',
         confirmPassword: '',
-        courses: [],
         prerequisites: 'no',
         experienceLevel: '',
         learningGoal: '',
@@ -429,11 +422,20 @@ export default function Home() {
               </Box>
 
               <Stack direction="row" spacing={0.5} alignItems="center" sx={{ display: { xs: 'none', md: 'flex' } }}>
-                {navItems.map(([label, hash]) => (
-                  <Button key={label} component={Link} to={`/#${hash}`} sx={navButtonSx}>
-                    {label}
-                  </Button>
-                ))}
+                {navItems.map(([label, hash]) => {
+                  const isCommunity = label === 'Community';
+                  return (
+                    <Button
+                      key={label}
+                      component={isCommunity || hash ? Link : 'button'}
+                      to={isCommunity ? '/login' : hash ? `/#${hash}` : undefined}
+                      type={!isCommunity && !hash ? 'button' : undefined}
+                      sx={navButtonSx}
+                    >
+                      {label}
+                    </Button>
+                  );
+                })}
                 <IconButton component={Link} to="/login" color="primary" aria-label="Login">
                   <AccountCircleIcon />
                 </IconButton>
@@ -450,11 +452,22 @@ export default function Home() {
 
           <Collapse in={mobileOpen} timeout={240}>
             <Box sx={{ display: { xs: 'block', md: 'none' }, bgcolor: '#fff', borderTop: '1px solid rgba(18,60,105,0.1)', px: 2, pb: 2 }}>
-              {navItems.map(([label, hash]) => (
-                <Button key={label} component={Link} to={`/#${hash}`} fullWidth onClick={() => setMobileOpen(false)} sx={{ justifyContent: 'flex-start', color: 'primary.dark' }}>
-                  {label}
-                </Button>
-              ))}
+              {navItems.map(([label, hash]) => {
+                const isCommunity = label === 'Community';
+                return (
+                  <Button
+                    key={label}
+                    component={isCommunity || hash ? Link : 'button'}
+                    to={isCommunity ? '/login' : hash ? `/#${hash}` : undefined}
+                    type={!isCommunity && !hash ? 'button' : undefined}
+                    fullWidth
+                    onClick={() => setMobileOpen(false)}
+                    sx={{ justifyContent: 'flex-start', color: 'primary.dark' }}
+                  >
+                    {label}
+                  </Button>
+                );
+              })}
               <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
                 <Button component={Link} to="/login" variant="outlined" fullWidth startIcon={<AccountCircleIcon />}>
                   Login
@@ -504,20 +517,9 @@ export default function Home() {
               <Grid item xs={12} md={5}>
                 <Box sx={{ bgcolor: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 3, p: { xs: 2, md: 2.5 }, backdropFilter: 'blur(18px)', maxWidth: 440, ml: { md: 'auto' } }}>
                   <Box component="img" src="/images/teaching.png" alt="Instructor teaching online IT students" sx={{ width: '100%', aspectRatio: '4 / 3', objectFit: 'cover', borderRadius: 2, display: 'block' }} />
-                  <Grid container spacing={1.5} sx={{ mt: 1 }}>
-                    {[
-                      ['6 weeks', 'per course'],
-                      ['2 nights', 'weekly live class'],
-                      ['Career', 'coaching included'],
-                    ].map(([value, label]) => (
-                      <Grid item xs={4} key={value}>
-                        <Box sx={{ bgcolor: 'rgba(255,255,255,0.12)', borderRadius: 2, p: 1.4, textAlign: 'center' }}>
-                          <Typography fontWeight={800}>{value}</Typography>
-                          <Typography sx={{ fontSize: 12, color: 'rgba(255,255,255,0.7)' }}>{label}</Typography>
-                        </Box>
-                      </Grid>
-                    ))}
-                  </Grid>
+                  <Typography sx={{ mt: 1.4, fontWeight: 900, fontSize: { xs: '1.15rem', sm: '1.35rem' }, textAlign: 'center', color: '#fff' }}>
+                    WE ENABLE POSSIBILITIES
+                  </Typography>
                 </Box>
               </Grid>
             </Grid>
@@ -585,7 +587,7 @@ export default function Home() {
                     COURSE DETAILS
                   </Typography>
                   <Typography sx={{ mt: 0.35, fontWeight: 700, fontSize: { xs: '0.82rem', sm: '0.95rem' }, lineHeight: 1.4 }}>
-                    JUNE 1ST - SEPT. 17TH, 2026 | MONDAYS & THURSDAYS | 7:00PM - 10.00PM | LOCATION: ZOOM
+                    JUNE 1ST - SEPT. 17TH, 2026 | MONDAYS & THURSDAYS | 7:00PM - 10.00PM | LOCATION: WEBX
                   </Typography>
                 </Box>
               </Box>
@@ -617,7 +619,7 @@ export default function Home() {
 
         <Box id="courses" ref={coursesRef} component="section" sx={{ pt: { xs: 5, md: 8 }, pb: { xs: 7, md: 11 }, bgcolor: '#eef3f8', overflow: 'hidden' }}>
           <Container maxWidth="xl">
-            <SectionHeader title="Choose the track that matches your next move." body="Start with fundamentals, move into security, or deepen your path with IT audit and governance." />
+            <SectionHeader title="Courses" body="Start with fundamentals, move into security, or deepen your path with IT audit and governance." />
             <Box
               sx={{
                 display: 'grid',
@@ -1073,23 +1075,11 @@ export default function Home() {
                     ),
                   }}
                 />
-                <Box sx={{ gridColumn: '1 / -1' }}>
-                  <FormControl fullWidth size="small" sx={{ minWidth: 0 }}>
-                    <InputLabel>Select Course(s)</InputLabel>
-                    <Select
-                      multiple
-                      value={formData.courses}
-                      onChange={(event) => setFormData((current) => ({ ...current, courses: typeof event.target.value === 'string' ? event.target.value.split(',') : event.target.value }))}
-                      label="Select Course(s)"
-                      displayEmpty
-                      renderValue={(selected) => selected.length ? selected.join(', ') : 'Select Course(s)'}
-                      sx={{ textAlign: 'left' }}
-                    >
-                      {courses.map((course) => (
-                        <MenuItem key={course.title} value={course.title}>{course.title}</MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
+                <Box sx={{ gridColumn: '1 / -1', bgcolor: '#eef3f8', borderRadius: 1, p: 1.4 }}>
+                  <Typography sx={{ color: 'primary.dark', fontWeight: 850, fontSize: 14 }}>Course Access</Typography>
+                  <Typography sx={{ color: '#637083', fontSize: 13 }}>
+                    Registration includes access to all current Three13 courses.
+                  </Typography>
                 </Box>
                 <Box sx={{ gridColumn: '1 / -1' }}>
                   <Typography sx={{ fontWeight: 800, color: 'primary.dark', mb: 0.5, fontSize: 14 }}>Do you meet course prerequisites?</Typography>

@@ -25,6 +25,13 @@ if DATABASE_URL.startswith("postgres://"):
 APP_SECRET = os.getenv("APP_SECRET", "dev-only-change-this-secret")
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
 GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI", "")
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://127.0.0.1:5173")
+CORS_ALLOWED_ORIGINS = os.getenv(
+    "CORS_ALLOWED_ORIGINS",
+    f"http://127.0.0.1:5173,http://localhost:5173,{FRONTEND_URL}",
+)
+RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
+EMAIL_FROM = os.getenv("EMAIL_FROM", "")
 
 
 def normalize_supabase_url(value: str) -> str:
