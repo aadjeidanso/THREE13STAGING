@@ -30,6 +30,7 @@ import {
   LinkOutlined,
   LightbulbOutlined,
   LockOutlined,
+  MenuOutlined,
   MenuBookOutlined,
   MoreHorizOutlined,
   MoreVertOutlined,
@@ -70,6 +71,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Drawer,
   FormControlLabel,
   IconButton,
   InputAdornment,
@@ -7863,6 +7865,7 @@ function AdminPortal({ user, onSignOut, onUserUpdated }) {
   });
   const [paneContext, setPaneContext] = React.useState({});
   const [adminRefreshKey, setAdminRefreshKey] = React.useState(0);
+  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const [notificationAnchor, setNotificationAnchor] = React.useState(null);
   const [adminNotifications, setAdminNotifications] = React.useState([]);
   const [adminToast, setAdminToast] = React.useState(null);
@@ -7948,7 +7951,7 @@ function AdminPortal({ user, onSignOut, onUserUpdated }) {
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: '#f6f8fb', display: { md: 'grid' }, gridTemplateColumns: { md: '280px 1fr' } }}>
-      <Box sx={{ bgcolor: '#082540', color: '#fff', p: { xs: 2, md: 2.5 }, position: { md: 'sticky' }, top: 0, height: { md: '100vh' }, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+      <Box sx={{ bgcolor: '#082540', color: '#fff', p: { xs: 2, md: 2.5 }, position: { md: 'sticky' }, top: 0, height: { md: '100vh' }, overflowY: 'auto', display: { xs: 'none', md: 'flex' }, flexDirection: 'column' }}>
         <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 3 }}>
           <Box component="img" src="/images/logo.png" alt="Three13 IT Solutions" sx={{ height: 52, objectFit: 'contain' }} />
           <Chip label="Admin" size="small" sx={{ bgcolor: 'rgba(240,90,40,0.16)', color: '#ffd7c8', fontWeight: 800 }} />
@@ -8026,6 +8029,44 @@ function AdminPortal({ user, onSignOut, onUserUpdated }) {
           </Box>
         </Stack>
       </Box>
+      <Drawer
+        open={mobileMenuOpen}
+        onClose={() => setMobileMenuOpen(false)}
+        PaperProps={{ sx: { width: 286, bgcolor: '#082540', color: '#fff', p: 2 } }}
+      >
+        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2.5 }}>
+          <Box component="img" src="/images/logo.png" alt="Three13 IT Solutions" sx={{ height: 52, objectFit: 'contain' }} />
+          <IconButton onClick={() => setMobileMenuOpen(false)} sx={{ color: '#fff' }}><CloseOutlined /></IconButton>
+        </Stack>
+        <Stack spacing={0.8}>
+          {adminNavItems.map((item) => {
+            const Icon = item.icon;
+            const active = item.key === activePane;
+            return (
+              <Button
+                key={item.key}
+                onClick={() => {
+                  openAdminPane(item.key);
+                  setMobileMenuOpen(false);
+                }}
+                startIcon={<Icon />}
+                sx={{
+                  justifyContent: 'flex-start',
+                  color: active ? '#fff' : 'rgba(255,255,255,0.78)',
+                  bgcolor: active ? 'rgba(240,90,40,0.95)' : 'transparent',
+                  border: active ? '1px solid rgba(255,255,255,0.22)' : '1px solid transparent',
+                  borderRadius: 1,
+                  px: 1.4,
+                  py: 1,
+                  '&:hover': { bgcolor: active ? '#f05a28' : 'rgba(255,255,255,0.08)', color: '#fff' },
+                }}
+              >
+                {item.label}
+              </Button>
+            );
+          })}
+        </Stack>
+      </Drawer>
 
       <Box sx={{ minWidth: 0 }}>
         <Box sx={{ bgcolor: '#fff', borderBottom: '1px solid rgba(18,60,105,0.12)', px: { xs: 2, md: 4 }, py: 2, position: 'sticky', top: 0, zIndex: 1200 }}>
@@ -14399,6 +14440,7 @@ function TeacherProfilePane({ user, setActivePane, onTeacherToast, onUserUpdated
 function TeacherPortal({ user, onSignOut, onUserUpdated }) {
   const [activePane, setActivePane] = React.useState('dashboard');
   const [paneContext, setPaneContext] = React.useState({});
+  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const [notificationAnchor, setNotificationAnchor] = React.useState(null);
   const [notificationSummary, setNotificationSummary] = React.useState(null);
   const [teacherToast, setTeacherToast] = React.useState(null);
@@ -14553,7 +14595,7 @@ function TeacherPortal({ user, onSignOut, onUserUpdated }) {
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: '#f6f8fb', display: { md: 'grid' }, gridTemplateColumns: { md: '280px 1fr' } }}>
-      <Box sx={{ bgcolor: '#082540', color: '#fff', p: { xs: 2, md: 2.5 }, position: { md: 'sticky' }, top: 0, height: { md: '100vh' }, overflowY: 'auto' }}>
+      <Box sx={{ bgcolor: '#082540', color: '#fff', p: { xs: 2, md: 2.5 }, position: { md: 'sticky' }, top: 0, height: { md: '100vh' }, overflowY: 'auto', display: { xs: 'none', md: 'block' } }}>
         <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 3 }}>
           <Box component="img" src="/images/logo.png" alt="Three13 IT Solutions" sx={{ height: 52, objectFit: 'contain' }} />
           <Chip label="Teacher" size="small" sx={{ bgcolor: 'rgba(240,90,40,0.16)', color: '#ffd7c8', fontWeight: 800 }} />
@@ -14583,6 +14625,44 @@ function TeacherPortal({ user, onSignOut, onUserUpdated }) {
           })}
         </Stack>
       </Box>
+      <Drawer
+        open={mobileMenuOpen}
+        onClose={() => setMobileMenuOpen(false)}
+        PaperProps={{ sx: { width: 286, bgcolor: '#082540', color: '#fff', p: 2 } }}
+      >
+        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2.5 }}>
+          <Box component="img" src="/images/logo.png" alt="Three13 IT Solutions" sx={{ height: 52, objectFit: 'contain' }} />
+          <IconButton onClick={() => setMobileMenuOpen(false)} sx={{ color: '#fff' }}><CloseOutlined /></IconButton>
+        </Stack>
+        <Stack spacing={0.8}>
+          {teacherNavItems.map((item) => {
+            const Icon = item.icon;
+            const active = item.key === activePane;
+            return (
+              <Button
+                key={item.key}
+                onClick={() => {
+                  setActivePane(item.key);
+                  setMobileMenuOpen(false);
+                }}
+                startIcon={<Icon />}
+                sx={{
+                  justifyContent: 'flex-start',
+                  color: active ? '#fff' : 'rgba(255,255,255,0.76)',
+                  bgcolor: active ? 'rgba(240,90,40,0.95)' : 'transparent',
+                  border: active ? '1px solid rgba(255,255,255,0.22)' : '1px solid transparent',
+                  borderRadius: 1,
+                  px: 1.4,
+                  py: 1,
+                  '&:hover': { bgcolor: active ? '#f05a28' : 'rgba(255,255,255,0.08)', color: '#fff' },
+                }}
+              >
+                {item.label}
+              </Button>
+            );
+          })}
+        </Stack>
+      </Drawer>
       <Box sx={{ minWidth: 0 }}>
         <Box sx={{ bgcolor: '#fff', borderBottom: '1px solid rgba(18,60,105,0.12)', px: { xs: 2, md: 4 }, py: 2, position: 'sticky', top: 0, zIndex: 1200, boxShadow: '0 8px 24px rgba(18,60,105,0.04)' }}>
           <Stack direction={{ xs: 'column', lg: 'row' }} justifyContent="space-between" alignItems={{ xs: 'stretch', lg: 'center' }} spacing={1.5}>
@@ -14625,6 +14705,13 @@ function TeacherPortal({ user, onSignOut, onUserUpdated }) {
               )}
             </Box>
             <Stack direction="row" spacing={1} alignItems="center">
+              <IconButton
+                onClick={() => setMobileMenuOpen(true)}
+                sx={{ display: { xs: 'inline-flex', md: 'none' }, border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, color: 'primary.dark' }}
+                aria-label="Open menu"
+              >
+                <MenuOutlined />
+              </IconButton>
               <IconButton onClick={(event) => setNotificationAnchor(event.currentTarget)} sx={{ border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5 }}>
                 <Badge badgeContent={unreadTeacherNotifications.length || null} color="secondary" max={99}>
                   <NotificationsOutlined sx={{ color: 'primary.dark' }} />
@@ -14747,6 +14834,7 @@ function StudentPortal({ user, onSignOut, onUserUpdated, initialPane = 'dashboar
   const [sidebarCourses, setSidebarCourses] = React.useState([]);
   const [expandedCourseId, setExpandedCourseId] = React.useState(initialSelectedCourseId);
   const [selectedSidebarCourseId, setSelectedSidebarCourseId] = React.useState(initialSelectedCourseId);
+  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const [selectedAnnouncementId, setSelectedAnnouncementId] = React.useState(null);
   const [notificationAnchor, setNotificationAnchor] = React.useState(null);
   const [notificationAnnouncements, setNotificationAnnouncements] = React.useState([]);
@@ -14872,6 +14960,11 @@ function StudentPortal({ user, onSignOut, onUserUpdated, initialPane = 'dashboar
     )));
   }, []);
 
+  const openStudentPane = React.useCallback((pane) => {
+    setActivePane(pane);
+    setMobileMenuOpen(false);
+  }, []);
+
   const openNotification = async (notification) => {
     if (!notification?.id) return;
     updateReadStudentNotifications([...readStudentNotificationIds, notification.id]);
@@ -14937,7 +15030,7 @@ function StudentPortal({ user, onSignOut, onUserUpdated, initialPane = 'dashboar
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: '#f6f8fb', display: { md: 'grid' }, gridTemplateColumns: { md: '280px 1fr' } }}>
-      <Box sx={{ bgcolor: '#082540', color: '#fff', p: { xs: 2, md: 2.5 }, position: { md: 'sticky' }, top: 0, height: { md: '100vh' }, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+      <Box sx={{ bgcolor: '#082540', color: '#fff', p: { xs: 2, md: 2.5 }, position: { md: 'sticky' }, top: 0, height: { md: '100vh' }, overflowY: 'auto', display: { xs: 'none', md: 'flex' }, flexDirection: 'column' }}>
         <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 3 }}>
           <Box component="img" src="/images/logo.png" alt="Three13 IT Solutions" sx={{ height: 52, objectFit: 'contain' }} />
           <Chip label={learnerLabel} size="small" sx={{ bgcolor: isAlumni ? 'rgba(124,58,237,0.22)' : 'rgba(240,90,40,0.16)', color: isAlumni ? '#e8ddff' : '#ffd7c8', fontWeight: 800 }} />
@@ -15070,6 +15163,114 @@ function StudentPortal({ user, onSignOut, onUserUpdated, initialPane = 'dashboar
           </Box>
         </Stack>
       </Box>
+      <Drawer
+        open={mobileMenuOpen}
+        onClose={() => setMobileMenuOpen(false)}
+        PaperProps={{ sx: { width: 306, bgcolor: '#082540', color: '#fff', p: 2 } }}
+      >
+        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2.5 }}>
+          <Box component="img" src="/images/logo.png" alt="Three13 IT Solutions" sx={{ height: 52, objectFit: 'contain' }} />
+          <IconButton onClick={() => setMobileMenuOpen(false)} sx={{ color: '#fff' }}><CloseOutlined /></IconButton>
+        </Stack>
+        <Stack spacing={0.8} sx={{ flex: 1 }}>
+          {isAlumni ? (
+            <>
+              <Button onClick={() => openStudentPane('community')} startIcon={<ForumOutlined />} sx={navButtonSx(activePane === 'community')}>
+                Community
+              </Button>
+              <Button onClick={() => openStudentPane('profile')} startIcon={<PersonOutlineOutlined />} sx={navButtonSx(activePane === 'profile')}>
+                Profile
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button onClick={() => openStudentPane('dashboard')} startIcon={<DashboardOutlined />} sx={navButtonSx(activePane === 'dashboard')}>
+                Dashboard
+              </Button>
+              <Button
+                onClick={() => {
+                  setCourseNavOpen((current) => !current);
+                  if (!courseSectionActive) setActivePane('my-courses');
+                }}
+                startIcon={<MenuBookOutlined />}
+                endIcon={courseNavOpen ? <KeyboardArrowUpOutlined /> : <KeyboardArrowDownOutlined />}
+                sx={{ ...navButtonSx(courseSectionActive), '& .MuiButton-endIcon': { ml: 'auto' } }}
+              >
+                My Courses
+              </Button>
+              {courseNavOpen && (
+                <Stack spacing={0.7} sx={{ mt: 0.2, mb: 1 }}>
+                  {sidebarCourses.length === 0 ? (
+                    <Typography sx={{ ml: 2.2, color: 'rgba(255,255,255,0.62)', fontSize: 12.5 }}>No active courses yet</Typography>
+                  ) : sidebarCourses.map((course) => {
+                    const courseId = String(course.id);
+                    const expanded = expandedCourseId === courseId;
+                    return (
+                      <Box key={course.id}>
+                        <Button
+                          fullWidth
+                          onClick={() => {
+                            setExpandedCourseId(expanded ? '' : courseId);
+                            setSelectedSidebarCourseId(courseId);
+                            setActivePane('my-courses');
+                          }}
+                          endIcon={expanded ? <KeyboardArrowUpOutlined /> : <KeyboardArrowDownOutlined />}
+                          sx={{
+                            justifyContent: 'flex-start',
+                            color: '#fff',
+                            px: 0.8,
+                            py: 0.65,
+                            ml: 1.45,
+                            width: 'calc(100% - 12px)',
+                            bgcolor: expanded ? 'rgba(255,255,255,0.07)' : 'transparent',
+                            '& .MuiButton-endIcon': { ml: 'auto' },
+                            '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' },
+                          }}
+                        >
+                          <Stack direction="row" spacing={0.9} alignItems="center" sx={{ minWidth: 0 }}>
+                            <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#f05a28', flexShrink: 0 }} />
+                            <Typography noWrap sx={{ fontWeight: 850, fontSize: 12.5 }}>{course.title}</Typography>
+                          </Stack>
+                        </Button>
+                        {expanded && (
+                          <Stack spacing={0.45} sx={{ mt: 0.35, mb: 0.7, pl: 2.4 }}>
+                            {studentCourseNavItems.map((item) => {
+                              const Icon = item.icon;
+                              const active = item.key === activePane;
+                              return (
+                                <Button
+                                  key={`${course.id}-${item.key}-mobile`}
+                                  onClick={() => {
+                                    setSelectedSidebarCourseId(courseId);
+                                    openStudentPane(item.key);
+                                  }}
+                                  startIcon={<Icon />}
+                                  sx={navButtonSx(active, true)}
+                                >
+                                  {item.label}
+                                </Button>
+                              );
+                            })}
+                          </Stack>
+                        )}
+                      </Box>
+                    );
+                  })}
+                </Stack>
+              )}
+              {studentNavItems.filter((item) => !['dashboard', 'my-courses'].includes(item.key) && !(isPendingStudent && item.key === 'community')).map((item) => {
+                const Icon = item.icon;
+                const active = item.key === activePane;
+                return (
+                  <Button key={`${item.key}-mobile`} onClick={() => openStudentPane(item.key)} startIcon={<Icon />} sx={{ ...navButtonSx(active), mt: item.key === 'announcements' ? 1.2 : 0 }}>
+                    {item.label}
+                  </Button>
+                );
+              })}
+            </>
+          )}
+        </Stack>
+      </Drawer>
 
       <Box sx={{ minWidth: 0 }}>
         <Box sx={{ bgcolor: '#fff', borderBottom: '1px solid rgba(18,60,105,0.12)', px: { xs: 2, md: 4 }, py: 2, position: 'sticky', top: 0, zIndex: 1200, boxShadow: '0 8px 24px rgba(18,60,105,0.04)' }}>
@@ -15082,6 +15283,23 @@ function StudentPortal({ user, onSignOut, onUserUpdated, initialPane = 'dashboar
               </Box>
             </Stack>
             <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: 'max-content' }}>
+              <IconButton
+                onClick={() => setMobileMenuOpen(true)}
+                sx={{
+                  display: { xs: 'inline-flex', md: 'none' },
+                  width: 46,
+                  height: 46,
+                  color: 'primary.dark',
+                  bgcolor: '#fff',
+                  border: '1px solid rgba(18,60,105,0.16)',
+                  borderRadius: 1,
+                  boxShadow: '0 8px 18px rgba(18,60,105,0.06)',
+                  '&:hover': { bgcolor: '#f8fbff' },
+                }}
+                aria-label="Open menu"
+              >
+                <MenuOutlined />
+              </IconButton>
               {!isAlumni && (
                 <IconButton
                   onClick={(event) => setNotificationAnchor(event.currentTarget)}
