@@ -722,9 +722,9 @@ export default function Home() {
                   gridTemplateColumns: {
                     xs: '1fr',
                     sm: 'repeat(2, minmax(0, 330px))',
-                    xl: 'repeat(4, minmax(0, 270px))',
+                    lg: 'repeat(4, minmax(0, 1fr))',
                   },
-                  gap: { xs: 3, md: 4 },
+                  gap: { xs: 3, md: 3, xl: 4 },
                   justifyContent: 'center',
                   alignItems: 'stretch',
                 }}
@@ -746,7 +746,7 @@ export default function Home() {
                         },
                         width: '100%',
                         minHeight: { xs: 380, sm: 430, lg: 'clamp(360px, 34vw, 470px)' },
-                        maxWidth: { xs: 330, sm: 330, lg: 'clamp(195px, 17.5vw, 270px)' },
+                        maxWidth: { xs: 330, sm: 330, lg: 'none' },
                         mx: 'auto',
                         px: { xs: 2, md: 'clamp(0.8rem, 1.25vw, 1.8rem)' },
                         pt: { xs: 2.8, md: 'clamp(1.5rem, 2vw, 2.8rem)' },
