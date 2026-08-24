@@ -134,8 +134,8 @@ const CourseInfoBadge = ({ type }) => {
       sx={{
         position: 'relative',
         flex: '0 0 auto',
-        width: { xs: 26, lg: 'clamp(22px, 2vw, 28px)' },
-        height: { xs: 26, lg: 'clamp(22px, 2vw, 28px)' },
+        width: { xs: 20, lg: 'clamp(18px, 1.45vw, 22px)' },
+        height: { xs: 20, lg: 'clamp(18px, 1.45vw, 22px)' },
         borderRadius: isPrereq ? '50%' : 1.6,
         display: 'grid',
         placeItems: 'center',
@@ -149,7 +149,7 @@ const CourseInfoBadge = ({ type }) => {
         '&:before': {
           content: '""',
           position: 'absolute',
-          inset: isPrereq ? 4 : 3,
+          inset: isPrereq ? 3 : 2,
           borderRadius: isPrereq ? '50%' : 1.2,
           border: '1px solid rgba(255,255,255,0.28)',
           pointerEvents: 'none',
@@ -157,22 +157,22 @@ const CourseInfoBadge = ({ type }) => {
         '&:after': {
           content: '""',
           position: 'absolute',
-          top: isPrereq ? 4 : 3,
-          right: isPrereq ? 5 : 4,
-          width: isPrereq ? 6 : 5,
-          height: isPrereq ? 6 : 5,
+          top: isPrereq ? 3 : 2,
+          right: isPrereq ? 4 : 3,
+          width: 4,
+          height: 4,
           borderRadius: '50%',
-          bgcolor: 'rgba(255,255,255,0.9)',
-          boxShadow: '0 0 12px rgba(255,255,255,0.9)',
+          bgcolor: 'rgba(255,255,255,0.86)',
+          boxShadow: '0 0 8px rgba(255,255,255,0.8)',
           pointerEvents: 'none',
         },
       }}
       aria-hidden="true"
     >
       {isPrereq ? (
-        <CheckCircleIcon sx={{ fontSize: { xs: 18, lg: 'clamp(15px, 1.4vw, 19px)' }, filter: 'drop-shadow(0 2px 3px rgba(0,0,0,0.16))' }} />
+        <CheckCircleIcon sx={{ fontSize: { xs: 14, lg: 'clamp(12px, 1vw, 15px)' }, filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.14))' }} />
       ) : (
-        <MenuBookIcon sx={{ fontSize: { xs: 18, lg: 'clamp(15px, 1.4vw, 19px)' }, filter: 'drop-shadow(0 2px 3px rgba(0,0,0,0.18))' }} />
+        <MenuBookIcon sx={{ fontSize: { xs: 14, lg: 'clamp(12px, 1vw, 15px)' }, filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.16))' }} />
       )}
     </Box>
   );
