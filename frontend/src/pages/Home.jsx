@@ -126,6 +126,58 @@ const courses = [
   },
 ];
 
+const CourseInfoBadge = ({ type }) => {
+  const isPrereq = type === 'prereq';
+
+  return (
+    <Box
+      sx={{
+        position: 'relative',
+        flex: '0 0 auto',
+        width: { xs: 34, lg: 'clamp(30px, 2.8vw, 38px)' },
+        height: { xs: 34, lg: 'clamp(30px, 2.8vw, 38px)' },
+        borderRadius: isPrereq ? '50%' : 1.6,
+        display: 'grid',
+        placeItems: 'center',
+        color: '#fff',
+        background: isPrereq
+          ? 'radial-gradient(circle at 32% 24%, #ffb267 0 14%, #ff7a13 38%, #f05a28 100%)'
+          : 'linear-gradient(145deg, #32bca5 0%, #0a7569 100%)',
+        boxShadow: isPrereq
+          ? '0 10px 20px rgba(240,90,40,0.28), inset 0 -5px 10px rgba(175,58,6,0.26)'
+          : '0 10px 20px rgba(10,117,105,0.26), inset 0 -6px 12px rgba(4,72,66,0.28)',
+        '&:before': {
+          content: '""',
+          position: 'absolute',
+          inset: isPrereq ? 5 : 4,
+          borderRadius: isPrereq ? '50%' : 1.2,
+          border: '1px solid rgba(255,255,255,0.28)',
+          pointerEvents: 'none',
+        },
+        '&:after': {
+          content: '""',
+          position: 'absolute',
+          top: isPrereq ? 5 : 4,
+          right: isPrereq ? 7 : 5,
+          width: isPrereq ? 8 : 6,
+          height: isPrereq ? 8 : 6,
+          borderRadius: '50%',
+          bgcolor: 'rgba(255,255,255,0.9)',
+          boxShadow: '0 0 12px rgba(255,255,255,0.9)',
+          pointerEvents: 'none',
+        },
+      }}
+      aria-hidden="true"
+    >
+      {isPrereq ? (
+        <CheckCircleIcon sx={{ fontSize: { xs: 23, lg: 'clamp(20px, 1.9vw, 25px)' }, filter: 'drop-shadow(0 2px 3px rgba(0,0,0,0.16))' }} />
+      ) : (
+        <MenuBookIcon sx={{ fontSize: { xs: 23, lg: 'clamp(20px, 1.9vw, 25px)' }, filter: 'drop-shadow(0 2px 3px rgba(0,0,0,0.18))' }} />
+      )}
+    </Box>
+  );
+};
+
 const faqs = [
   ['What are the prerequisites for the courses?', 'Network Essentials requires no prior experience. For Security Essentials, we recommend completing Network Essentials first. The CISA / IT Audit course is best after Security Essentials.'],
   ['How long do I have access to course materials?', 'You receive long-term access to lecture recordings, slides, labs, and practice resources so you can revisit the material as your career grows.'],
@@ -669,19 +721,18 @@ export default function Home() {
                         {course.title}
                       </Typography>
 
-                      <Stack direction="row" spacing={0.8} alignItems="flex-start" sx={{ color: '#102b49', mb: 1.1 }}>
-                        <CheckCircleIcon sx={{ fontSize: { xs: 18, lg: 'clamp(14px, 1.2vw, 18px)' }, color: 'secondary.main', mt: 0.2 }} />
+                      <Stack direction="row" spacing={1.15} alignItems="flex-start" sx={{ color: '#102b49', mb: 1.35 }}>
+                        <CourseInfoBadge type="prereq" />
                         <Typography sx={{ fontSize: { xs: '0.95rem', lg: 'clamp(0.72rem, 0.95vw, 0.9rem)' }, lineHeight: 1.45 }}>
-                          <Box component="span" sx={{ fontWeight: 800 }}>Prereq:</Box>
+                          <Box component="span" sx={{ fontWeight: 800, display: 'block', mb: 0.1 }}>Prerequisite</Box>
                           {course.prereq}
                         </Typography>
                       </Stack>
 
-                      <Stack direction="row" spacing={0.8} alignItems="flex-start" sx={{ color: '#102b49', mb: { xs: 3, lg: 'clamp(1.2rem, 2vw, 3rem)' } }}>
-                        <MenuBookIcon sx={{ fontSize: { xs: 18, lg: 'clamp(14px, 1.2vw, 18px)' }, color: '#16805f', mt: 0.2 }} />
+                      <Stack direction="row" spacing={1.15} alignItems="flex-start" sx={{ color: '#102b49', mb: { xs: 3, lg: 'clamp(1.2rem, 2vw, 3rem)' } }}>
+                        <CourseInfoBadge type="desc" />
                         <Typography sx={{ fontSize: { xs: '0.95rem', lg: 'clamp(0.72rem, 0.95vw, 0.9rem)' }, lineHeight: 1.5 }}>
-                          <Box component="span" sx={{ fontWeight: 800 }}>Desc:</Box>
-                          {' '}
+                          <Box component="span" sx={{ fontWeight: 800, display: 'block', mb: 0.1 }}>Description</Box>
                           {course.desc}
                         </Typography>
                       </Stack>
