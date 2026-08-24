@@ -134,8 +134,8 @@ const CourseInfoBadge = ({ type }) => {
       sx={{
         position: 'relative',
         flex: '0 0 auto',
-        width: { xs: 34, lg: 'clamp(30px, 2.8vw, 38px)' },
-        height: { xs: 34, lg: 'clamp(30px, 2.8vw, 38px)' },
+        width: { xs: 26, lg: 'clamp(22px, 2vw, 28px)' },
+        height: { xs: 26, lg: 'clamp(22px, 2vw, 28px)' },
         borderRadius: isPrereq ? '50%' : 1.6,
         display: 'grid',
         placeItems: 'center',
@@ -149,7 +149,7 @@ const CourseInfoBadge = ({ type }) => {
         '&:before': {
           content: '""',
           position: 'absolute',
-          inset: isPrereq ? 5 : 4,
+          inset: isPrereq ? 4 : 3,
           borderRadius: isPrereq ? '50%' : 1.2,
           border: '1px solid rgba(255,255,255,0.28)',
           pointerEvents: 'none',
@@ -157,10 +157,10 @@ const CourseInfoBadge = ({ type }) => {
         '&:after': {
           content: '""',
           position: 'absolute',
-          top: isPrereq ? 5 : 4,
-          right: isPrereq ? 7 : 5,
-          width: isPrereq ? 8 : 6,
-          height: isPrereq ? 8 : 6,
+          top: isPrereq ? 4 : 3,
+          right: isPrereq ? 5 : 4,
+          width: isPrereq ? 6 : 5,
+          height: isPrereq ? 6 : 5,
           borderRadius: '50%',
           bgcolor: 'rgba(255,255,255,0.9)',
           boxShadow: '0 0 12px rgba(255,255,255,0.9)',
@@ -170,9 +170,9 @@ const CourseInfoBadge = ({ type }) => {
       aria-hidden="true"
     >
       {isPrereq ? (
-        <CheckCircleIcon sx={{ fontSize: { xs: 23, lg: 'clamp(20px, 1.9vw, 25px)' }, filter: 'drop-shadow(0 2px 3px rgba(0,0,0,0.16))' }} />
+        <CheckCircleIcon sx={{ fontSize: { xs: 18, lg: 'clamp(15px, 1.4vw, 19px)' }, filter: 'drop-shadow(0 2px 3px rgba(0,0,0,0.16))' }} />
       ) : (
-        <MenuBookIcon sx={{ fontSize: { xs: 23, lg: 'clamp(20px, 1.9vw, 25px)' }, filter: 'drop-shadow(0 2px 3px rgba(0,0,0,0.18))' }} />
+        <MenuBookIcon sx={{ fontSize: { xs: 18, lg: 'clamp(15px, 1.4vw, 19px)' }, filter: 'drop-shadow(0 2px 3px rgba(0,0,0,0.18))' }} />
       )}
     </Box>
   );
@@ -721,7 +721,7 @@ export default function Home() {
                         {course.title}
                       </Typography>
 
-                      <Stack direction="row" spacing={1.15} alignItems="flex-start" sx={{ color: '#102b49', mb: 1.35 }}>
+                      <Stack direction="row" spacing={0.85} alignItems="flex-start" sx={{ color: '#102b49', mb: 1.35 }}>
                         <CourseInfoBadge type="prereq" />
                         <Typography sx={{ fontSize: { xs: '0.95rem', lg: 'clamp(0.72rem, 0.95vw, 0.9rem)' }, lineHeight: 1.45 }}>
                           <Box component="span" sx={{ fontWeight: 800, display: 'block', mb: 0.1 }}>Prerequisite</Box>
@@ -729,7 +729,7 @@ export default function Home() {
                         </Typography>
                       </Stack>
 
-                      <Stack direction="row" spacing={1.15} alignItems="flex-start" sx={{ color: '#102b49', mb: { xs: 3, lg: 'clamp(1.2rem, 2vw, 3rem)' } }}>
+                      <Stack direction="row" spacing={0.85} alignItems="flex-start" sx={{ color: '#102b49', mb: { xs: 3, lg: 'clamp(1.2rem, 2vw, 3rem)' } }}>
                         <CourseInfoBadge type="desc" />
                         <Typography sx={{ fontSize: { xs: '0.95rem', lg: 'clamp(0.72rem, 0.95vw, 0.9rem)' }, lineHeight: 1.5 }}>
                           <Box component="span" sx={{ fontWeight: 800, display: 'block', mb: 0.1 }}>Description</Box>
