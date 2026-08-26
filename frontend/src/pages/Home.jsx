@@ -485,7 +485,7 @@ export default function Home() {
                 color: '#ff5a1f',
                 fontWeight: 500,
                 fontSize: { xs: 10, sm: 11, md: 12.5 },
-                letterSpacing: { xs: 0.1, md: 0.35 },
+                letterSpacing: { xs: 1.4, sm: 2.2, md: 3.4 },
                 textTransform: 'uppercase',
                 whiteSpace: { xs: 'normal', sm: 'nowrap' },
               }}
