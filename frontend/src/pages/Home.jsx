@@ -491,7 +491,7 @@ export default function Home() {
                 textShadow: '0 0 12px rgba(255,122,24,0.55)',
               }}
             >
-              Current Session (June - September 2026)
+              Current Session (June 2026 - September 2026)
             </Typography>
           </Stack>
           <Typography component="span" sx={{ display: { xs: 'none', sm: 'inline' }, color: 'rgba(255,255,255,0.78)', fontWeight: 500 }}>
