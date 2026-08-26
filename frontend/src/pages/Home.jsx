@@ -629,10 +629,7 @@ export default function Home() {
               <Grid item xs={12} md={7}>
                 <Chip label="Live online IT career training" sx={{ bgcolor: 'rgba(255,255,255,0.16)', color: '#fff', border: '1px solid rgba(255,255,255,0.24)', mb: 3 }} />
                 <Typography variant="h1" sx={{ fontSize: { xs: '2.8rem', sm: '4rem', md: '5.8rem' }, lineHeight: 0.96, maxWidth: 830 }}>
-                  Build a career-ready path into{' '}
-                  <Box component="span" sx={{ color: '#ff7a18', textShadow: '0 0 18px rgba(255,122,24,0.42)' }}>
-                    IT.
-                  </Box>
+                  Build a career-ready path into IT.
                 </Typography>
                 <Typography sx={{ mt: 3, maxWidth: 650, color: 'rgba(255,255,255,0.82)', fontSize: { xs: '1.05rem', md: '1.2rem' }, lineHeight: 1.8 }}>
                   Three13 IT Solutions helps new and growing professionals move from interest to certification-ready skills through live instruction, labs, and guided career support.
