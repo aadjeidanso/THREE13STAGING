@@ -459,12 +459,12 @@ export default function Home() {
       <Box id="top" sx={{ bgcolor: 'background.default', color: '#1f2933' }}>
         <Box
           sx={{
-            minHeight: { xs: 34, md: 42 },
-            px: { xs: 1.5, md: 3 },
+            minHeight: { xs: 28, md: 34 },
+            px: { xs: 1.25, md: 2.5 },
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: { xs: 1, sm: 1.5 },
+            gap: { xs: 0.75, sm: 1.2 },
             flexWrap: { xs: 'wrap', sm: 'nowrap' },
             textAlign: 'center',
             color: '#fff',
@@ -475,8 +475,8 @@ export default function Home() {
             boxShadow: 'inset 0 -1px 0 rgba(255,255,255,0.06)',
           }}
         >
-          <Stack direction="row" spacing={0.7} alignItems="center" sx={{ minWidth: 0 }}>
-            <Typography component="span" sx={{ color: '#ff5a1f', fontSize: { xs: 10, md: 12 }, lineHeight: 1, flexShrink: 0 }}>
+          <Stack direction="row" spacing={0.55} alignItems="center" sx={{ minWidth: 0 }}>
+            <Typography component="span" sx={{ color: '#ff5a1f', fontSize: { xs: 8, md: 10 }, lineHeight: 1, flexShrink: 0 }}>
               ●
             </Typography>
             <Typography
@@ -484,8 +484,8 @@ export default function Home() {
               sx={{
                 color: '#ff5a1f',
                 fontWeight: 900,
-                fontSize: { xs: 11, sm: 12, md: 14 },
-                letterSpacing: { xs: 0.25, md: 0.8 },
+                fontSize: { xs: 10, sm: 11, md: 12.5 },
+                letterSpacing: { xs: 0.2, md: 0.65 },
                 textTransform: 'uppercase',
                 whiteSpace: { xs: 'normal', sm: 'nowrap' },
               }}
@@ -501,8 +501,8 @@ export default function Home() {
             sx={{
               color: 'rgba(255,255,255,0.92)',
               fontWeight: 800,
-              fontSize: { xs: 11, sm: 12, md: 13.5 },
-              letterSpacing: { xs: 0.15, md: 0.55 },
+              fontSize: { xs: 10, sm: 11, md: 12 },
+              letterSpacing: { xs: 0.1, md: 0.45 },
               whiteSpace: 'nowrap',
             }}
           >
@@ -520,8 +520,8 @@ export default function Home() {
               p: 0,
               color: '#ff5a1f',
               fontWeight: 900,
-              fontSize: { xs: 11, sm: 12, md: 13.5 },
-              letterSpacing: { xs: 0.2, md: 0.7 },
+              fontSize: { xs: 10, sm: 11, md: 12 },
+              letterSpacing: { xs: 0.15, md: 0.55 },
               textTransform: 'uppercase',
               '&:hover': { bgcolor: 'transparent', color: '#fff' },
             }}
