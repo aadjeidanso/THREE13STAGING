@@ -457,11 +457,83 @@ export default function Home() {
   return (
     <ThemeProvider theme={theme}>
       <Box id="top" sx={{ bgcolor: 'background.default', color: '#1f2933' }}>
+        <Box
+          sx={{
+            minHeight: { xs: 34, md: 42 },
+            px: { xs: 1.5, md: 3 },
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: { xs: 1, sm: 1.5 },
+            flexWrap: { xs: 'wrap', sm: 'nowrap' },
+            textAlign: 'center',
+            color: '#fff',
+            borderBottom: '1px solid rgba(255,255,255,0.12)',
+            backgroundImage: 'linear-gradient(90deg, rgba(8,37,64,0.94), rgba(10,64,101,0.9), rgba(8,37,64,0.94)), url("/images/background.png")',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            boxShadow: 'inset 0 -1px 0 rgba(255,255,255,0.06)',
+          }}
+        >
+          <Stack direction="row" spacing={0.7} alignItems="center" sx={{ minWidth: 0 }}>
+            <StarIcon sx={{ color: '#f2b94b', fontSize: { xs: 15, md: 18 }, flexShrink: 0 }} />
+            <Typography
+              component="span"
+              sx={{
+                color: '#f2b94b',
+                fontWeight: 900,
+                fontSize: { xs: 12.5, sm: 14, md: 18 },
+                letterSpacing: { xs: 0.4, md: 1.3 },
+                textTransform: 'uppercase',
+                whiteSpace: { xs: 'normal', sm: 'nowrap' },
+              }}
+            >
+              Current Session (June - September 2026)
+            </Typography>
+          </Stack>
+          <Typography component="span" sx={{ display: { xs: 'none', sm: 'inline' }, color: 'rgba(255,255,255,0.78)', fontWeight: 800 }}>
+            |
+          </Typography>
+          <Typography
+            component="span"
+            sx={{
+              color: 'rgba(255,255,255,0.92)',
+              fontWeight: 800,
+              fontSize: { xs: 12.5, sm: 14, md: 16 },
+              letterSpacing: { xs: 0.2, md: 0.8 },
+              whiteSpace: 'nowrap',
+            }}
+          >
+            7PM - 10PM
+          </Typography>
+          <Typography component="span" sx={{ display: { xs: 'none', sm: 'inline' }, color: 'rgba(255,255,255,0.78)', fontWeight: 800 }}>
+            |
+          </Typography>
+          <Button
+            color="secondary"
+            endIcon={<ArrowForwardIcon />}
+            onClick={() => setOpenModal(true)}
+            sx={{
+              minHeight: 'auto',
+              p: 0,
+              color: '#f2b94b',
+              fontWeight: 900,
+              fontSize: { xs: 12.5, sm: 14, md: 16 },
+              letterSpacing: { xs: 0.3, md: 1 },
+              textTransform: 'uppercase',
+              '&:hover': { bgcolor: 'transparent', color: '#fff' },
+            }}
+          >
+            Enroll Now
+          </Button>
+        </Box>
+
         <AppBar
           ref={headerRef}
-          position="fixed"
+          position="sticky"
           elevation={0}
           sx={{
+            top: 0,
             bgcolor: 'rgba(255,255,255,0.88)',
             backdropFilter: 'blur(18px)',
             borderBottom: '1px solid rgba(18,60,105,0.1)',
@@ -538,7 +610,7 @@ export default function Home() {
             minHeight: { xs: '92vh', md: '96vh' },
             display: 'flex',
             alignItems: 'center',
-            pt: { xs: 12, md: 14 },
+            pt: { xs: 6, md: 7 },
             pb: { xs: 6, md: 8 },
             overflow: 'hidden',
             color: '#fff',
