@@ -476,13 +476,13 @@ export default function Home() {
           }}
         >
           <Stack direction="row" spacing={0.7} alignItems="center" sx={{ minWidth: 0 }}>
-            <Typography component="span" sx={{ color: 'secondary.main', fontSize: { xs: 10, md: 12 }, lineHeight: 1, flexShrink: 0 }}>
+            <Typography component="span" sx={{ color: '#ff5a1f', fontSize: { xs: 10, md: 12 }, lineHeight: 1, flexShrink: 0 }}>
               ●
             </Typography>
             <Typography
               component="span"
               sx={{
-                color: 'secondary.main',
+                color: '#ff5a1f',
                 fontWeight: 900,
                 fontSize: { xs: 11, sm: 12, md: 14 },
                 letterSpacing: { xs: 0.25, md: 0.8 },
@@ -518,7 +518,7 @@ export default function Home() {
             sx={{
               minHeight: 'auto',
               p: 0,
-              color: 'secondary.main',
+              color: '#ff5a1f',
               fontWeight: 900,
               fontSize: { xs: 11, sm: 12, md: 13.5 },
               letterSpacing: { xs: 0.2, md: 0.7 },
