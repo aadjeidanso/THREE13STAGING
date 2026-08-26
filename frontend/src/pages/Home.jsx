@@ -483,9 +483,9 @@ export default function Home() {
               component="span"
               sx={{
                 color: '#ff5a1f',
-                fontWeight: 900,
+                fontWeight: 500,
                 fontSize: { xs: 10, sm: 11, md: 12.5 },
-                letterSpacing: { xs: 0.2, md: 0.65 },
+                letterSpacing: { xs: 0.1, md: 0.35 },
                 textTransform: 'uppercase',
                 whiteSpace: { xs: 'normal', sm: 'nowrap' },
               }}
@@ -493,22 +493,23 @@ export default function Home() {
               Current Session (June - September 2026)
             </Typography>
           </Stack>
-          <Typography component="span" sx={{ display: { xs: 'none', sm: 'inline' }, color: 'rgba(255,255,255,0.78)', fontWeight: 800 }}>
+          <Typography component="span" sx={{ display: { xs: 'none', sm: 'inline' }, color: 'rgba(255,255,255,0.78)', fontWeight: 500 }}>
             |
           </Typography>
           <Typography
             component="span"
             sx={{
               color: 'rgba(255,255,255,0.92)',
-              fontWeight: 800,
-              fontSize: { xs: 10, sm: 11, md: 12 },
-              letterSpacing: { xs: 0.1, md: 0.45 },
+              fontFamily: 'Georgia, "Times New Roman", serif',
+              fontWeight: 500,
+              fontSize: { xs: 10.5, sm: 11.5, md: 13 },
+              letterSpacing: 0,
               whiteSpace: 'nowrap',
             }}
           >
             7PM - 10PM
           </Typography>
-          <Typography component="span" sx={{ display: { xs: 'none', sm: 'inline' }, color: 'rgba(255,255,255,0.78)', fontWeight: 800 }}>
+          <Typography component="span" sx={{ display: { xs: 'none', sm: 'inline' }, color: 'rgba(255,255,255,0.78)', fontWeight: 500 }}>
             |
           </Typography>
           <Button
@@ -519,11 +520,11 @@ export default function Home() {
               minHeight: 'auto',
               p: 0,
               color: '#ff5a1f',
-              fontWeight: 900,
+              fontWeight: 500,
               fontSize: { xs: 10, sm: 11, md: 12 },
-              letterSpacing: { xs: 0.15, md: 0.55 },
+              letterSpacing: { xs: 0.1, md: 0.35 },
               textTransform: 'uppercase',
-              '&:hover': { bgcolor: 'transparent', color: '#fff' },
+              '&:hover': { bgcolor: 'transparent', color: '#f2b94b' },
             }}
           >
             Enroll Now
