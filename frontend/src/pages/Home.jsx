@@ -507,7 +507,7 @@ export default function Home() {
               whiteSpace: 'nowrap',
             }}
           >
-            7PM - 10PM
+            MONDAYS & THURSDAYS 7PM - 10PM
           </Typography>
           <Typography component="span" sx={{ display: { xs: 'none', sm: 'inline' }, color: 'rgba(255,255,255,0.78)', fontWeight: 500 }}>
             |
