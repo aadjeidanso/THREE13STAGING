@@ -476,14 +476,16 @@ export default function Home() {
           }}
         >
           <Stack direction="row" spacing={0.7} alignItems="center" sx={{ minWidth: 0 }}>
-            <StarIcon sx={{ color: '#f2b94b', fontSize: { xs: 15, md: 18 }, flexShrink: 0 }} />
+            <Typography component="span" sx={{ color: 'secondary.main', fontSize: { xs: 10, md: 12 }, lineHeight: 1, flexShrink: 0 }}>
+              ●
+            </Typography>
             <Typography
               component="span"
               sx={{
-                color: '#f2b94b',
+                color: 'secondary.main',
                 fontWeight: 900,
-                fontSize: { xs: 12.5, sm: 14, md: 18 },
-                letterSpacing: { xs: 0.4, md: 1.3 },
+                fontSize: { xs: 11, sm: 12, md: 14 },
+                letterSpacing: { xs: 0.25, md: 0.8 },
                 textTransform: 'uppercase',
                 whiteSpace: { xs: 'normal', sm: 'nowrap' },
               }}
@@ -499,8 +501,8 @@ export default function Home() {
             sx={{
               color: 'rgba(255,255,255,0.92)',
               fontWeight: 800,
-              fontSize: { xs: 12.5, sm: 14, md: 16 },
-              letterSpacing: { xs: 0.2, md: 0.8 },
+              fontSize: { xs: 11, sm: 12, md: 13.5 },
+              letterSpacing: { xs: 0.15, md: 0.55 },
               whiteSpace: 'nowrap',
             }}
           >
@@ -516,10 +518,10 @@ export default function Home() {
             sx={{
               minHeight: 'auto',
               p: 0,
-              color: '#f2b94b',
+              color: 'secondary.main',
               fontWeight: 900,
-              fontSize: { xs: 12.5, sm: 14, md: 16 },
-              letterSpacing: { xs: 0.3, md: 1 },
+              fontSize: { xs: 11, sm: 12, md: 13.5 },
+              letterSpacing: { xs: 0.2, md: 0.7 },
               textTransform: 'uppercase',
               '&:hover': { bgcolor: 'transparent', color: '#fff' },
             }}
