@@ -476,18 +476,19 @@ export default function Home() {
           }}
         >
           <Stack direction="row" spacing={0.55} alignItems="center" sx={{ minWidth: 0 }}>
-            <Typography component="span" sx={{ color: '#ff5a1f', fontSize: { xs: 8, md: 10 }, lineHeight: 1, flexShrink: 0 }}>
+            <Typography component="span" sx={{ color: '#ff7a18', fontSize: { xs: 8, md: 10 }, lineHeight: 1, flexShrink: 0, textShadow: '0 0 10px rgba(255,122,24,0.85)' }}>
               ●
             </Typography>
             <Typography
               component="span"
               sx={{
-                color: '#ff5a1f',
+                color: '#ff7a18',
                 fontWeight: 500,
                 fontSize: { xs: 10, sm: 11, md: 12.5 },
                 letterSpacing: { xs: 1.4, sm: 2.2, md: 3.4 },
                 textTransform: 'uppercase',
                 whiteSpace: { xs: 'normal', sm: 'nowrap' },
+                textShadow: '0 0 12px rgba(255,122,24,0.55)',
               }}
             >
               Current Session (June - September 2026)
@@ -519,12 +520,13 @@ export default function Home() {
             sx={{
               minHeight: 'auto',
               p: 0,
-              color: '#ff5a1f',
+              color: '#ff7a18',
               fontWeight: 500,
               fontSize: { xs: 10, sm: 11, md: 12 },
               letterSpacing: { xs: 0.1, md: 0.35 },
               textTransform: 'uppercase',
-              '&:hover': { bgcolor: 'transparent', color: '#f2b94b' },
+              textShadow: '0 0 10px rgba(255,122,24,0.5)',
+              '&:hover': { bgcolor: 'transparent', color: '#f2b94b', textShadow: '0 0 12px rgba(242,185,75,0.65)' },
             }}
           >
             Enroll Now
