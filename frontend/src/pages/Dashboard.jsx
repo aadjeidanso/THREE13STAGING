@@ -242,14 +242,14 @@ function formatDateTime(timestamp) {
 const adminTableHeaderSx = {
   display: { xs: 'none', lg: 'grid' },
   gap: 1,
-  px: 1.5,
-  py: 1.35,
+  px: { lg: 1.1, xl: 1.5 },
+  py: { lg: 1.15, xl: 1.35 },
   bgcolor: 'primary.dark',
   borderBottom: '1px solid rgba(18,60,105,0.08)',
   '& .admin-table-heading': {
     color: '#fff',
     fontWeight: 900,
-    fontSize: 12.5,
+    fontSize: { lg: 11.5, xl: 12.5 },
     lineHeight: 1.2,
   },
 };
@@ -1411,7 +1411,7 @@ function AdminCohortsPane({ onAdminDataChanged, setActivePane, onAdminToast }) {
       {message && <Alert severity="success">{message}</Alert>}
       {error && <Alert severity="error">{error}</Alert>}
 
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', xl: 'repeat(5, 1fr)' }, gap: 1.5 }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(5, minmax(0, 1fr))' }, gap: { xs: 1.5, lg: 1.1, xl: 1.5 } }}>
         {stats.map((stat) => {
           const Icon = stat.icon;
           return (
@@ -1455,7 +1455,7 @@ function AdminCohortsPane({ onAdminDataChanged, setActivePane, onAdminToast }) {
         </Box>
       </Box>
 
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', xl: 'minmax(0, 1fr) 310px' }, gap: 2, alignItems: 'start' }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1fr) 280px', xl: 'minmax(0, 1fr) 310px' }, gap: { xs: 2, lg: 1.4, xl: 2 }, alignItems: 'start' }}>
         <Box sx={{ bgcolor: '#fff', border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, overflow: 'hidden', boxShadow: '0 18px 48px rgba(18,60,105,0.06)', minWidth: 0, maxWidth: '100%' }}>
           <Box sx={{ display: { xs: 'none', lg: 'grid' }, gridTemplateColumns: 'minmax(220px, 1fr) 96px 90px 172px 92px', gap: 1, px: 1.2, py: 1.2, bgcolor: 'primary.dark' }}>
             {['Cohort', 'Status', 'Students', 'Dates', 'Actions'].map((label) => (
@@ -1484,7 +1484,7 @@ function AdminCohortsPane({ onAdminDataChanged, setActivePane, onAdminToast }) {
                     onClick={() => setSelectedCohortId(cohort.id)}
                     sx={{
                       display: 'grid',
-                      gridTemplateColumns: { xs: '1fr', lg: 'minmax(220px, 1fr) 96px 90px 172px 92px' },
+                      gridTemplateColumns: { xs: '1fr', lg: 'minmax(190px, 1fr) 86px 74px 150px 76px', xl: 'minmax(220px, 1fr) 96px 90px 172px 92px' },
                       gap: 1,
                       alignItems: 'center',
                       px: 1.2,
@@ -1609,7 +1609,7 @@ function AdminCohortsPane({ onAdminDataChanged, setActivePane, onAdminToast }) {
           )}
         </Menu>
 
-        <Box sx={{ bgcolor: '#fff', border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, p: 2, position: { xl: 'sticky' }, top: 92, boxShadow: '0 18px 48px rgba(18,60,105,0.06)' }}>
+        <Box sx={{ bgcolor: '#fff', border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, p: { xs: 2, lg: 1.4, xl: 2 }, position: { lg: 'sticky' }, top: 92, boxShadow: '0 18px 48px rgba(18,60,105,0.06)', minWidth: 0 }}>
           {!selectedCohort ? (
             <Typography sx={{ color: '#526273' }}>Select a cohort to view details.</Typography>
           ) : (
@@ -2210,7 +2210,7 @@ function AdminStudentsPane({ onAdminDataChanged, onOpenActivityLink, onAdminToas
       {message && <Alert severity="success">{message}</Alert>}
       {error && <Alert severity="error">{error}</Alert>}
 
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(5, minmax(0, 1fr))' }, gap: 1.5 }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))', lg: 'repeat(5, minmax(0, 1fr))' }, gap: { xs: 1.5, lg: 1.1, xl: 1.5 } }}>
         {learnerStats.map((stat) => {
           const Icon = stat.icon;
           return (
@@ -2229,7 +2229,7 @@ function AdminStudentsPane({ onAdminDataChanged, onOpenActivityLink, onAdminToas
       </Box>
 
       <Box sx={{ border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, p: 1.4, bgcolor: '#fff' }}>
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1.2fr 150px 140px 170px 150px 160px auto' }, gap: 1.2, alignItems: 'center' }}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))', xl: '1.2fr 150px 140px 170px 150px 160px auto' }, gap: 1.2, alignItems: 'center' }}>
           <TextField
             label="Search learners"
             value={search}
@@ -2274,9 +2274,9 @@ function AdminStudentsPane({ onAdminDataChanged, onOpenActivityLink, onAdminToas
         </Box>
       </Box>
 
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', xl: 'minmax(0, 1fr) 360px' }, gap: 2, alignItems: 'start' }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1fr) 300px', xl: 'minmax(0, 1fr) 340px' }, gap: { xs: 2, lg: 1.4, xl: 2 }, alignItems: 'start' }}>
         <Box sx={{ border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, bgcolor: '#fff', overflow: 'hidden', boxShadow: '0 18px 48px rgba(18,60,105,0.06)' }}>
-          <Box sx={{ ...adminTableHeaderSx, gridTemplateColumns: '44px minmax(230px, 1.35fr) 150px minmax(250px, 1fr) 110px 86px' }}>
+          <Box sx={{ ...adminTableHeaderSx, gridTemplateColumns: { lg: '34px minmax(185px, 1.25fr) 112px minmax(170px, 1fr) 82px 64px', xl: '44px minmax(230px, 1.35fr) 150px minmax(250px, 1fr) 110px 86px' } }}>
             {['', 'Learner', 'Status', 'Courses', 'Joined', 'Actions'].map((label) => (
               <Typography key={label || 'select'} className="admin-table-heading" sx={{ textAlign: label === 'Actions' ? 'center' : 'left' }}>{label}</Typography>
             ))}
@@ -2299,7 +2299,7 @@ function AdminStudentsPane({ onAdminDataChanged, onOpenActivityLink, onAdminToas
                     onClick={() => setSelectedStudentId(student.id)}
                     sx={{
                       display: 'grid',
-                      gridTemplateColumns: { xs: '1fr', lg: '44px minmax(230px, 1.35fr) 150px minmax(250px, 1fr) 110px 86px' },
+                      gridTemplateColumns: { xs: '1fr', lg: '34px minmax(185px, 1.25fr) 112px minmax(170px, 1fr) 82px 64px', xl: '44px minmax(230px, 1.35fr) 150px minmax(250px, 1fr) 110px 86px' },
                       gap: 1,
                       alignItems: 'center',
                       px: 1.4,
@@ -2371,7 +2371,7 @@ function AdminStudentsPane({ onAdminDataChanged, onOpenActivityLink, onAdminToas
           </Stack>
         </Box>
 
-        <Box sx={{ bgcolor: '#fff', border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, p: 2, position: { xl: 'sticky' }, top: 92, boxShadow: '0 18px 48px rgba(18,60,105,0.06)' }}>
+        <Box sx={{ bgcolor: '#fff', border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, p: { xs: 2, lg: 1.4, xl: 2 }, position: { lg: 'sticky' }, top: 92, boxShadow: '0 18px 48px rgba(18,60,105,0.06)', minWidth: 0 }}>
           {!selectedStudent ? (
             <Typography sx={{ color: '#526273' }}>Select a learner to view details.</Typography>
           ) : (
@@ -2845,7 +2845,7 @@ function AdminTeachersPane({ onAdminDataChanged, onAdminToast }) {
       {message && <Alert severity="success">{message}</Alert>}
       {error && <Alert severity="error">{error}</Alert>}
 
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', xl: 'repeat(4, 1fr)' }, gap: 1.5 }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(4, minmax(0, 1fr))' }, gap: { xs: 1.5, lg: 1.1, xl: 1.5 } }}>
         {teacherStats.map((stat) => {
           const Icon = stat.icon;
           return (
@@ -2864,7 +2864,7 @@ function AdminTeachersPane({ onAdminDataChanged, onAdminToast }) {
       </Box>
 
       <Box sx={{ border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, p: 1.4, bgcolor: '#fff' }}>
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1.4fr 160px 190px 170px auto' }, gap: 1.2, alignItems: 'center' }}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))', xl: '1.4fr 160px 190px 170px auto' }, gap: 1.2, alignItems: 'center' }}>
           <TextField label="Search teachers" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Name, email, or phone" InputProps={{ endAdornment: <InputAdornment position="end"><SearchOutlined fontSize="small" /></InputAdornment> }} />
           <TextField select label="Account status" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
             <MenuItem value="all">All teachers</MenuItem>
@@ -2887,9 +2887,9 @@ function AdminTeachersPane({ onAdminDataChanged, onAdminToast }) {
         </Box>
       </Box>
 
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', xl: 'minmax(0, 1fr) 360px' }, gap: 2, alignItems: 'start' }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1fr) 300px', xl: 'minmax(0, 1fr) 340px' }, gap: { xs: 2, lg: 1.4, xl: 2 }, alignItems: 'start' }}>
         <Box sx={{ bgcolor: '#fff', border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, overflow: 'hidden', boxShadow: '0 18px 48px rgba(18,60,105,0.06)', minWidth: 0, maxWidth: '100%' }}>
-          <Box sx={{ ...adminTableHeaderSx, gridTemplateColumns: 'minmax(220px, 1.4fr) 104px 160px 104px 64px' }}>
+          <Box sx={{ ...adminTableHeaderSx, gridTemplateColumns: { lg: 'minmax(180px, 1.35fr) 92px 130px 82px 54px', xl: 'minmax(220px, 1.4fr) 104px 160px 104px 64px' } }}>
             {['Teacher', 'Status', 'Assigned Course', 'Courses', 'Actions'].map((label) => <Typography key={label} className="admin-table-heading" sx={{ textAlign: label === 'Actions' ? 'center' : 'left' }}>{label}</Typography>)}
           </Box>
           {loading ? (
@@ -2901,7 +2901,7 @@ function AdminTeachersPane({ onAdminDataChanged, onAdminToast }) {
               {paginatedTeachers.map((teacher) => {
                 const isSelected = selectedTeacher?.id === teacher.id;
                 return (
-                  <Box key={teacher.id} onClick={() => setSelectedTeacherId(teacher.id)} sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(220px, 1.4fr) 104px 160px 104px 64px' }, gap: 1, alignItems: 'center', px: 1.2, py: 1.25, cursor: 'pointer', bgcolor: isSelected ? '#f1f7ff' : '#fff', borderLeft: isSelected ? '3px solid #1b6ef3' : '3px solid transparent', '&:hover': { bgcolor: '#f8fafc' } }}>
+                  <Box key={teacher.id} onClick={() => setSelectedTeacherId(teacher.id)} sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(180px, 1.35fr) 92px 130px 82px 54px', xl: 'minmax(220px, 1.4fr) 104px 160px 104px 64px' }, gap: 1, alignItems: 'center', px: 1.2, py: 1.25, cursor: 'pointer', bgcolor: isSelected ? '#f1f7ff' : '#fff', borderLeft: isSelected ? '3px solid #1b6ef3' : '3px solid transparent', '&:hover': { bgcolor: '#f8fafc' } }}>
                     <Stack direction="row" spacing={1.1} alignItems="center" sx={{ minWidth: 0 }}>
                       <UserAvatar user={teacher} size={44} />
                       <Box sx={{ minWidth: 0 }}>
@@ -2929,7 +2929,7 @@ function AdminTeachersPane({ onAdminDataChanged, onAdminToast }) {
           </Stack>
         </Box>
 
-        <Box sx={{ bgcolor: '#fff', border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, p: 2, position: { xl: 'sticky' }, top: 92, boxShadow: '0 18px 48px rgba(18,60,105,0.06)' }}>
+        <Box sx={{ bgcolor: '#fff', border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, p: { xs: 2, lg: 1.4, xl: 2 }, position: { lg: 'sticky' }, top: 92, boxShadow: '0 18px 48px rgba(18,60,105,0.06)', minWidth: 0 }}>
           {!selectedTeacher ? (
             <Typography sx={{ color: '#526273' }}>Select a teacher to view details.</Typography>
           ) : (
@@ -3305,7 +3305,7 @@ function AdminCoursesPane({ onAdminDataChanged, onOpenMaterials, onAdminToast })
       {message && <Alert severity="success">{message}</Alert>}
       {error && <Alert severity="error">{error}</Alert>}
 
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', xl: 'repeat(5, 1fr)' }, gap: 1.4 }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(5, minmax(0, 1fr))' }, gap: { xs: 1.4, lg: 1.1, xl: 1.4 } }}>
         {courseStats.map((stat) => {
           const Icon = stat.icon;
           return (
@@ -3323,10 +3323,10 @@ function AdminCoursesPane({ onAdminDataChanged, onOpenMaterials, onAdminToast })
         })}
       </Box>
 
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', xl: 'minmax(0, 1fr) 350px' }, gap: 2, alignItems: 'start' }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1fr) 300px', xl: 'minmax(0, 1fr) 340px' }, gap: { xs: 2, lg: 1.4, xl: 2 }, alignItems: 'start' }}>
         <Stack spacing={1.6}>
           <Box sx={{ bgcolor: '#fff', border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, p: 1.4 }}>
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1.4fr 150px 210px 170px auto' }, gap: 1.1, alignItems: 'center' }}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))', xl: '1.4fr 150px 210px 170px auto' }, gap: 1.1, alignItems: 'center' }}>
               <TextField size="small" label="Search courses" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Title, teacher, description" InputProps={{ endAdornment: <InputAdornment position="end"><SearchOutlined fontSize="small" /></InputAdornment> }} />
               <TextField select size="small" label="Status" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
                 <MenuItem value="all">All statuses</MenuItem>
@@ -3389,7 +3389,7 @@ function AdminCoursesPane({ onAdminDataChanged, onOpenMaterials, onAdminToast })
           )}
         </Stack>
 
-        <Box sx={{ bgcolor: '#fff', border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, p: 1.8, position: { xl: 'sticky' }, top: 92, boxShadow: '0 18px 48px rgba(18,60,105,0.06)' }}>
+        <Box sx={{ bgcolor: '#fff', border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, p: { xs: 1.8, lg: 1.4, xl: 1.8 }, position: { lg: 'sticky' }, top: 92, boxShadow: '0 18px 48px rgba(18,60,105,0.06)', minWidth: 0 }}>
           {!selectedCourse ? (
             <Typography sx={{ color: '#526273' }}>Select a course to view details.</Typography>
           ) : (() => {
@@ -4316,7 +4316,7 @@ function AdminCourseMaterialsPane({ onAdminDataChanged, initialCourseId = '', on
       ) : courses.length === 0 ? (
         <Box sx={{ bgcolor: '#eef3f8', borderRadius: 1, p: 2 }}><Typography sx={{ color: 'primary.dark', fontWeight: 700 }}>Create a course before adding materials.</Typography></Box>
       ) : (
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', xl: 'minmax(0, 1fr) 340px' }, gap: 2, alignItems: 'start' }}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1fr) 290px', xl: 'minmax(0, 1fr) 330px' }, gap: { xs: 2, lg: 1.4, xl: 2 }, alignItems: 'start' }}>
           <Stack spacing={1.5}>
             <Box sx={{ bgcolor: '#fff', border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, overflow: 'hidden', boxShadow: '0 18px 48px rgba(18,60,105,0.06)' }}>
               <Stack direction="row" spacing={2} sx={{ px: 1.6, py: 1.1, borderBottom: '1px solid rgba(18,60,105,0.1)', overflowX: 'auto' }}>
@@ -4397,7 +4397,7 @@ function AdminCourseMaterialsPane({ onAdminDataChanged, initialCourseId = '', on
 
           </Stack>
 
-          <Stack spacing={1.4} sx={{ position: { xl: 'sticky' }, top: 92 }}>
+          <Stack spacing={1.4} sx={{ position: { lg: 'sticky' }, top: 92, minWidth: 0 }}>
             <Box sx={{ bgcolor: '#fff', border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, p: 1.8 }}>
               <Typography sx={{ color: 'primary.dark', fontWeight: 950, mb: 1.2 }}>Course Overview</Typography>
               {[
@@ -4857,7 +4857,7 @@ function AdminAssignmentsPane({ initialCourseId = '', onOpenMaterials, onAdminTo
       {error && <Alert severity="error">{error}</Alert>}
       {message && <Alert severity="info" onClose={() => setMessage('')}>{message}</Alert>}
 
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', xl: 'repeat(4, 1fr)' }, gap: 1.5 }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(4, minmax(0, 1fr))' }, gap: { xs: 1.5, lg: 1.1, xl: 1.5 } }}>
         {[
           ['Total Assignments', totals.assignments, 'All courses', AssignmentOutlined, '#8b5cf6', '#f0e8ff'],
           ['Submitted', totals.submitted, 'Total received', CheckCircleOutlined, '#16805f', '#e1f6ec'],
@@ -4875,10 +4875,10 @@ function AdminAssignmentsPane({ initialCourseId = '', onOpenMaterials, onAdminTo
         ))}
       </Box>
 
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', xl: 'minmax(0, 1fr) 320px' }, gap: 2 }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1fr) 290px', xl: 'minmax(0, 1fr) 320px' }, gap: { xs: 2, lg: 1.4, xl: 2 } }}>
         <Stack spacing={2} sx={{ minWidth: 0 }}>
           <Box sx={{ border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, p: 2, bgcolor: '#fff', boxShadow: '0 12px 30px rgba(8,37,64,0.04)' }}>
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1.6fr repeat(4, 1fr)' }, gap: 1.2, alignItems: 'center' }}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))', xl: '1.6fr repeat(4, 1fr)' }, gap: 1.2, alignItems: 'center' }}>
               <TextField
                 size="small"
                 placeholder="Search assignments..."
@@ -4940,7 +4940,7 @@ function AdminAssignmentsPane({ initialCourseId = '', onOpenMaterials, onAdminTo
               ))}
             </Stack>
 
-            <Box sx={{ ...adminTableHeaderSx, gridTemplateColumns: 'minmax(230px, 1.3fr) minmax(140px, 0.8fr) 120px 150px 84px' }}>
+            <Box sx={{ ...adminTableHeaderSx, gridTemplateColumns: { lg: 'minmax(190px, 1.3fr) minmax(120px, 0.8fr) 104px 120px 72px', xl: 'minmax(230px, 1.3fr) minmax(140px, 0.8fr) 120px 150px 84px' } }}>
               {['Assignment', 'Course', 'Due Date', 'Submissions', 'Actions'].map((label) => (
                 <Box component="span" key={label} className="admin-table-heading" sx={{ textAlign: label === 'Actions' ? 'center' : 'left' }}>{label}</Box>
               ))}
@@ -4971,7 +4971,7 @@ function AdminAssignmentsPane({ initialCourseId = '', onOpenMaterials, onAdminTo
                       key={assignment.id}
                       sx={{
                         display: 'grid',
-                        gridTemplateColumns: { xs: '1fr', lg: 'minmax(230px, 1.3fr) minmax(140px, 0.8fr) 120px 150px 84px' },
+                        gridTemplateColumns: { xs: '1fr', lg: 'minmax(190px, 1.3fr) minmax(120px, 0.8fr) 104px 120px 72px', xl: 'minmax(230px, 1.3fr) minmax(140px, 0.8fr) 120px 150px 84px' },
                         gap: { xs: 1.2, lg: 1 },
                         alignItems: 'center',
                         px: 1.5,
@@ -5454,7 +5454,7 @@ function AdminAnnouncementsPane({ onAdminDataChanged, initialCourseId = '', onAd
       {message && <Alert severity="success">{message}</Alert>}
       {error && <Alert severity="error">{error}</Alert>}
 
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', xl: 'repeat(4, 1fr)' }, gap: 1.5 }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(4, minmax(0, 1fr))' }, gap: { xs: 1.5, lg: 1.1, xl: 1.5 } }}>
         {statCards.map((stat) => {
           const Icon = stat.icon;
           return (
@@ -5472,7 +5472,7 @@ function AdminAnnouncementsPane({ onAdminDataChanged, initialCourseId = '', onAd
         })}
       </Box>
 
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', xl: 'minmax(0, 1fr) 330px' }, gap: 2, alignItems: 'start' }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1fr) 290px', xl: 'minmax(0, 1fr) 330px' }, gap: { xs: 2, lg: 1.4, xl: 2 }, alignItems: 'start' }}>
       <Stack spacing={1.5}>
       <Box sx={{ border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, p: 2, bgcolor: '#fff', boxShadow: '0 18px 48px rgba(18,60,105,0.06)' }}>
         <Stack spacing={1.5} sx={{ mb: 2 }}>
@@ -5480,7 +5480,7 @@ function AdminAnnouncementsPane({ onAdminDataChanged, initialCourseId = '', onAd
             <Typography sx={{ color: 'primary.dark', fontWeight: 900 }}>Posted Announcements</Typography>
             <Typography sx={{ color: '#637083', fontSize: 14 }}>{filteredAnnouncements.length} announcement{filteredAnnouncements.length === 1 ? '' : 's'} in this view</Typography>
           </Box>
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))', lg: 'repeat(4, minmax(0, 1fr))' }, gap: 1.2, alignItems: 'center', width: '100%', minWidth: 0 }}>
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))', xl: 'repeat(4, minmax(0, 1fr))' }, gap: 1.2, alignItems: 'center', width: '100%', minWidth: 0 }}>
             <TextField
               size="small"
               label="Search"
@@ -5607,7 +5607,7 @@ function AdminAnnouncementsPane({ onAdminDataChanged, initialCourseId = '', onAd
       )}
       </Stack>
 
-      <Stack spacing={1.5} sx={{ position: { xl: 'sticky' }, top: 92 }}>
+      <Stack spacing={1.5} sx={{ position: { lg: 'sticky' }, top: 92, minWidth: 0 }}>
         <Box sx={{ border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, p: 1.8, bgcolor: '#fff', boxShadow: '0 18px 48px rgba(18,60,105,0.06)' }}>
           <Typography sx={{ color: 'primary.dark', fontWeight: 950, mb: 1.4 }}>Recent Announcement</Typography>
           {recentAnnouncement ? (
@@ -6127,7 +6127,7 @@ function CommunityHubModern({ adminView = false }) {
       {message && <Alert severity="success">{message}</Alert>}
       {error && <Alert severity="error">{error}</Alert>}
 
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', xl: 'minmax(0, 1fr) 330px' }, gap: 2, alignItems: 'start' }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1fr) 290px', xl: 'minmax(0, 1fr) 330px' }, gap: { xs: 2, lg: 1.4, xl: 2 }, alignItems: 'start' }}>
         <Stack spacing={1.5}>
           <Box sx={{ bgcolor: '#fff', border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, p: 1.6, boxShadow: '0 16px 42px rgba(18,60,105,0.06)' }}>
             <Stack direction="row" spacing={1.2} alignItems="center">
@@ -6149,7 +6149,7 @@ function CommunityHubModern({ adminView = false }) {
                   <Button key={key} onClick={() => setFeedTab(key)} sx={{ color: feedTab === key ? '#f05a28' : '#526273', borderBottom: feedTab === key ? '2px solid #f05a28' : '2px solid transparent', borderRadius: 0 }}>{label}</Button>
                 ))}
               </Stack>
-              <TextField size="small" placeholder="Search community" value={search} onChange={(event) => setSearch(event.target.value)} InputProps={{ startAdornment: <InputAdornment position="start"><SearchOutlined fontSize="small" /></InputAdornment> }} sx={{ minWidth: { md: 260 }, pb: { xs: 1, md: 0.7 } }} />
+              <TextField size="small" placeholder="Search community" value={search} onChange={(event) => setSearch(event.target.value)} InputProps={{ startAdornment: <InputAdornment position="start"><SearchOutlined fontSize="small" /></InputAdornment> }} sx={{ minWidth: { md: 220, xl: 260 }, pb: { xs: 1, md: 0.7 } }} />
             </Stack>
             <Stack direction="row" spacing={0.8} sx={{ flexWrap: 'wrap', gap: 0.8 }}>
               {categories.map((item) => <Button key={item.value} size="small" variant={category === item.value ? 'contained' : 'outlined'} color={category === item.value ? 'secondary' : 'primary'} onClick={() => setCategory(item.value)}>{item.label}</Button>)}
@@ -6211,7 +6211,7 @@ function CommunityHubModern({ adminView = false }) {
           )}
         </Stack>
 
-        <Stack spacing={1.5} sx={{ position: { xl: 'sticky' }, top: 92 }}>
+        <Stack spacing={1.5} sx={{ position: { lg: 'sticky' }, top: 92, minWidth: 0 }}>
           <Box sx={{ bgcolor: '#fff', border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, p: 1.6, boxShadow: '0 16px 42px rgba(18,60,105,0.05)' }}>
             <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}><Typography sx={{ color: 'primary.dark', fontWeight: 950 }}>Trending Discussions</Typography><Button size="small">View all</Button></Stack>
             <Stack spacing={1.1}>{trendingPosts.map((post, index) => <Stack key={post.id} direction="row" spacing={1} alignItems="center"><Avatar sx={{ width: 28, height: 28, bgcolor: ['#f05a28', '#1b6ef3', '#16805f', '#8b5cf6'][index % 4], fontSize: 13 }}>{index + 1}</Avatar><Box sx={{ minWidth: 0 }}><Typography noWrap sx={{ color: 'primary.dark', fontWeight: 850, fontSize: 13 }}>{post.title}</Typography><Typography sx={{ color: '#637083', fontSize: 12 }}>{post.comment_count || 0} replies</Typography></Box></Stack>)}</Stack>
@@ -6720,7 +6720,7 @@ function AdminSupportPane({ onAdminDataChanged, onAdminToast }) {
       {message && <Alert severity="success">{message}</Alert>}
       {error && <Alert severity="error">{error}</Alert>}
 
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', xl: 'repeat(4, 1fr)' }, gap: 1.5 }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(4, minmax(0, 1fr))' }, gap: { xs: 1.5, lg: 1.1, xl: 1.5 } }}>
         {[
           ['Total Tickets', totals.total, 'All submitted requests', HelpOutlineOutlined, '#8b5cf6', '#f0e8ff'],
           ['Open', totals.open, 'Needs first response', EmailOutlined, '#16805f', '#e1f6ec'],
@@ -6738,10 +6738,10 @@ function AdminSupportPane({ onAdminDataChanged, onAdminToast }) {
         ))}
       </Box>
 
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', xl: 'minmax(0, 1fr) 320px' }, gap: 2 }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1fr) 290px', xl: 'minmax(0, 1fr) 320px' }, gap: { xs: 2, lg: 1.4, xl: 2 } }}>
         <Stack spacing={2}>
           <Box sx={{ border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, p: 2, bgcolor: '#fff', boxShadow: '0 12px 30px rgba(8,37,64,0.04)' }}>
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1.6fr repeat(4, 1fr)' }, gap: 1.2, alignItems: 'center' }}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))', xl: '1.6fr repeat(4, 1fr)' }, gap: 1.2, alignItems: 'center' }}>
               <TextField
                 size="small"
                 placeholder="Search tickets by keyword..."
@@ -7663,7 +7663,7 @@ function AdminSettingsPane({ user, onUserUpdated, onAdminDataChanged, onAdminToa
         <Stack alignItems="center" sx={{ py: 4 }}><CircularProgress size={28} /></Stack>
       ) : (
         <Box component="form" id="admin-settings-form" onSubmit={saveSettings}>
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', xl: 'minmax(0, 1fr) 330px' }, gap: 2.2, alignItems: 'start' }}>
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1fr) 300px', xl: 'minmax(0, 1fr) 330px' }, gap: { xs: 2.2, lg: 1.4, xl: 2.2 }, alignItems: 'start' }}>
             <Stack spacing={1.5}>
               <Box sx={{ bgcolor: '#fff', border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, p: 0.5, overflowX: 'auto', boxShadow: '0 12px 32px rgba(18,60,105,0.04)' }}>
                 <Stack direction="row" spacing={0.4} sx={{ minWidth: 760 }}>
@@ -7684,7 +7684,7 @@ function AdminSettingsPane({ user, onUserUpdated, onAdminDataChanged, onAdminToa
               </Box>
             </Stack>
 
-            <Stack spacing={1.4} sx={{ position: { xl: 'sticky' }, top: 92 }}>
+            <Stack spacing={1.4} sx={{ position: { lg: 'sticky' }, top: 92, minWidth: 0 }}>
               <Box sx={{ bgcolor: '#fff', border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, p: 2, boxShadow: '0 16px 42px rgba(18,60,105,0.05)' }}>
                 <Typography sx={{ color: 'primary.dark', fontWeight: 950, mb: 1.3 }}>Platform Overview</Typography>
                 {[
@@ -13320,15 +13320,15 @@ function TeacherSubmissionsPane({ onTeacherToast, scope = 'teacher' }) {
         </Stack>
         <Button variant="outlined" startIcon={<DownloadOutlined />} onClick={exportSubmissions}>Export Report</Button>
       </Stack>
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1fr) 340px' }, gap: 2, alignItems: 'start' }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1fr) 300px', xl: 'minmax(0, 1fr) 340px' }, gap: { xs: 2, lg: 1.4, xl: 2 }, alignItems: 'start' }}>
         <Stack spacing={2} sx={{ minWidth: 0 }}>
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(4, 1fr)' }, gap: 1.2 }}>
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(4, minmax(0, 1fr))' }, gap: { xs: 1.2, lg: 1 } }}>
         {[['Total Submissions', records.length, 'All time', '#2678f3', InsertDriveFileOutlined], ['Pending Review', pendingReviewCount, 'Awaiting your review', '#f05a28', AccessTimeOutlined], ['Reviewed', gradedCount, 'Completed', '#16805f', CheckCircleOutlined], ['Late Submissions', lateCount, 'Submitted after due date', '#ef4444', CalendarTodayOutlined]].map(([label, value, detail, color, Icon]) => (
           <Box key={label} sx={{ ...cardSx, p: 1.8 }}><Stack direction="row" spacing={1.2} alignItems="center"><Box sx={{ width: 48, height: 48, borderRadius: 1.2, bgcolor: `${color}14`, color, display: 'grid', placeItems: 'center' }}><Icon /></Box><Box><Typography sx={{ color: '#526273', fontSize: 12.5, fontWeight: 850 }}>{label}</Typography><Typography sx={{ color, fontWeight: 950, fontSize: '1.75rem', lineHeight: 1.05 }}>{value}</Typography><Typography sx={{ color: '#637083', fontSize: 12 }}>{detail}</Typography></Box></Stack></Box>
         ))}
           </Box>
           <Box sx={{ ...cardSx, p: 1.4 }}>
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'minmax(190px, 1fr) minmax(180px, 0.9fr)', xl: 'minmax(190px, 1fr) minmax(170px, 0.95fr) minmax(170px, 0.95fr) minmax(160px, 0.9fr) 56px' }, gap: 1.2, alignItems: 'center' }}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))', xl: 'minmax(190px, 1fr) minmax(170px, 0.95fr) minmax(170px, 0.95fr) minmax(160px, 0.9fr) 56px' }, gap: 1.2, alignItems: 'center' }}>
               <TextField placeholder="Search submissions..." value={filters.search} onChange={(event) => setFilters((current) => ({ ...current, search: event.target.value }))} InputProps={{ startAdornment: <InputAdornment position="start"><SearchOutlined /></InputAdornment> }} sx={{ minWidth: 0 }} />
               <TextField select label="Course" value={filters.course_id} onChange={(event) => setFilters((current) => ({ ...current, course_id: event.target.value, module_id: 'all' }))} sx={{ minWidth: 0 }}><MenuItem value="">All Courses</MenuItem>{courses.map((course) => <MenuItem key={course.id} value={String(course.id)}>{course.title}</MenuItem>)}</TextField>
               <TextField select label="Module" value={filters.module_id} onChange={(event) => setFilters((current) => ({ ...current, module_id: event.target.value }))} sx={{ minWidth: 0 }}><MenuItem value="all">All Modules</MenuItem>{modulesForSelectedCourse.map((module) => <MenuItem key={module.id} value={String(module.id)}>{module.title}</MenuItem>)}</TextField>
@@ -13360,15 +13360,15 @@ function TeacherSubmissionsPane({ onTeacherToast, scope = 'teacher' }) {
             </Stack>
             {loading ? <Stack alignItems="center" sx={{ py: 4 }}><CircularProgress size={28} /></Stack> : visibleRecords.length === 0 ? <Box sx={{ p: 2 }}><Typography sx={{ color: '#637083' }}>No submissions found.</Typography></Box> : (
               <Box sx={{ overflowX: 'auto' }}>
-                <Box sx={{ minWidth: 1210 }}>
-                  <Box sx={{ display: 'grid', gridTemplateColumns: '190px 180px 180px 130px 155px 92px 165px 96px', gap: 1.2, alignItems: 'center', px: 2, py: 1.3, color: '#526273', fontSize: 12, fontWeight: 900, borderBottom: '1px solid rgba(18,60,105,0.08)' }}>
+                <Box sx={{ minWidth: { lg: 1040, xl: 1210 } }}>
+                  <Box sx={{ display: 'grid', gridTemplateColumns: { lg: '160px 155px 160px 116px 135px 78px 140px 82px', xl: '190px 180px 180px 130px 155px 92px 165px 96px' }, gap: { lg: 0.9, xl: 1.2 }, alignItems: 'center', px: { lg: 1.4, xl: 2 }, py: 1.3, color: '#526273', fontSize: 12, fontWeight: 900, borderBottom: '1px solid rgba(18,60,105,0.08)' }}>
                     <span>Student</span><span>Assignment</span><span>Course & Module</span><span>Submitted</span><span>Status</span><span>Reviewed</span><span>Comment</span><span>File</span>
                   </Box>
                   {pagedRecords.map((record, index) => {
                     const meta = statusMeta(record);
                     const teacherComment = getTeacherComment(record);
                     return (
-                      <Box key={record.submission_id} sx={{ display: 'grid', gridTemplateColumns: '190px 180px 180px 130px 155px 92px 165px 96px', gap: 1.2, alignItems: 'center', px: 2, py: 1.35, borderBottom: '1px solid rgba(18,60,105,0.08)', bgcolor: index % 2 === 0 ? '#fff' : '#f8fafc' }}>
+                      <Box key={record.submission_id} sx={{ display: 'grid', gridTemplateColumns: { lg: '160px 155px 160px 116px 135px 78px 140px 82px', xl: '190px 180px 180px 130px 155px 92px 165px 96px' }, gap: { lg: 0.9, xl: 1.2 }, alignItems: 'center', px: { lg: 1.4, xl: 2 }, py: 1.35, borderBottom: '1px solid rgba(18,60,105,0.08)', bgcolor: index % 2 === 0 ? '#fff' : '#f8fafc' }}>
                         <Stack direction="row" spacing={1.1} alignItems="center" sx={{ minWidth: 0 }}><UserAvatar user={record.student} size={42} /><Box sx={{ minWidth: 0 }}><Typography noWrap sx={{ color: 'primary.dark', fontWeight: 900 }}>{record.student.full_name}</Typography><Typography noWrap sx={{ color: '#637083', fontSize: 12 }}>{record.student.email}</Typography></Box></Stack>
                         <Box sx={{ minWidth: 0 }}><Typography noWrap sx={{ color: 'primary.dark', fontWeight: 900 }}>{record.assignment.title}</Typography><Typography noWrap sx={{ color: '#637083', fontSize: 12 }}>Due: {formatTimestamp(record.assignment.due_at, { month: 'short', day: 'numeric', year: 'numeric' })}</Typography></Box>
                         <Box sx={{ minWidth: 0 }}><Typography noWrap sx={{ color: 'primary.dark', fontWeight: 800 }}>{record.course.title}</Typography><Typography noWrap sx={{ color: '#637083', fontSize: 12 }}>{record.module?.title || 'Unassigned'}</Typography></Box>
