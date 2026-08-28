@@ -905,19 +905,19 @@ function AdminDashboardHome({ refreshKey, setActivePane }) {
         </Stack>
       ) : (
         <>
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))', xl: 'repeat(4, minmax(0, 1fr))' }, gap: 1.8 }}>
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))', lg: 'repeat(4, minmax(0, 1fr))' }, gap: { xs: 1.4, lg: 1.2, xl: 1.8 } }}>
             {stats.map((stat) => {
               const Icon = stat.icon;
               return (
-                <Box key={stat.label} sx={{ ...cardSx, p: 2 }}>
-                  <Stack direction="row" spacing={1.4} alignItems="center">
-                    <Box sx={{ width: 52, height: 52, borderRadius: 1.5, bgcolor: stat.bg, color: stat.color, display: 'grid', placeItems: 'center', flexShrink: 0 }}>
-                      <Icon sx={{ fontSize: 28 }} />
+                <Box key={stat.label} sx={{ ...cardSx, p: { xs: 1.6, lg: 1.35, xl: 2 } }}>
+                  <Stack direction="row" spacing={{ xs: 1.4, lg: 1.05, xl: 1.4 }} alignItems="center">
+                    <Box sx={{ width: { xs: 52, lg: 46, xl: 52 }, height: { xs: 52, lg: 46, xl: 52 }, borderRadius: 1.5, bgcolor: stat.bg, color: stat.color, display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                      <Icon sx={{ fontSize: { xs: 28, lg: 25, xl: 28 } }} />
                     </Box>
                     <Box sx={{ minWidth: 0 }}>
-                      <Typography sx={{ color: '#526273', fontSize: 12, fontWeight: 800 }}>{stat.label}</Typography>
-                      <Typography sx={{ color: 'primary.dark', fontWeight: 950, fontSize: 28, lineHeight: 1 }}>{stat.value}</Typography>
-                      <Typography sx={{ color: '#637083', fontSize: 11, mt: 0.5 }}>{stat.source}</Typography>
+                      <Typography noWrap sx={{ color: '#526273', fontSize: { xs: 12, lg: 11.3, xl: 12 }, fontWeight: 800 }}>{stat.label}</Typography>
+                      <Typography sx={{ color: 'primary.dark', fontWeight: 950, fontSize: { xs: 28, lg: 25, xl: 28 }, lineHeight: 1 }}>{stat.value}</Typography>
+                      <Typography noWrap sx={{ color: '#637083', fontSize: { xs: 11, lg: 10.5, xl: 11 }, mt: 0.5 }}>{stat.source}</Typography>
                       <Stack direction="row" spacing={1} alignItems="baseline" sx={{ display: 'none' }}>
                         <Typography sx={{ color: 'primary.dark', fontWeight: 950, fontSize: 28, lineHeight: 1 }}>{stat.value}</Typography>
                         <Typography sx={{ color: '#16a36d', fontWeight: 850, fontSize: 12 }}>↑ {stat.delta}</Typography>
@@ -7950,8 +7950,8 @@ function AdminPortal({ user, onSignOut, onUserUpdated }) {
   }, [adminRefreshKey]);
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: '#f6f8fb', display: { md: 'grid' }, gridTemplateColumns: { md: '280px 1fr' } }}>
-      <Box sx={{ bgcolor: '#082540', color: '#fff', p: { xs: 2, md: 2.5 }, position: { md: 'sticky' }, top: 0, height: { md: '100vh' }, overflowY: 'auto', display: { xs: 'none', md: 'flex' }, flexDirection: 'column' }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: '#f6f8fb', display: { md: 'grid' }, gridTemplateColumns: { md: '252px minmax(0, 1fr)', xl: '280px minmax(0, 1fr)' } }}>
+      <Box sx={{ bgcolor: '#082540', color: '#fff', p: { xs: 2, md: 2 }, position: { md: 'sticky' }, top: 0, height: { md: '100vh' }, overflowY: 'auto', display: { xs: 'none', md: 'flex' }, flexDirection: 'column' }}>
         <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 3 }}>
           <Box component="img" src="/images/logo.png" alt="Three13 IT Solutions" sx={{ height: 52, objectFit: 'contain' }} />
           <Chip label="Admin" size="small" sx={{ bgcolor: 'rgba(240,90,40,0.16)', color: '#ffd7c8', fontWeight: 800 }} />
@@ -8035,7 +8035,7 @@ function AdminPortal({ user, onSignOut, onUserUpdated }) {
         PaperProps={{ sx: { width: 286, bgcolor: '#082540', color: '#fff', p: 2 } }}
       >
         <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2.5 }}>
-          <Box component="img" src="/images/logo.png" alt="Three13 IT Solutions" sx={{ height: 52, objectFit: 'contain' }} />
+          <Box component="img" src="/images/logo.png" alt="Three13 IT Solutions" sx={{ height: { md: 48, xl: 52 }, objectFit: 'contain' }} />
           <IconButton onClick={() => setMobileMenuOpen(false)} sx={{ color: '#fff' }}><CloseOutlined /></IconButton>
         </Stack>
         <Stack spacing={0.8}>
@@ -8056,7 +8056,7 @@ function AdminPortal({ user, onSignOut, onUserUpdated }) {
                   bgcolor: active ? 'rgba(240,90,40,0.95)' : 'transparent',
                   border: active ? '1px solid rgba(255,255,255,0.22)' : '1px solid transparent',
                   borderRadius: 1,
-                  px: 1.4,
+                  px: { md: 1.15, xl: 1.4 },
                   py: 1,
                   '&:hover': { bgcolor: active ? '#f05a28' : 'rgba(255,255,255,0.08)', color: '#fff' },
                 }}
@@ -8069,8 +8069,8 @@ function AdminPortal({ user, onSignOut, onUserUpdated }) {
       </Drawer>
 
       <Box sx={{ minWidth: 0 }}>
-        <Box sx={{ bgcolor: '#fff', borderBottom: '1px solid rgba(18,60,105,0.12)', px: { xs: 2, md: 4 }, py: 2, position: 'sticky', top: 0, zIndex: 1200 }}>
-          <Stack direction={{ xs: 'column', lg: 'row' }} justifyContent="space-between" alignItems={{ xs: 'stretch', lg: 'center' }} spacing={1.5}>
+        <Box sx={{ bgcolor: '#fff', borderBottom: '1px solid rgba(18,60,105,0.12)', px: { xs: 2, md: 2.5, xl: 4 }, py: { xs: 1.6, md: 1.35, xl: 2 }, position: 'sticky', top: 0, zIndex: 1200 }}>
+          <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" alignItems={{ xs: 'stretch', md: 'center' }} spacing={{ xs: 1.5, md: 1.2 }}>
             <Stack direction="row" spacing={1.2} alignItems="center">
               <Box
                 component="img"
@@ -14680,7 +14680,7 @@ function TeacherPortal({ user, onSignOut, onUserUpdated }) {
                 <Typography sx={{ color: '#637083', fontSize: 13 }}>{user.email}</Typography>
               </Box>
             </Stack>
-            <Box sx={{ width: { xs: '100%', lg: 420 }, minHeight: 46, display: 'flex', alignItems: 'center' }}>
+            <Box sx={{ width: { xs: '100%', md: 360, lg: 420 }, minHeight: 46, display: 'flex', alignItems: 'center' }}>
               {teacherToast ? (
                 <Alert
                   key={teacherToast.id}
@@ -14792,7 +14792,7 @@ function TeacherPortal({ user, onSignOut, onUserUpdated }) {
             </Stack>
           </Popover>
         </Box>
-        <Box component="main" sx={{ px: { xs: 2, md: 4 }, py: { xs: 3, md: 4 } }}>
+        <Box component="main" sx={{ px: { xs: 2, md: 2.5, xl: 4 }, py: { xs: 3, md: 3, xl: 4 } }}>
           {activePane === 'dashboard' && <TeacherDashboardHome setActivePane={setActivePane} user={user} onTeacherToast={showTeacherToast} />}
           {activePane === 'my-courses' && <TeacherCourseWorkspace focus="courses" setActivePane={setActivePane} onTeacherToast={showTeacherToast} />}
           {activePane === 'materials' && <AdminCourseMaterialsPane scope="teacher" initialCourseId={paneContext.courseId || ''} onAdminToast={showTeacherToast} />}
