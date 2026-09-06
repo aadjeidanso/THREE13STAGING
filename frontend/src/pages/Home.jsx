@@ -102,6 +102,8 @@ const courses = [
     icon: <NetworkCheckIcon />,
     prereq: 'No prior IT experience required',
     desc: 'Build a practical foundation in networking, infrastructure, troubleshooting, and core IT terminology.',
+    details: 'Network Essentials introduces the practical language and systems behind modern IT environments. Students learn how devices connect, how information moves across networks, and how to approach common troubleshooting tasks with confidence.',
+    highlights: ['Core networking concepts and terminology', 'Routers, switches, IP addressing, and connectivity basics', 'Troubleshooting methods for real IT support scenarios'],
   },
   {
     title: 'Security Essentials',
@@ -109,6 +111,8 @@ const courses = [
     icon: <ShieldIcon />,
     prereq: 'No prior IT experience required',
     desc: 'Learn security operations, risk fundamentals, controls, incident response, and exam-ready security practices.',
+    details: 'Security Essentials helps students understand the foundations of cybersecurity work. The course covers risks, controls, common threats, and the practical mindset needed to protect systems and respond to incidents.',
+    highlights: ['Security operations and threat awareness', 'Risk, controls, access, and incident response basics', 'Career-ready security concepts for entry-level roles'],
   },
   {
     title: 'IT Audit',
@@ -116,6 +120,8 @@ const courses = [
     icon: <WorkspacePremiumIcon />,
     prereq: 'No prior IT experience required',
     desc: 'Prepare for audit, governance, compliance, controls testing, and career paths in assurance.',
+    details: 'IT Audit focuses on how organizations assess technology risk, governance, compliance, and controls. Students learn how audits are planned, how evidence is reviewed, and how assurance work supports business trust.',
+    highlights: ['IT governance, compliance, and audit foundations', 'Control testing, evidence review, and risk assessment', 'Practical preparation for audit and assurance career paths'],
   },
   {
     title: 'AI Essentials for IT Professionals',
@@ -123,6 +129,8 @@ const courses = [
     icon: <PsychologyIcon />,
     prereq: 'No prior IT experience required',
     desc: 'Learn practical AI concepts, prompt workflows, automation opportunities, and responsible AI use for modern IT teams.',
+    details: 'AI Essentials for IT Professionals gives students a practical introduction to AI tools, workflows, and responsible usage. The course is designed for learners who want to understand how AI can support productivity, automation, and IT operations.',
+    highlights: ['Practical AI concepts and prompt workflows', 'Automation opportunities for IT and business tasks', 'Responsible AI use, limitations, and workplace applications'],
   },
 ];
 
@@ -280,6 +288,7 @@ export default function Home() {
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openModal, setOpenModal] = useState(false);
+  const [selectedCourseDetails, setSelectedCourseDetails] = useState(null);
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMessageOpen, setChatMessageOpen] = useState(false);
   const [selectedChatPrompt, setSelectedChatPrompt] = useState(chatPrompts[0]);
@@ -814,8 +823,8 @@ export default function Home() {
                         </Typography>
                       </Stack>
 
-                      <Button variant="contained" color="primary" fullWidth onClick={() => setOpenModal(true)} sx={{ mt: 'auto', bgcolor: '#5684e1', '&:hover': { bgcolor: '#466fd0' } }}>
-                        Enroll Now
+                      <Button variant="contained" color="primary" fullWidth onClick={() => setSelectedCourseDetails(course)} sx={{ mt: 'auto', bgcolor: '#5684e1', '&:hover': { bgcolor: '#466fd0' } }}>
+                        Read more...
                       </Button>
                     </Box>
                   </Box>
@@ -1147,6 +1156,101 @@ export default function Home() {
             </Typography>
           </Container>
         </Box>
+
+        <Modal open={Boolean(selectedCourseDetails)} onClose={() => setSelectedCourseDetails(null)} aria-labelledby="course-detail-modal-title" sx={{ backdropFilter: 'blur(6px)' }}>
+          <Box
+            sx={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: { xs: '92vw', md: 880 },
+              maxHeight: '88vh',
+              overflowY: 'auto',
+              bgcolor: '#fff',
+              borderRadius: { xs: 2, sm: 3 },
+              boxShadow: '0 24px 70px rgba(8,37,64,0.28)',
+              border: '1px solid rgba(18,60,105,0.12)',
+            }}
+          >
+            {selectedCourseDetails && (
+              <>
+                <Box sx={{ position: 'relative', height: { xs: 210, sm: 270 }, overflow: 'hidden', borderTopLeftRadius: { xs: 16, sm: 24 }, borderTopRightRadius: { xs: 16, sm: 24 } }}>
+                  <Box component="img" src={selectedCourseDetails.img} alt={selectedCourseDetails.title} sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                  <Box sx={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(8,37,64,0.14) 0%, rgba(8,37,64,0.72) 100%)' }} />
+                  <IconButton
+                    aria-label="Close course details"
+                    onClick={() => setSelectedCourseDetails(null)}
+                    sx={{ position: 'absolute', top: 14, right: 14, bgcolor: 'rgba(255,255,255,0.92)', color: 'primary.dark', '&:hover': { bgcolor: '#fff' } }}
+                  >
+                    <CloseIcon />
+                  </IconButton>
+                  <Box sx={{ position: 'absolute', left: { xs: 20, sm: 30 }, right: { xs: 20, sm: 30 }, bottom: { xs: 18, sm: 26 } }}>
+                    <Chip label="Three13 Course" sx={{ bgcolor: 'rgba(240,90,40,0.95)', color: '#fff', fontWeight: 850, mb: 1.4 }} />
+                    <Typography id="course-detail-modal-title" variant="h3" sx={{ color: '#fff', fontSize: { xs: '2rem', sm: '2.65rem' }, lineHeight: 1.08, fontWeight: 900 }}>
+                      {selectedCourseDetails.title}
+                    </Typography>
+                  </Box>
+                </Box>
+
+                <Box sx={{ p: { xs: 2.2, sm: 3.2 } }}>
+                  <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1.25fr 0.75fr' }, gap: 2.5, alignItems: 'start' }}>
+                    <Stack spacing={2}>
+                      <Box>
+                        <Typography sx={{ color: 'primary.dark', fontWeight: 900, fontSize: '1.05rem', mb: 0.75 }}>Course Overview</Typography>
+                        <Typography sx={{ color: '#526273', fontSize: { xs: '0.98rem', sm: '1.02rem' }, lineHeight: 1.75 }}>
+                          {selectedCourseDetails.details}
+                        </Typography>
+                      </Box>
+
+                      <Box>
+                        <Typography sx={{ color: 'primary.dark', fontWeight: 900, fontSize: '1.05rem', mb: 1 }}>What you will learn</Typography>
+                        <Stack spacing={1}>
+                          {selectedCourseDetails.highlights.map((item) => (
+                            <Stack key={item} direction="row" spacing={1.1} alignItems="flex-start">
+                              <CheckCircleIcon sx={{ color: 'secondary.main', fontSize: 20, mt: '2px' }} />
+                              <Typography sx={{ color: '#102b49', lineHeight: 1.55 }}>{item}</Typography>
+                            </Stack>
+                          ))}
+                        </Stack>
+                      </Box>
+                    </Stack>
+
+                    <Box sx={{ bgcolor: '#f6f8fb', border: '1px solid rgba(18,60,105,0.1)', borderRadius: 2, p: 2 }}>
+                      <Stack spacing={1.8}>
+                        <Stack direction="row" spacing={1.2} alignItems="flex-start">
+                          <CourseInfoBadge type="prereq" />
+                          <Box>
+                            <Typography sx={{ color: 'primary.dark', fontWeight: 900 }}>Prerequisite</Typography>
+                            <Typography sx={{ color: '#526273', fontSize: 14 }}>{selectedCourseDetails.prereq}</Typography>
+                          </Box>
+                        </Stack>
+                        <Stack direction="row" spacing={1.2} alignItems="flex-start">
+                          <CourseInfoBadge type="desc" />
+                          <Box>
+                            <Typography sx={{ color: 'primary.dark', fontWeight: 900 }}>Short Description</Typography>
+                            <Typography sx={{ color: '#526273', fontSize: 14, lineHeight: 1.6 }}>{selectedCourseDetails.desc}</Typography>
+                          </Box>
+                        </Stack>
+                        <Button
+                          variant="contained"
+                          color="secondary"
+                          fullWidth
+                          onClick={() => {
+                            setSelectedCourseDetails(null);
+                            setOpenModal(true);
+                          }}
+                        >
+                          Enroll Now
+                        </Button>
+                      </Stack>
+                    </Box>
+                  </Box>
+                </Box>
+              </>
+            )}
+          </Box>
+        </Modal>
 
         <Modal open={openModal} onClose={() => setOpenModal(false)} aria-labelledby="registration-modal-title" sx={{ backdropFilter: 'blur(6px)' }}>
           <Box sx={modalStyle}>
