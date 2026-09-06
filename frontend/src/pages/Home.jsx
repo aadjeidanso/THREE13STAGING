@@ -111,7 +111,7 @@ const courses = [
     desc: 'Learn security operations, risk fundamentals, controls, incident response, and exam-ready security practices.',
   },
   {
-    title: 'CISA / IT Audit',
+    title: 'IT Audit',
     img: '/images/course3.jpg',
     icon: <WorkspacePremiumIcon />,
     prereq: 'No prior IT experience required',
@@ -179,7 +179,7 @@ const CourseInfoBadge = ({ type }) => {
 };
 
 const faqs = [
-  ['What are the prerequisites for the courses?', 'Network Essentials requires no prior experience. For Security Essentials, we recommend completing Network Essentials first. The CISA / IT Audit course is best after Security Essentials.'],
+  ['What are the prerequisites for the courses?', 'No prior IT experience is required for any course.'],
   ['How long do I have access to course materials?', 'You receive long-term access to lecture recordings, slides, labs, and practice resources so you can revisit the material as your career grows.'],
   ['What certifications will I be prepared for?', 'The program is designed around Network+, Security+, and CISA-aligned skills, with guided exam preparation and practice sessions.'],
   ['What is the class schedule?', 'Classes are held Mondays and Thursdays from 7:00 PM to 10:00 PM EST. Each course runs for 10 weeks.'],
@@ -192,7 +192,7 @@ const faqs = [
 const chatPrompts = [
   {
     question: 'Which courses are offered?',
-    answer: 'Three13 currently offers Network Essentials, Security Essentials, CISA / IT Audit, and AI Essentials for IT Professionals.',
+    answer: 'Three13 currently offers Network Essentials, Security Essentials, IT Audit, and AI Essentials for IT Professionals.',
   },
   {
     question: 'How do I enroll?',

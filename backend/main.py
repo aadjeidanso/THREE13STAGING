@@ -602,6 +602,17 @@ def ensure_schema_updates():
                 connection.execute(text("ALTER TABLE submissions ADD COLUMN teacher_feedback TEXT"))
 
     table_names = set(inspector.get_table_names())
+    if "courses" in table_names:
+        with engine.begin() as connection:
+            connection.execute(
+                text("UPDATE courses SET title = :new_title WHERE title IN (:old_title_spaced, :old_title_compact)"),
+                {
+                    "new_title": "IT Audit",
+                    "old_title_spaced": "CISA / IT Audit",
+                    "old_title_compact": "CISA/IT Audit",
+                },
+            )
+
     active_cohort_id = None
     if "cohorts" in table_names:
         current_ts = now_ts()

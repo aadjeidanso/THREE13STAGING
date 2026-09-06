@@ -607,7 +607,7 @@ export default function TermsOfService() {
               >
                 <MenuItem value="Network Essentials">Network Essentials</MenuItem>
                 <MenuItem value="Security Essentials">Security Essentials</MenuItem>
-                <MenuItem value="CISA/IT Audit">CISA/IT Audit</MenuItem>
+                <MenuItem value="IT Audit">IT Audit</MenuItem>
               </Select>
             </FormControl>
 

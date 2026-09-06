@@ -14,7 +14,7 @@ COURSES = [
         "description": "Learn security operations, risk fundamentals, controls, incident response, and exam-ready security practices.",
     },
     {
-        "title": "CISA / IT Audit",
+        "title": "IT Audit",
         "description": "Prepare for audit, governance, compliance, controls testing, and career paths in assurance.",
     },
     {
