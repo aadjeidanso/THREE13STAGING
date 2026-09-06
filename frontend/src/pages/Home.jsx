@@ -1021,7 +1021,7 @@ export default function Home() {
           <Container maxWidth="lg" sx={{ textAlign: 'center' }}>
             <SchoolIcon sx={{ color: 'secondary.main', fontSize: 42, mb: 2 }} />
             <Typography variant="h3" sx={{ fontSize: { xs: '2rem', md: '3rem' }, mb: 2 }}>
-              Ready to break into IT?
+              Take the Next Step in Your IT Career
             </Typography>
             <Typography sx={{ color: 'rgba(255,255,255,0.72)', maxWidth: 620, mx: 'auto', mb: 4 }}>
               Join Three13 IT Solutions and get a structured path from learning to certification preparation to career conversations.

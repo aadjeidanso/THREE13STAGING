@@ -352,7 +352,7 @@ export default function PrivacyPolicy() {
               fontSize: { xs: '1.6rem', md: '2rem' }
             }}
           >
-            Ready to break into IT?
+            Take the Next Step in Your IT Career
           </Typography>
           <Typography
             variant="h5"
