@@ -97,15 +97,6 @@ const navItems = [
 
 const courses = [
   {
-    title: 'Network Essentials',
-    img: '/images/course1.jpg',
-    icon: <NetworkCheckIcon />,
-    prereq: 'No prior IT experience required',
-    desc: 'Build a practical foundation in networking, infrastructure, troubleshooting, and core IT terminology.',
-    details: 'Network Essentials introduces the practical language and systems behind modern IT environments. Students learn how devices connect, how information moves across networks, and how to approach common troubleshooting tasks with confidence.',
-    highlights: ['Core networking concepts and terminology', 'Routers, switches, IP addressing, and connectivity basics', 'Troubleshooting methods for real IT support scenarios'],
-  },
-  {
     title: 'Security Essentials',
     img: '/images/course2.jpg',
     icon: <ShieldIcon />,
@@ -113,6 +104,15 @@ const courses = [
     desc: 'Learn security operations, risk fundamentals, controls, incident response, and exam-ready security practices.',
     details: 'Security Essentials helps students understand the foundations of cybersecurity work. The course covers risks, controls, common threats, and the practical mindset needed to protect systems and respond to incidents.',
     highlights: ['Security operations and threat awareness', 'Risk, controls, access, and incident response basics', 'Career-ready security concepts for entry-level roles'],
+  },
+  {
+    title: 'Network Essentials',
+    img: '/images/course1.jpg',
+    icon: <NetworkCheckIcon />,
+    prereq: 'No prior IT experience required',
+    desc: 'Build a practical foundation in networking, infrastructure, troubleshooting, and core IT terminology.',
+    details: 'Network Essentials introduces the practical language and systems behind modern IT environments. Students learn how devices connect, how information moves across networks, and how to approach common troubleshooting tasks with confidence.',
+    highlights: ['Core networking concepts and terminology', 'Routers, switches, IP addressing, and connectivity basics', 'Troubleshooting methods for real IT support scenarios'],
   },
   {
     title: 'IT Audit',
