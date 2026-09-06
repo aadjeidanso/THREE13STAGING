@@ -1186,7 +1186,6 @@ export default function Home() {
                     <CloseIcon />
                   </IconButton>
                   <Box sx={{ position: 'absolute', left: { xs: 20, sm: 30 }, right: { xs: 20, sm: 30 }, bottom: { xs: 18, sm: 26 } }}>
-                    <Chip label="Three13 Course" sx={{ bgcolor: 'rgba(240,90,40,0.95)', color: '#fff', fontWeight: 850, mb: 1.4 }} />
                     <Typography id="course-detail-modal-title" variant="h3" sx={{ color: '#fff', fontSize: { xs: '2rem', sm: '2.65rem' }, lineHeight: 1.08, fontWeight: 900 }}>
                       {selectedCourseDetails.title}
                     </Typography>
