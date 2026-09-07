@@ -210,6 +210,7 @@ const supportCategoryLabels = supportCategoryOptions.reduce((labels, option) => 
 const courseImageMap = {
   'network essentials': '/images/course1.jpg',
   'security essentials': '/images/course2.jpg',
+  'it audit': '/images/course3.jpg',
   'cisa / it audit': '/images/course3.jpg',
   'cisa/it audit': '/images/course3.jpg',
   'ai essentials for it professionals': '/images/AI-Essential.jpg',
@@ -217,6 +218,31 @@ const courseImageMap = {
 
 function getToken() {
   return window.localStorage.getItem('three13_token');
+}
+
+async function loadReadNotificationIds() {
+  const response = await fetch(`${apiBaseUrl.replace(/\/$/, '')}/notifications/read`, {
+    headers: { Authorization: `Bearer ${getToken()}` },
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.detail || 'Unable to load notification read state');
+  return Array.isArray(data.notification_ids) ? data.notification_ids : [];
+}
+
+async function saveReadNotificationIds(notificationIds) {
+  const uniqueIds = [...new Set((notificationIds || []).filter(Boolean))];
+  if (!uniqueIds.length) return [];
+  const response = await fetch(`${apiBaseUrl.replace(/\/$/, '')}/notifications/read`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${getToken()}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ notification_ids: uniqueIds }),
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.detail || 'Unable to save notification read state');
+  return Array.isArray(data.notification_ids) ? data.notification_ids : uniqueIds;
 }
 
 function getCourseImage(title) {
@@ -1722,6 +1748,21 @@ function AdminStudentsPane({ onAdminDataChanged, onOpenActivityLink, onAdminToas
   const [alumniForm, setAlumniForm] = React.useState({ full_name: '', email: '', phone: '', cohort_id: '' });
   const [alumniSetup, setAlumniSetup] = React.useState(null);
   const [inviteDialogOpen, setInviteDialogOpen] = React.useState(false);
+  const [learnerDialogOpen, setLearnerDialogOpen] = React.useState(false);
+  const [learnerSetup, setLearnerSetup] = React.useState(null);
+  const [learnerForm, setLearnerForm] = React.useState({
+    first_name: '',
+    last_name: '',
+    email: '',
+    phone: '',
+    country: '',
+    experience_level: '',
+    learning_goal: '',
+    access_reason: 'paid_externally',
+    access_reason_other: '',
+    admin_note: '',
+    send_setup_email: true,
+  });
 
   const loadStudents = React.useCallback(async () => {
     setLoading(true);
@@ -1780,6 +1821,10 @@ function AdminStudentsPane({ onAdminDataChanged, onOpenActivityLink, onAdminToas
 
   const updateAlumniForm = (field, value) => {
     setAlumniForm((current) => ({ ...current, [field]: value }));
+  };
+
+  const updateLearnerForm = (field, value) => {
+    setLearnerForm((current) => ({ ...current, [field]: value }));
   };
 
   const getLatestEnrollmentTime = (student) => {
@@ -1922,6 +1967,49 @@ function AdminStudentsPane({ onAdminDataChanged, onOpenActivityLink, onAdminToas
       setInviteDialogOpen(false);
       onAdminDataChanged?.();
       setMessage(data.email_sent ? 'Alumni account saved and setup email sent.' : 'Alumni account saved. Email was not delivered, so use the development setup link below.');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const createLearner = async (event) => {
+    event.preventDefault();
+    setSaving(true);
+    setError('');
+    setMessage('');
+    setLearnerSetup(null);
+    try {
+      const response = await fetch(`${apiBaseUrl.replace(/\/$/, '')}/admin/learners`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${getToken()}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(learnerForm),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.detail || 'Unable to add learner');
+      upsertStudentInList(data.student);
+      setSelectedStudentId(data.student.id);
+      setLearnerForm({
+        first_name: '',
+        last_name: '',
+        email: '',
+        phone: '',
+        country: '',
+        experience_level: '',
+        learning_goal: '',
+        access_reason: 'paid_externally',
+        access_reason_other: '',
+        admin_note: '',
+        send_setup_email: true,
+      });
+      setLearnerSetup(data.email_sent ? null : data);
+      setLearnerDialogOpen(false);
+      onAdminDataChanged?.();
+      setMessage(data.email_sent ? 'Learner added, access granted, and setup email sent.' : 'Learner added and access granted. Email was not delivered, so use the development setup link below.');
     } catch (err) {
       setError(err.message);
     } finally {
@@ -2200,6 +2288,9 @@ function AdminStudentsPane({ onAdminDataChanged, onOpenActivityLink, onAdminToas
           </Typography>
         </Box>
         <Stack direction="row" spacing={1}>
+          <Button variant="contained" color="secondary" startIcon={<GroupOutlined />} onClick={() => setLearnerDialogOpen(true)}>
+            Add Learner
+          </Button>
           <Button variant="contained" color="primary" startIcon={<GroupOutlined />} onClick={() => setInviteDialogOpen(true)} sx={{ bgcolor: 'primary.dark', '&:hover': { bgcolor: '#061c31' } }}>
             Invite Alumni
           </Button>
@@ -2209,6 +2300,11 @@ function AdminStudentsPane({ onAdminDataChanged, onOpenActivityLink, onAdminToas
 
       {message && <Alert severity="success">{message}</Alert>}
       {error && <Alert severity="error">{error}</Alert>}
+      {learnerSetup?.setup_url && (
+        <Alert severity="info">
+          Development setup link: <Button size="small" href={learnerSetup.setup_url} sx={{ ml: 1, color: '#0b67c2', fontWeight: 850 }}>Open setup link</Button>
+        </Alert>
+      )}
 
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))', lg: 'repeat(5, minmax(0, 1fr))' }, gap: { xs: 1.5, lg: 1.1, xl: 1.5 } }}>
         {learnerStats.map((stat) => {
@@ -2500,6 +2596,50 @@ function AdminStudentsPane({ onAdminDataChanged, onOpenActivityLink, onAdminToas
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button variant="contained" color="secondary" onClick={() => setActivityDialogKey('')}>Close</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={learnerDialogOpen} onClose={() => setLearnerDialogOpen(false)} fullWidth maxWidth="md">
+        <DialogTitle sx={{ color: 'primary.dark', fontWeight: 950 }}>Add Learner</DialogTitle>
+        <DialogContent>
+          <Stack component="form" id="admin-learner-invite-form" onSubmit={createLearner} spacing={1.5} sx={{ pt: 1 }}>
+            <Typography sx={{ color: '#526273', fontSize: 14 }}>
+              Grant access to the full Three13 Training Bundle and send a secure setup link. The learner creates their own password.
+            </Typography>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' }, gap: 1.3 }}>
+              <TextField label="First name" value={learnerForm.first_name} onChange={(event) => updateLearnerForm('first_name', event.target.value)} required />
+              <TextField label="Last name" value={learnerForm.last_name} onChange={(event) => updateLearnerForm('last_name', event.target.value)} required />
+              <TextField label="Email address" type="email" value={learnerForm.email} onChange={(event) => updateLearnerForm('email', event.target.value)} required />
+              <TextField label="Phone number" value={learnerForm.phone} onChange={(event) => updateLearnerForm('phone', event.target.value)} />
+              <TextField label="Country / Location" value={learnerForm.country} onChange={(event) => updateLearnerForm('country', event.target.value)} />
+              <TextField label="Experience level" value={learnerForm.experience_level} onChange={(event) => updateLearnerForm('experience_level', event.target.value)} />
+              <TextField label="Learning goal" value={learnerForm.learning_goal} onChange={(event) => updateLearnerForm('learning_goal', event.target.value)} sx={{ gridColumn: { sm: '1 / -1' } }} />
+              <TextField select label="Enrollment method / access reason" value={learnerForm.access_reason} onChange={(event) => updateLearnerForm('access_reason', event.target.value)} required sx={{ gridColumn: { sm: '1 / -1' } }}>
+                <MenuItem value="paid_externally">Paid externally</MenuItem>
+                <MenuItem value="scholarship">Scholarship</MenuItem>
+                <MenuItem value="sponsored_by_employer">Sponsored by employer</MenuItem>
+                <MenuItem value="sponsored_by_organization">Sponsored by organization</MenuItem>
+                <MenuItem value="complimentary_access">Complimentary access</MenuItem>
+                <MenuItem value="staff_instructor">Staff / instructor</MenuItem>
+                <MenuItem value="administrative_exception">Administrative exception</MenuItem>
+                <MenuItem value="other">Other</MenuItem>
+              </TextField>
+              {learnerForm.access_reason === 'other' && (
+                <TextField label="Access reason note" value={learnerForm.access_reason_other} onChange={(event) => updateLearnerForm('access_reason_other', event.target.value)} required sx={{ gridColumn: { sm: '1 / -1' } }} />
+              )}
+              <TextField label="Admin note" value={learnerForm.admin_note} onChange={(event) => updateLearnerForm('admin_note', event.target.value)} multiline minRows={2} sx={{ gridColumn: { sm: '1 / -1' } }} />
+            </Box>
+            <FormControlLabel
+              control={<Checkbox checked={learnerForm.send_setup_email} onChange={(event) => updateLearnerForm('send_setup_email', event.target.checked)} />}
+              label="Send account setup email"
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button variant="outlined" onClick={() => setLearnerDialogOpen(false)} disabled={saving}>Cancel</Button>
+          <Button type="submit" form="admin-learner-invite-form" variant="contained" color="secondary" disabled={saving} startIcon={<SendOutlined />}>
+            {saving ? 'Adding...' : 'Add Learner & Send Invite'}
+          </Button>
         </DialogActions>
       </Dialog>
 
@@ -7870,13 +8010,7 @@ function AdminPortal({ user, onSignOut, onUserUpdated }) {
   const [adminNotifications, setAdminNotifications] = React.useState([]);
   const [adminToast, setAdminToast] = React.useState(null);
   const adminNotificationStorageKey = `three13_admin_cleared_notifications_${user?.id || user?.email || 'admin'}`;
-  const [clearedAdminNotificationIds, setClearedAdminNotificationIds] = React.useState(() => {
-    try {
-      return JSON.parse(window.localStorage.getItem(adminNotificationStorageKey) || '[]');
-    } catch {
-      return [];
-    }
-  });
+  const [clearedAdminNotificationIds, setClearedAdminNotificationIds] = React.useState([]);
   const activeItem = adminNavItems.find((item) => item.key === activePane) || adminNavItems[0];
   const visibleAdminNotifications = adminNotifications.filter((notification) => !clearedAdminNotificationIds.includes(notification.id));
   const markAdminDataChanged = React.useCallback(() => {
@@ -7907,9 +8041,28 @@ function AdminPortal({ user, onSignOut, onUserUpdated }) {
     setActivePane(pane);
   }, []);
 
+  React.useEffect(() => {
+    let mounted = true;
+    loadReadNotificationIds()
+      .then((ids) => {
+        if (mounted) setClearedAdminNotificationIds(ids);
+      })
+      .catch(() => {
+        try {
+          if (mounted) setClearedAdminNotificationIds(JSON.parse(window.localStorage.getItem(adminNotificationStorageKey) || '[]'));
+        } catch {
+          if (mounted) setClearedAdminNotificationIds([]);
+        }
+      });
+    return () => { mounted = false; };
+  }, [adminNotificationStorageKey]);
+
   const updateClearedAdminNotifications = React.useCallback((ids) => {
     const uniqueIds = [...new Set(ids)];
     setClearedAdminNotificationIds(uniqueIds);
+    saveReadNotificationIds(uniqueIds).catch(() => {
+      // Local fallback keeps the current browser accurate if the API is temporarily unavailable.
+    });
     try {
       window.localStorage.setItem(adminNotificationStorageKey, JSON.stringify(uniqueIds));
     } catch {
@@ -8379,7 +8532,7 @@ function StudentDashboardHome({ setActivePane, user, onOpenCourse }) {
             Welcome back, {firstName}!
           </Typography>
           <Typography sx={{ color: '#637083' }}>
-            {pendingActivation ? 'Your dashboard is ready. Course access will unlock after admin activation.' : "Here's what's happening in your learning journey today."}
+            {pendingActivation ? 'You are almost there. Complete payment to activate your Three13 training program.' : "Here's what's happening in your learning journey today."}
           </Typography>
         </Box>
         <Box component="img" src="/images/student_illustration_upscaled.png" alt="" sx={{ display: { xs: 'none', md: 'block' }, position: 'absolute', right: 0, bottom: -4, width: 230, height: 132, objectFit: 'contain' }} />
@@ -8426,7 +8579,12 @@ function StudentDashboardHome({ setActivePane, user, onOpenCourse }) {
             </Box>
             {approvedCourses.length === 0 ? (
               <Box sx={{ bgcolor: '#fff', border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, p: 2.4, mt: 2 }}>
-                <Typography sx={{ color: 'primary.dark', fontWeight: 700 }}>{pendingActivation ? 'Course access pending admin activation.' : 'No enrolled courses yet.'}</Typography>
+                <Typography sx={{ color: 'primary.dark', fontWeight: 700 }}>{pendingActivation ? "You're almost there" : 'No enrolled courses yet.'}</Typography>
+                {pendingActivation && (
+                  <Button component={RouterLink} to="/complete-registration" variant="contained" color="secondary" sx={{ mt: 1.2 }}>
+                    Complete Enrollment
+                  </Button>
+                )}
               </Box>
             ) : (
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)', xl: 'repeat(4, 1fr)' }, gap: 1.5, mt: 2 }}>
@@ -8660,8 +8818,13 @@ function StudentMyCoursesPane({ setActivePane, user, onOpenCourse }) {
       {error && <Alert severity="error">{error}</Alert>}
       {loading ? <Stack alignItems="center" sx={{ py: 5 }}><CircularProgress size={28} /></Stack> : courses.length === 0 ? (
         <Box sx={{ bgcolor: '#fff', border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, p: 2.4 }}>
-          <Typography sx={{ color: 'primary.dark', fontWeight: 900 }}>{user?.is_active ? 'No courses are available yet.' : 'Course access pending activation.'}</Typography>
-          <Typography sx={{ color: '#637083' }}>{user?.is_active ? 'Your current Three13 courses will appear here as soon as they are active.' : 'An admin needs to activate your account before courses, materials, and assignments unlock.'}</Typography>
+          <Typography sx={{ color: 'primary.dark', fontWeight: 900 }}>{user?.is_active ? 'No courses are available yet.' : "You're almost there"}</Typography>
+          <Typography sx={{ color: '#637083' }}>{user?.is_active ? 'Your current Three13 courses will appear here as soon as they are active.' : 'Complete payment to activate your Three13 training program.'}</Typography>
+          {!user?.is_active && (
+            <Button component={RouterLink} to="/complete-registration" variant="contained" color="secondary" sx={{ mt: 1.2 }}>
+              Complete Enrollment
+            </Button>
+          )}
         </Box>
       ) : (
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)', xl: 'repeat(3, 1fr)' }, gap: 1.5 }}>
@@ -14452,26 +14615,31 @@ function TeacherPortal({ user, onSignOut, onUserUpdated }) {
   const [notificationSummary, setNotificationSummary] = React.useState(null);
   const [teacherToast, setTeacherToast] = React.useState(null);
   const notificationStorageKey = `three13_teacher_read_notifications_${user?.id || user?.email || 'teacher'}`;
-  const [readNotificationIds, setReadNotificationIds] = React.useState(() => {
-    try {
-      return JSON.parse(window.localStorage.getItem(notificationStorageKey) || '[]');
-    } catch {
-      return [];
-    }
-  });
+  const [readNotificationIds, setReadNotificationIds] = React.useState([]);
   const activeItem = teacherNavItems.find((item) => item.key === activePane) || teacherNavItems[0];
 
   React.useEffect(() => {
-    try {
-      setReadNotificationIds(JSON.parse(window.localStorage.getItem(notificationStorageKey) || '[]'));
-    } catch {
-      setReadNotificationIds([]);
-    }
+    let mounted = true;
+    loadReadNotificationIds()
+      .then((ids) => {
+        if (mounted) setReadNotificationIds(ids);
+      })
+      .catch(() => {
+        try {
+          if (mounted) setReadNotificationIds(JSON.parse(window.localStorage.getItem(notificationStorageKey) || '[]'));
+        } catch {
+          if (mounted) setReadNotificationIds([]);
+        }
+      });
+    return () => { mounted = false; };
   }, [notificationStorageKey]);
 
   const updateReadNotifications = React.useCallback((ids) => {
     const uniqueIds = Array.from(new Set(ids));
     setReadNotificationIds(uniqueIds);
+    saveReadNotificationIds(uniqueIds).catch(() => {
+      // Local fallback keeps the bell consistent in this browser if the API is temporarily unavailable.
+    });
     try {
       window.localStorage.setItem(notificationStorageKey, JSON.stringify(uniqueIds));
     } catch {
@@ -14862,17 +15030,28 @@ function StudentPortal({ user, onSignOut, onUserUpdated, initialPane = 'dashboar
   const latestNotifications = unreadNotifications.slice(0, 5);
 
   React.useEffect(() => {
-    try {
-      const stored = window.localStorage.getItem(studentNotificationStorageKey);
-      setReadStudentNotificationIds(stored ? JSON.parse(stored) : []);
-    } catch {
-      setReadStudentNotificationIds([]);
-    }
+    let mounted = true;
+    loadReadNotificationIds()
+      .then((ids) => {
+        if (mounted) setReadStudentNotificationIds(ids);
+      })
+      .catch(() => {
+        try {
+          const stored = window.localStorage.getItem(studentNotificationStorageKey);
+          if (mounted) setReadStudentNotificationIds(stored ? JSON.parse(stored) : []);
+        } catch {
+          if (mounted) setReadStudentNotificationIds([]);
+        }
+      });
+    return () => { mounted = false; };
   }, [studentNotificationStorageKey]);
 
   const updateReadStudentNotifications = React.useCallback((ids) => {
     const nextIds = [...new Set(ids.filter(Boolean))];
     setReadStudentNotificationIds(nextIds);
+    saveReadNotificationIds(nextIds).catch(() => {
+      // Local fallback keeps the current browser accurate if the API is temporarily unavailable.
+    });
     try {
       window.localStorage.setItem(studentNotificationStorageKey, JSON.stringify(nextIds));
     } catch {

@@ -26,12 +26,21 @@ APP_SECRET = os.getenv("APP_SECRET", "dev-only-change-this-secret")
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
 GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI", "")
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://127.0.0.1:5173")
+APP_BASE_URL = os.getenv("APP_BASE_URL", FRONTEND_URL)
 CORS_ALLOWED_ORIGINS = os.getenv(
     "CORS_ALLOWED_ORIGINS",
     f"http://127.0.0.1:5173,http://localhost:5173,{FRONTEND_URL}",
 )
 RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
 EMAIL_FROM = os.getenv("EMAIL_FROM", "")
+PROGRAM_FEE_CENTS = int(os.getenv("PROGRAM_FEE_CENTS", "0") or "0")
+PROGRAM_CURRENCY = os.getenv("PROGRAM_CURRENCY", "USD").upper()
+STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", "")
+STRIPE_PUBLISHABLE_KEY = os.getenv("STRIPE_PUBLISHABLE_KEY", "")
+STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "")
+PAYPAL_CLIENT_ID = os.getenv("PAYPAL_CLIENT_ID", "")
+PAYPAL_CLIENT_SECRET = os.getenv("PAYPAL_CLIENT_SECRET", "")
+PAYPAL_ENVIRONMENT = os.getenv("PAYPAL_ENVIRONMENT", "sandbox").lower()
 
 
 def normalize_supabase_url(value: str) -> str:

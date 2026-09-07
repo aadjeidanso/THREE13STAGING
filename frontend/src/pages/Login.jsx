@@ -66,7 +66,7 @@ export default function Login() {
     if (!resetToken) return;
     setResetDialogOpen(true);
     setResetStep('confirm');
-    setIsAlumniSetupLink(true);
+    setIsAlumniSetupLink(searchParams.get('setup') === 'alumni');
     setResetForm((current) => ({
       ...current,
       email: searchParams.get('email') || current.email,
@@ -162,6 +162,8 @@ export default function Login() {
     setResetDialogOpen(true);
     setResetStep('request');
     setResetForm({ email: credentials.email || '', token: '', newPassword: '', confirmPassword: '' });
+    setIsAlumniSetupLink(false);
+    setSelectedAlumniCohort(null);
     setResetMessage('');
     setResetError('');
     setResetDevToken('');

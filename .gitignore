@@ -21,6 +21,9 @@ __pycache__/
 # Logs
 *.log
 
+# Local developer tools
+tools/
+
 # OS/editor
 .DS_Store
 Thumbs.db

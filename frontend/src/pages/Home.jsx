@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import {
   Accordion,
@@ -17,12 +17,9 @@ import {
   FormControlLabel,
   Grid,
   IconButton,
-  InputAdornment,
   InputLabel,
   MenuItem,
   Modal,
-  Radio,
-  RadioGroup,
   Select,
   Stack,
   TextField,
@@ -47,8 +44,6 @@ import PsychologyIcon from '@mui/icons-material/Psychology';
 import SchoolIcon from '@mui/icons-material/School';
 import ShieldIcon from '@mui/icons-material/Shield';
 import StarIcon from '@mui/icons-material/Star';
-import Visibility from '@mui/icons-material/Visibility';
-import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
 
 const theme = createTheme({
@@ -220,6 +215,40 @@ const chatPrompts = [
   },
 ];
 
+const experienceLevelOptions = [
+  'No IT experience',
+  'Beginner',
+  'Some IT experience',
+  'Intermediate',
+  'Experienced IT professional',
+];
+
+const learningGoalOptions = [
+  'Start a career in IT',
+  'Transition into IT from another field',
+  'Prepare for industry certifications',
+  'Build practical technical skills',
+  'Advance in my current IT role',
+  'Build AI and emerging technology skills',
+  'Prepare for further education',
+  'Professional development',
+  'Other',
+];
+
+const referralSourceOptions = [
+  'Google Search',
+  'LinkedIn',
+  'Instagram',
+  'Facebook',
+  'YouTube',
+  'Friend or Family',
+  'Church / Community Organization',
+  'Employer',
+  'School / University',
+  'Three13 Event',
+  'Other',
+];
+
 const chatAttachmentLimitMb = 5;
 const chatAttachmentLimitBytes = chatAttachmentLimitMb * 1024 * 1024;
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000';
@@ -252,7 +281,7 @@ const modalStyle = {
   top: { xs: '12px', sm: '50%' },
   left: '50%',
   transform: { xs: 'translateX(-50%)', sm: 'translate(-50%, -50%)' },
-  width: { xs: 'min(390px, calc(100vw - 24px))', sm: 560 },
+  width: { xs: 'min(430px, calc(100vw - 24px))', sm: 760 },
   maxHeight: { xs: 'calc(100dvh - 24px)', sm: '88vh' },
   overflowY: 'auto',
   bgcolor: '#fff',
@@ -282,7 +311,6 @@ function SectionHeader({ eyebrow, title, body, light = false }) {
 }
 export default function Home() {
   const location = useLocation();
-  const navigate = useNavigate();
   const headerRef = useRef(null);
   const coursesRef = useRef(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
@@ -297,20 +325,23 @@ export default function Home() {
   const [coursesInView, setCoursesInView] = useState(false);
   const [registrationStatus, setRegistrationStatus] = useState({ type: '', message: '' });
   const [registrationSubmitting, setRegistrationSubmitting] = useState(false);
-  const [showRegistrationPassword, setShowRegistrationPassword] = useState(false);
-  const [showRegistrationConfirmPassword, setShowRegistrationConfirmPassword] = useState(false);
+  const [registrationSuccess, setRegistrationSuccess] = useState(null);
+  const [resendSubmitting, setResendSubmitting] = useState(false);
   const [formData, setFormData] = useState({
-    fullName: '',
+    firstName: '',
+    lastName: '',
     email: '',
     phone: '',
-    password: '',
-    confirmPassword: '',
-    prerequisites: 'no',
+    country: '',
     experienceLevel: '',
     learningGoal: '',
+    learningGoalOther: '',
+    referralSource: '',
+    referralSourceOther: '',
     agree: false,
+    marketingConsent: false,
   });
-  const [errors, setErrors] = useState({ password: '', confirmPassword: '', agree: '' });
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     const handleScroll = () => setShowScrollButton(window.pageYOffset > 320);
@@ -386,19 +417,37 @@ export default function Home() {
   };
 
   const validateForm = () => {
-    const nextErrors = { password: '', confirmPassword: '', agree: '' };
+    const nextErrors = {};
     let isValid = true;
 
-    if (formData.password.length < 9) {
-      nextErrors.password = 'Password must be at least 9 characters';
+    if (!formData.firstName.trim()) {
+      nextErrors.firstName = 'First name is required';
       isValid = false;
     }
-
-    if (formData.password !== formData.confirmPassword) {
-      nextErrors.confirmPassword = 'Passwords do not match';
+    if (!formData.lastName.trim()) {
+      nextErrors.lastName = 'Last name is required';
       isValid = false;
     }
-
+    if (!formData.email.trim()) {
+      nextErrors.email = 'Email is required';
+      isValid = false;
+    }
+    if (!formData.phone.trim()) {
+      nextErrors.phone = 'Phone number is required';
+      isValid = false;
+    }
+    if (!formData.experienceLevel) {
+      nextErrors.experienceLevel = 'Experience level is required';
+      isValid = false;
+    }
+    if (!formData.learningGoal) {
+      nextErrors.learningGoal = 'Learning goal is required';
+      isValid = false;
+    }
+    if (formData.learningGoal === 'Other' && !formData.learningGoalOther.trim()) {
+      nextErrors.learningGoalOther = 'Tell us briefly what you are hoping to achieve';
+      isValid = false;
+    }
     if (!formData.agree) {
       nextErrors.agree = 'You must agree to the terms';
       isValid = false;
@@ -416,44 +465,68 @@ export default function Home() {
     setRegistrationStatus({ type: '', message: '' });
 
     try {
-      const response = await fetch(`${apiBaseUrl.replace(/\/$/, '')}/enrollment-requests`, {
+      const response = await fetch(`${apiBaseUrl.replace(/\/$/, '')}/pre-registrations`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          full_name: formData.fullName,
+          first_name: formData.firstName,
+          last_name: formData.lastName,
           email: formData.email,
           phone: formData.phone,
-          password: formData.password,
-          course_titles: courses.map((course) => course.title),
-          prerequisites: formData.prerequisites,
+          country: formData.country,
           experience_level: formData.experienceLevel,
           learning_goal: formData.learningGoal,
+          learning_goal_other: formData.learningGoalOther,
+          referral_source: formData.referralSource,
+          referral_source_other: formData.referralSourceOther,
           agree: formData.agree,
+          marketing_consent: formData.marketingConsent,
         }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.detail || 'Unable to submit registration');
 
+      setRegistrationSuccess({ ...data, rawEmail: formData.email });
       setRegistrationStatus({ type: 'success', message: data.message });
       setFormData({
-        fullName: '',
+        firstName: '',
+        lastName: '',
         email: '',
         phone: '',
-        password: '',
-        confirmPassword: '',
-        prerequisites: 'no',
+        country: '',
         experienceLevel: '',
         learningGoal: '',
+        learningGoalOther: '',
+        referralSource: '',
+        referralSourceOther: '',
         agree: false,
+        marketingConsent: false,
       });
-      window.setTimeout(() => {
-        setOpenModal(false);
-        navigate('/login');
-      }, 3000);
     } catch (error) {
       setRegistrationStatus({ type: 'error', message: error.message });
     } finally {
       setRegistrationSubmitting(false);
+    }
+  };
+
+  const handleResendRegistration = async () => {
+    if (!registrationSuccess?.rawEmail) return;
+    setResendSubmitting(true);
+    setRegistrationStatus({ type: '', message: '' });
+    try {
+      const response = await fetch(`${apiBaseUrl.replace(/\/$/, '')}/pre-registrations/resend`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: registrationSuccess.rawEmail }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.detail || 'Unable to resend email');
+      setRegistrationSuccess((current) => ({ ...current, ...data }));
+      setRegistrationStatus({ type: 'success', message: data.message });
+    } catch (error) {
+      setRegistrationStatus({ type: 'error', message: error.message });
+    } finally {
+      setResendSubmitting(false);
     }
   };
 
@@ -1253,125 +1326,116 @@ export default function Home() {
 
         <Modal open={openModal} onClose={() => setOpenModal(false)} aria-labelledby="registration-modal-title" sx={{ backdropFilter: 'blur(6px)' }}>
           <Box sx={modalStyle}>
-            <Typography id="registration-modal-title" variant="h5" sx={{ color: 'primary.dark', fontWeight: 800, mb: 0.5, fontSize: { xs: '1.45rem', sm: '1.75rem' } }}>
-              Course Registration
-            </Typography>
-            <Typography sx={{ color: '#687789', mb: { xs: 2, sm: 3 }, fontSize: { xs: 13, sm: 14 } }}>
-              Tell us where you are starting, and our team will follow up with next steps.
-            </Typography>
-            <Box component="form" onSubmit={handleSubmit}>
-              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' }, gap: { xs: 1.15, sm: 1.5 } }}>
-                <TextField required fullWidth label="Full Name" name="fullName" value={formData.fullName} onChange={handleInputChange} size="small" />
-                <TextField required fullWidth label="Email Address" name="email" type="email" value={formData.email} onChange={handleInputChange} size="small" />
-                <TextField required fullWidth label="Phone Number" name="phone" value={formData.phone} onChange={handleInputChange} size="small" />
-                <TextField
-                  required
-                  fullWidth
-                  label="Password (min. 9 chars)"
-                  name="password"
-                  type={showRegistrationPassword ? 'text' : 'password'}
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  error={Boolean(errors.password)}
-                  helperText={errors.password}
-                  size="small"
-                  InputProps={{
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton onClick={() => setShowRegistrationPassword((shown) => !shown)} onMouseDown={(event) => event.preventDefault()} edge="end" aria-label="Toggle password visibility">
-                          {showRegistrationPassword ? <VisibilityOff /> : <Visibility />}
-                        </IconButton>
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-                <TextField
-                  required
-                  fullWidth
-                  label="Confirm Password"
-                  name="confirmPassword"
-                  type={showRegistrationConfirmPassword ? 'text' : 'password'}
-                  value={formData.confirmPassword}
-                  onChange={handleInputChange}
-                  error={Boolean(errors.confirmPassword)}
-                  helperText={errors.confirmPassword}
-                  size="small"
-                  InputProps={{
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton onClick={() => setShowRegistrationConfirmPassword((shown) => !shown)} onMouseDown={(event) => event.preventDefault()} edge="end" aria-label="Toggle confirm password visibility">
-                          {showRegistrationConfirmPassword ? <VisibilityOff /> : <Visibility />}
-                        </IconButton>
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-                <Box sx={{ gridColumn: '1 / -1', bgcolor: '#eef3f8', borderRadius: 1, p: 1.4 }}>
-                  <Typography sx={{ color: 'primary.dark', fontWeight: 850, fontSize: 14 }}>Course Access</Typography>
-                  <Typography sx={{ color: '#637083', fontSize: 13 }}>
-                    Registration includes access to all current Three13 courses.
+            {registrationSuccess ? (
+              <Stack spacing={2.1}>
+                <Box>
+                  <Typography id="registration-modal-title" variant="h5" sx={{ color: 'primary.dark', fontWeight: 900, mb: 0.5, fontSize: { xs: '1.5rem', sm: '1.9rem' } }}>
+                    Check your email
+                  </Typography>
+                  <Typography sx={{ color: '#687789', fontSize: { xs: 13.5, sm: 14.5 }, lineHeight: 1.7 }}>
+                    We've sent a secure registration link to {registrationSuccess.email}. Open the email to verify your address and finish setting up your Three13 learner account.
                   </Typography>
                 </Box>
-                <Box sx={{ gridColumn: '1 / -1' }}>
-                  <Typography sx={{ fontWeight: 800, color: 'primary.dark', mb: 0.5, fontSize: 14 }}>Do you meet course prerequisites?</Typography>
-                  <RadioGroup row name="prerequisites" value={formData.prerequisites} onChange={handleInputChange}>
-                    <FormControlLabel value="yes" control={<Radio size="small" />} label="Yes" />
-                    <FormControlLabel value="no" control={<Radio size="small" />} label="No" />
-                  </RadioGroup>
+                <Box sx={{ bgcolor: '#f8fafc', border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.4, p: 1.6 }}>
+                  <Typography sx={{ color: 'primary.dark', fontWeight: 900, mb: 0.4 }}>Didn't receive it?</Typography>
+                  <Typography sx={{ color: '#637083', fontSize: 13.5 }}>You may also want to check your spam or junk folder.</Typography>
+                  {registrationSuccess.setup_url && (
+                    <Button size="small" href={registrationSuccess.setup_url} sx={{ mt: 1, color: '#0b67c2', fontWeight: 850 }}>
+                      Open development setup link
+                    </Button>
+                  )}
                 </Box>
-                <FormControl fullWidth size="small">
-                  <InputLabel>Experience Level</InputLabel>
-                  <Select
-                    name="experienceLevel"
-                    value={formData.experienceLevel}
-                    onChange={handleInputChange}
-                    label="Experience Level"
-                  >
-                    <MenuItem value="Beginner">Beginner</MenuItem>
-                    <MenuItem value="Some IT experience">Some IT experience</MenuItem>
-                    <MenuItem value="Currently working in IT">Currently working in IT</MenuItem>
-                  </Select>
-                </FormControl>
-                <FormControl fullWidth size="small">
-                  <InputLabel>Learning Goal</InputLabel>
-                  <Select
-                    name="learningGoal"
-                    value={formData.learningGoal}
-                    onChange={handleInputChange}
-                    label="Learning Goal"
-                  >
-                    <MenuItem value="Career switch">Career switch</MenuItem>
-                    <MenuItem value="Certification preparation">Certification preparation</MenuItem>
-                    <MenuItem value="Promotion or career growth">Promotion or career growth</MenuItem>
-                    <MenuItem value="Skill upgrade">Skill upgrade</MenuItem>
-                  </Select>
-                </FormControl>
-                <Box sx={{ gridColumn: '1 / -1' }}>
-                  <FormControl error={Boolean(errors.agree)} fullWidth>
-                    <FormControlLabel control={<Checkbox checked={formData.agree} onChange={handleInputChange} name="agree" size="small" />} label={<Typography sx={{ fontSize: 14 }}>I agree to the Terms of Service and Privacy Policy</Typography>} />
-                    {errors.agree && <Typography color="error" sx={{ fontSize: 12 }}>{errors.agree}</Typography>}
-                  </FormControl>
-                </Box>
-              </Box>
-              {registrationStatus.message && (
-                <Typography
-                  sx={{
-                    mt: 1.5,
-                    color: registrationStatus.type === 'success' ? '#16805f' : 'error.main',
-                    fontSize: 13,
-                    fontWeight: 700,
-                  }}
-                >
-                  {registrationStatus.message}
-                </Typography>
-              )}
-              <Stack direction={{ xs: 'column-reverse', sm: 'row' }} spacing={1.2} justifyContent="flex-end" sx={{ mt: { xs: 2, sm: 3 } }}>
-                <Button variant="outlined" fullWidth={false} onClick={() => setOpenModal(false)} sx={{ width: { xs: '100%', sm: 'auto' } }}>Cancel</Button>
-                <Button type="submit" variant="contained" color="primary" disabled={registrationSubmitting} sx={{ width: { xs: '100%', sm: 'auto' } }}>
-                  {registrationSubmitting ? 'Submitting...' : 'Submit registration'}
-                </Button>
+                {registrationStatus.message && (
+                  <Typography sx={{ color: registrationStatus.type === 'error' ? 'error.main' : '#16805f', fontSize: 13, fontWeight: 800 }}>
+                    {registrationStatus.message}
+                  </Typography>
+                )}
+                <Stack direction={{ xs: 'column-reverse', sm: 'row' }} spacing={1.2} justifyContent="flex-end">
+                  <Button variant="outlined" onClick={() => { setRegistrationSuccess(null); setOpenModal(false); }} sx={{ width: { xs: '100%', sm: 'auto' } }}>Done</Button>
+                  <Button variant="contained" color="primary" disabled={resendSubmitting} onClick={handleResendRegistration} sx={{ width: { xs: '100%', sm: 'auto' } }}>
+                    {resendSubmitting ? 'Sending...' : 'Resend Email'}
+                  </Button>
+                </Stack>
               </Stack>
-            </Box>
+            ) : (
+              <>
+                <Typography id="registration-modal-title" variant="h5" sx={{ color: 'primary.dark', fontWeight: 900, mb: 0.5, fontSize: { xs: '1.45rem', sm: '1.85rem' } }}>
+                  Start Your Registration
+                </Typography>
+                <Typography sx={{ color: '#687789', mb: 1, fontSize: { xs: 13, sm: 14.5 }, lineHeight: 1.6 }}>
+                  Tell us a little about yourself and your learning goals. We'll email you a secure link to complete your registration.
+                </Typography>
+                <Chip label="Step 1 of 2 - Pre-Registration" sx={{ mb: { xs: 2, sm: 2.4 }, bgcolor: '#eef6ff', color: 'primary.dark', fontWeight: 850 }} />
+                <Box component="form" onSubmit={handleSubmit}>
+                  <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' }, gap: { xs: 1.15, sm: 1.5 } }}>
+                    <TextField required fullWidth label="First Name" name="firstName" value={formData.firstName} onChange={handleInputChange} error={Boolean(errors.firstName)} helperText={errors.firstName} size="small" />
+                    <TextField required fullWidth label="Last Name" name="lastName" value={formData.lastName} onChange={handleInputChange} error={Boolean(errors.lastName)} helperText={errors.lastName} size="small" />
+                    <TextField required fullWidth label="Email Address" name="email" type="email" value={formData.email} onChange={handleInputChange} error={Boolean(errors.email)} helperText={errors.email} size="small" />
+                    <TextField required fullWidth label="Phone Number" name="phone" value={formData.phone} onChange={handleInputChange} error={Boolean(errors.phone)} helperText={errors.phone} size="small" />
+                    <TextField fullWidth label="Country / Location" name="country" value={formData.country} onChange={handleInputChange} size="small" />
+                    <FormControl fullWidth size="small" error={Boolean(errors.experienceLevel)}>
+                      <InputLabel>Experience Level</InputLabel>
+                      <Select name="experienceLevel" value={formData.experienceLevel} onChange={handleInputChange} label="Experience Level">
+                        {experienceLevelOptions.map((option) => <MenuItem key={option} value={option}>{option}</MenuItem>)}
+                      </Select>
+                      {errors.experienceLevel && <Typography color="error" sx={{ fontSize: 12, mt: 0.4 }}>{errors.experienceLevel}</Typography>}
+                    </FormControl>
+                    <FormControl fullWidth size="small" error={Boolean(errors.learningGoal)}>
+                      <InputLabel>Learning Goal</InputLabel>
+                      <Select name="learningGoal" value={formData.learningGoal} onChange={handleInputChange} label="Learning Goal">
+                        {learningGoalOptions.map((option) => <MenuItem key={option} value={option}>{option}</MenuItem>)}
+                      </Select>
+                      {errors.learningGoal && <Typography color="error" sx={{ fontSize: 12, mt: 0.4 }}>{errors.learningGoal}</Typography>}
+                    </FormControl>
+                    {formData.learningGoal === 'Other' && (
+                      <TextField required fullWidth label="Tell us briefly what you're hoping to achieve" name="learningGoalOther" value={formData.learningGoalOther} onChange={handleInputChange} error={Boolean(errors.learningGoalOther)} helperText={errors.learningGoalOther} size="small" />
+                    )}
+                    <FormControl fullWidth size="small">
+                      <InputLabel>How did you hear about Three13?</InputLabel>
+                      <Select name="referralSource" value={formData.referralSource} onChange={handleInputChange} label="How did you hear about Three13?">
+                        {referralSourceOptions.map((option) => <MenuItem key={option} value={option}>{option}</MenuItem>)}
+                      </Select>
+                    </FormControl>
+                    {formData.referralSource === 'Other' && (
+                      <TextField fullWidth label="Referral source" name="referralSourceOther" value={formData.referralSourceOther} onChange={handleInputChange} size="small" />
+                    )}
+                    <Box sx={{ gridColumn: '1 / -1', bgcolor: '#eef3f8', borderRadius: 1.2, p: 1.5 }}>
+                      <Typography sx={{ color: 'primary.dark', fontWeight: 900, fontSize: 14 }}>What happens next?</Typography>
+                      <Typography sx={{ color: '#637083', fontSize: 13.5, mt: 0.4, lineHeight: 1.6 }}>
+                        After you submit this form, we'll email you a secure link to verify your email, create your password, and complete your Three13 registration.
+                      </Typography>
+                    </Box>
+                    <Box sx={{ gridColumn: '1 / -1' }}>
+                      <FormControl error={Boolean(errors.agree)} fullWidth>
+                        <FormControlLabel
+                          control={<Checkbox checked={formData.agree} onChange={handleInputChange} name="agree" size="small" />}
+                          label={<Typography sx={{ fontSize: 14 }}>I agree to the Terms of Service and Privacy Policy.</Typography>}
+                        />
+                        {errors.agree && <Typography color="error" sx={{ fontSize: 12 }}>{errors.agree}</Typography>}
+                      </FormControl>
+                      <FormControlLabel
+                        control={<Checkbox checked={formData.marketingConsent} onChange={handleInputChange} name="marketingConsent" size="small" />}
+                        label={<Typography sx={{ fontSize: 14 }}>I'd like to receive Three13 course updates, training opportunities, and announcements.</Typography>}
+                      />
+                    </Box>
+                  </Box>
+                  {registrationStatus.message && (
+                    <Typography sx={{ mt: 1.5, color: registrationStatus.type === 'success' ? '#16805f' : 'error.main', fontSize: 13, fontWeight: 800 }}>
+                      {registrationStatus.message}
+                    </Typography>
+                  )}
+                  <Stack direction={{ xs: 'column-reverse', sm: 'row' }} spacing={1.2} justifyContent="space-between" alignItems={{ xs: 'stretch', sm: 'center' }} sx={{ mt: { xs: 2, sm: 3 } }}>
+                    <Typography sx={{ color: '#637083', fontSize: 12.5 }}>No payment is required at this stage.</Typography>
+                    <Stack direction={{ xs: 'column-reverse', sm: 'row' }} spacing={1.2}>
+                      <Button variant="outlined" onClick={() => setOpenModal(false)} sx={{ width: { xs: '100%', sm: 'auto' } }}>Cancel</Button>
+                      <Button type="submit" variant="contained" color="primary" disabled={registrationSubmitting} endIcon={<ArrowForwardIcon />} sx={{ width: { xs: '100%', sm: 'auto' } }}>
+                        {registrationSubmitting ? 'Sending...' : 'Continue'}
+                      </Button>
+                    </Stack>
+                  </Stack>
+                </Box>
+              </>
+            )}
           </Box>
         </Modal>
 

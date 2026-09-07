@@ -5,6 +5,7 @@ import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService'; 
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import CompleteRegistration from './pages/CompleteRegistration';
 
 function AccountSessionBoundary() {
   const location = useLocation();
@@ -14,7 +15,9 @@ function AccountSessionBoundary() {
     const previousPath = previousPathRef.current;
     const currentPath = location.pathname;
 
-    if (previousPath.startsWith('/dashboard') && !currentPath.startsWith('/dashboard')) {
+    const isContinuingEnrollment = currentPath.startsWith('/complete-registration');
+
+    if (previousPath.startsWith('/dashboard') && !currentPath.startsWith('/dashboard') && !isContinuingEnrollment) {
       window.localStorage.removeItem('three13_token');
       window.sessionStorage.removeItem('three13_student_start_pane');
       window.sessionStorage.removeItem('three13_admin_start_pane');
@@ -34,6 +37,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/terms-of-service" element={<TermsOfService />} />
+        <Route path="/complete-registration" element={<CompleteRegistration />} />
         <Route path="/login" element={<Login/>}/>
         <Route path="/dashboard" element={<Dashboard />} />
       

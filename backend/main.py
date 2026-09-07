@@ -21,9 +21,9 @@ from fastapi.responses import RedirectResponse, Response
 from pydantic import BaseModel
 from sqlalchemy import func, inspect, text
 from sqlalchemy.orm import Session, aliased
-from config import APP_SECRET, CORS_ALLOWED_ORIGINS, EMAIL_FROM, FRONTEND_URL, GOOGLE_CLIENT_ID, GOOGLE_REDIRECT_URI, RESEND_API_KEY, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_STORAGE_BUCKET, SUPABASE_URL
+from config import APP_BASE_URL, APP_SECRET, CORS_ALLOWED_ORIGINS, EMAIL_FROM, FRONTEND_URL, GOOGLE_CLIENT_ID, GOOGLE_REDIRECT_URI, PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET, PAYPAL_ENVIRONMENT, PROGRAM_CURRENCY, PROGRAM_FEE_CENTS, RESEND_API_KEY, STRIPE_PUBLISHABLE_KEY, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_STORAGE_BUCKET, SUPABASE_URL
 from database import Base, engine, get_db
-from models import Announcement, AnnouncementRead, Assignment, AuditLog, Certificate, Cohort, CommunityComment, CommunityPost, Course, CourseMaterial, Enrollment, EnrollmentRequest, Grade, MaterialProgress, Module, PasswordResetToken, PlatformSetting, Submission, SupportTicket, User, now_ts
+from models import Announcement, AnnouncementRead, Assignment, AuditLog, Certificate, Cohort, CommunityComment, CommunityPost, Course, CourseMaterial, Enrollment, EnrollmentRequest, Grade, MaterialProgress, Module, NotificationRead, PasswordResetToken, Payment, PlatformSetting, PreRegistration, Submission, SupportTicket, User, now_ts
 import models  # noqa: F401 - ensures all SQLAlchemy models are registered.
 
 SESSION_TTL_SECONDS = 60 * 60 * 8
@@ -350,6 +350,14 @@ class SupportTicketResponse(BaseModel):
     user: dict | None = None
 
 
+class NotificationReadRequest(BaseModel):
+    notification_ids: list[str]
+
+
+class NotificationReadResponse(BaseModel):
+    notification_ids: list[str]
+
+
 class PlatformSettingsRequest(BaseModel):
     platform_profile: dict
     enrollment_rules: dict
@@ -385,6 +393,131 @@ class EnrollmentRegistrationResponse(BaseModel):
     message: str
     student_id: int
     enrollment_request_ids: list[int]
+
+
+class PreRegistrationCreateRequest(BaseModel):
+    first_name: str
+    last_name: str
+    email: str
+    phone: str
+    country: str | None = None
+    experience_level: str
+    learning_goal: str
+    learning_goal_other: str | None = None
+    referral_source: str | None = None
+    referral_source_other: str | None = None
+    agree: bool
+    marketing_consent: bool = False
+
+
+class PreRegistrationResponse(BaseModel):
+    message: str
+    email: str
+    email_sent: bool
+    resend_available_at: int
+    dev_token: str | None = None
+    setup_url: str | None = None
+
+
+class PreRegistrationResendRequest(BaseModel):
+    email: str
+
+
+class RegistrationTokenValidateRequest(BaseModel):
+    token: str
+
+
+class RegistrationCompletionResponse(BaseModel):
+    status: str
+    first_name: str
+    last_name: str
+    email: str
+    phone: str
+    country: str | None = None
+    experience_level: str
+    learning_goal: str
+    program_fee_cents: int
+    currency: str
+
+
+class RegistrationCompleteRequest(BaseModel):
+    token: str
+    password: str
+    confirm_password: str
+
+
+class RegistrationCompleteResponse(BaseModel):
+    message: str
+    token: str
+    user: UserResponse
+    program_fee_cents: int
+    currency: str
+    payment_required: bool
+
+
+class PaymentCreateRequest(BaseModel):
+    provider: Literal["stripe", "paypal"]
+
+
+class PaymentCreateResponse(BaseModel):
+    provider: str
+    checkout_url: str | None = None
+    order_id: str | None = None
+    payment_id: int
+    publishable_key: str | None = None
+
+
+class PayPalCaptureResponse(BaseModel):
+    message: str
+    status: str
+    dashboard_url: str
+
+
+class ProgramEnrollmentConfigResponse(BaseModel):
+    program_name: str
+    bundle_name: str
+    program_fee_cents: int
+    currency: str
+
+
+class PaymentStatusResponse(BaseModel):
+    id: int
+    provider: str
+    status: str
+    amount: int
+    currency: str
+    paid_at: int | None = None
+    learner_active: bool
+
+
+class AdminLearnerCreateRequest(BaseModel):
+    first_name: str
+    last_name: str
+    email: str
+    phone: str | None = None
+    country: str | None = None
+    experience_level: str | None = None
+    learning_goal: str | None = None
+    access_reason: Literal[
+        "paid_externally",
+        "scholarship",
+        "sponsored_by_employer",
+        "sponsored_by_organization",
+        "complimentary_access",
+        "staff_instructor",
+        "administrative_exception",
+        "other",
+    ]
+    access_reason_other: str | None = None
+    admin_note: str | None = None
+    send_setup_email: bool = True
+
+
+class AdminLearnerCreateResponse(BaseModel):
+    student: dict
+    email_sent: bool
+    dev_token: str | None = None
+    setup_url: str | None = None
 
 
 class EnrollmentRequestResponse(BaseModel):
@@ -779,6 +912,26 @@ def hash_reset_token(token: str) -> str:
     return hmac.new(APP_SECRET.encode("utf-8"), token.encode("utf-8"), sha256).hexdigest()
 
 
+def normalize_email(value: str) -> str:
+    return (value or "").strip().lower()
+
+
+def mask_email(value: str) -> str:
+    email = normalize_email(value)
+    if "@" not in email:
+        return email
+    local, domain = email.split("@", 1)
+    if len(local) <= 2:
+        masked_local = local[:1] + "*"
+    else:
+        masked_local = local[:1] + "*" * max(1, len(local) - 2) + local[-1:]
+    return f"{masked_local}@{domain}"
+
+
+def validate_email_address(email: str) -> bool:
+    return bool(re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", normalize_email(email)))
+
+
 def is_email_delivery_configured() -> bool:
     return bool(RESEND_API_KEY and EMAIL_FROM)
 
@@ -815,6 +968,89 @@ def send_email(to_email: str, subject: str, text_body: str, html_body: str | Non
     except Exception as exc:
         print(f"[email] Resend delivery failed: {exc}")
     return False
+
+
+def branded_email_html(title: str, body_html: str, cta_label: str | None = None, cta_url: str | None = None) -> str:
+    cta = ""
+    if cta_label and cta_url:
+        cta = (
+            f"<p style=\"margin:24px 0;\"><a href=\"{cta_url}\" "
+            "style=\"background:#f05a28;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:8px;font-weight:700;display:inline-block;\">"
+            f"{cta_label}</a></p>"
+        )
+    return (
+        "<div style=\"font-family:Inter,Arial,sans-serif;background:#f6f8fb;padding:24px;color:#082540;\">"
+        "<div style=\"max-width:620px;margin:0 auto;background:#ffffff;border-radius:14px;padding:28px;border:1px solid #dfe7f1;\">"
+        "<div style=\"font-weight:800;font-size:20px;color:#082540;margin-bottom:18px;\">Three13 IT Solutions</div>"
+        f"<h1 style=\"font-size:24px;line-height:1.25;margin:0 0 12px;color:#082540;\">{title}</h1>"
+        f"{body_html}{cta}"
+        "<p style=\"font-size:12px;color:#637083;margin-top:28px;\">If you did not request this, you can ignore this email.</p>"
+        "</div></div>"
+    )
+
+
+def send_registration_email(pre_registration: PreRegistration, token: str, resend: bool = False) -> bool:
+    setup_url = f"{APP_BASE_URL.rstrip('/')}/complete-registration?token={quote(token)}"
+    subject = "Complete your Three13 registration"
+    text_body = (
+        f"Hi {pre_registration.first_name},\n\n"
+        "Thanks for starting your Three13 registration.\n\n"
+        f"Use this secure link to verify your email, create your password, and continue enrollment: {setup_url}\n\n"
+        "This link expires in 72 hours."
+    )
+    html_body = branded_email_html(
+        "Complete your Three13 registration",
+        (
+            f"<p>Hi {pre_registration.first_name},</p>"
+            "<p>Thanks for starting your Three13 registration. Use the secure link below to verify your email, create your password, and continue enrollment.</p>"
+            "<p style=\"color:#526273;\">This link expires in 72 hours.</p>"
+        ),
+        "Complete Registration",
+        setup_url,
+    )
+    sent = send_email(pre_registration.email, subject, text_body, html_body)
+    if not sent:
+        print(f"[registration] {'Resent' if resend else 'New'} registration token for {pre_registration.email}: {token}")
+    return sent
+
+
+def send_welcome_email(user: User) -> bool:
+    dashboard_url = f"{APP_BASE_URL.rstrip('/')}/dashboard"
+    return send_email(
+        user.email,
+        "Welcome to Three13 IT Solutions",
+        (
+            f"Hi {user.full_name},\n\n"
+            "Your Three13 learner account is active and your training bundle access is ready.\n\n"
+            f"Go to your dashboard: {dashboard_url}"
+        ),
+        branded_email_html(
+            "Welcome to Three13 IT Solutions",
+            f"<p>Hi {user.full_name},</p><p>Your learner account is active and your Three13 training bundle access is ready.</p>",
+            "Go to My Dashboard",
+            dashboard_url,
+        ),
+    )
+
+
+def send_admin_learner_invite(user: User, token: str) -> bool:
+    setup_url = f"{APP_BASE_URL.rstrip('/')}/login?reset_token={quote(token)}&email={quote(user.email)}"
+    return send_email(
+        user.email,
+        "You've been invited to Three13",
+        (
+            f"Hi {user.full_name},\n\n"
+            "Your enrollment in the Three13 IT Solutions training program has been created.\n\n"
+            f"Use this secure link to create your password and activate your learner account: {setup_url}\n\n"
+            "This setup token expires in 72 hours."
+        ),
+        branded_email_html(
+            "You've been invited to Three13",
+            f"<p>Hi {user.full_name},</p><p>Your enrollment in the Three13 IT Solutions training program has been created.</p><p>Use the secure link below to create your password and activate your learner account.</p><p style=\"color:#526273;\">This setup token expires in 72 hours.</p>",
+            "Complete Account Setup",
+            setup_url,
+        ),
+    )
 
 
 def encode_token(payload: dict, ttl_seconds: int = SESSION_TTL_SECONDS) -> str:
@@ -1493,6 +1729,45 @@ def change_password(
     return {"message": "Password updated successfully"}
 
 
+@app.get("/notifications/read", response_model=NotificationReadResponse)
+def list_read_notifications(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    rows = (
+        db.query(NotificationRead.notification_id)
+        .filter(NotificationRead.user_id == current_user.id)
+        .order_by(NotificationRead.read_at.desc())
+        .all()
+    )
+    return {"notification_ids": [row[0] for row in rows]}
+
+
+@app.post("/notifications/read", response_model=NotificationReadResponse)
+def mark_notifications_read(
+    data: NotificationReadRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    notification_ids = [str(notification_id).strip() for notification_id in data.notification_ids if str(notification_id).strip()]
+    unique_ids = list(dict.fromkeys(notification_ids))
+    if not unique_ids:
+        return {"notification_ids": []}
+
+    existing_ids = {
+        row[0]
+        for row in db.query(NotificationRead.notification_id)
+        .filter(NotificationRead.user_id == current_user.id, NotificationRead.notification_id.in_(unique_ids))
+        .all()
+    }
+    now = now_ts()
+    for notification_id in unique_ids:
+        if notification_id not in existing_ids:
+            db.add(NotificationRead(user_id=current_user.id, notification_id=notification_id, read_at=now))
+    db.commit()
+    return {"notification_ids": unique_ids}
+
+
 @app.post("/auth/password-reset/request")
 def request_password_reset(data: PasswordResetRequest, db: Session = Depends(get_db)):
     email = data.email.strip().lower()
@@ -1675,6 +1950,332 @@ def list_courses(db: Session = Depends(get_db)):
         .order_by(Course.title.asc())
         .all()
     )
+
+
+@app.get("/program-enrollment/config", response_model=ProgramEnrollmentConfigResponse)
+def get_program_enrollment_config():
+    return {
+        "program_name": "Three13 IT Training Program",
+        "bundle_name": "Full Program Bundle",
+        "program_fee_cents": PROGRAM_FEE_CENTS,
+        "currency": PROGRAM_CURRENCY,
+    }
+
+
+@app.post("/pre-registrations", response_model=PreRegistrationResponse)
+def create_pre_registration(data: PreRegistrationCreateRequest, db: Session = Depends(get_db)):
+    email = normalize_email(data.email)
+    first_name = data.first_name.strip()
+    last_name = data.last_name.strip()
+    phone = data.phone.strip()
+    if not data.agree:
+        raise HTTPException(status_code=400, detail="Terms agreement is required")
+    if not first_name or not last_name:
+        raise HTTPException(status_code=400, detail="First and last name are required")
+    if not validate_email_address(email):
+        raise HTTPException(status_code=400, detail="A valid email address is required")
+    if not phone:
+        raise HTTPException(status_code=400, detail="Phone number is required")
+    if not data.experience_level.strip():
+        raise HTTPException(status_code=400, detail="Experience level is required")
+    if not data.learning_goal.strip():
+        raise HTTPException(status_code=400, detail="Learning goal is required")
+    if data.learning_goal == "Other" and not (data.learning_goal_other or "").strip():
+        raise HTTPException(status_code=400, detail="Tell us briefly what you're hoping to achieve")
+
+    existing_user = db.query(User).filter(func.lower(User.email) == email).first()
+    if existing_user and existing_user.is_active:
+        raise HTTPException(status_code=409, detail="An account may already exist for this email. Please sign in or use Forgot Password.")
+
+    now = now_ts()
+    pending = (
+        db.query(PreRegistration)
+        .filter(
+            func.lower(PreRegistration.email) == email,
+            PreRegistration.status.in_(["pre_registered", "email_sent", "registration_in_progress", "awaiting_payment"]),
+        )
+        .order_by(PreRegistration.created_at.desc())
+        .first()
+    )
+    token = secrets.token_urlsafe(32)
+    resend_available_at = now + 60
+    if pending and pending.token_sent_at and pending.token_sent_at > now - 60:
+        return {
+            "message": "Registration already started. Check your email for your secure link.",
+            "email": mask_email(email),
+            "email_sent": True,
+            "resend_available_at": pending.token_sent_at + 60,
+            "dev_token": None,
+            "setup_url": None,
+        }
+
+    pre_registration = pending or PreRegistration(
+        first_name=first_name,
+        last_name=last_name,
+        email=email,
+        phone=phone,
+        experience_level=data.experience_level.strip(),
+        learning_goal=data.learning_goal.strip(),
+        registration_token_hash=hash_reset_token(token),
+        token_expires_at=now + 72 * 60 * 60,
+        token_sent_at=now,
+    )
+    pre_registration.first_name = first_name
+    pre_registration.last_name = last_name
+    pre_registration.email = email
+    pre_registration.phone = phone
+    pre_registration.country = (data.country or "").strip() or None
+    pre_registration.experience_level = data.experience_level.strip()
+    pre_registration.learning_goal = data.learning_goal.strip()
+    pre_registration.learning_goal_other = (data.learning_goal_other or "").strip() or None
+    pre_registration.referral_source = (data.referral_source or "").strip() or None
+    pre_registration.referral_source_other = (data.referral_source_other or "").strip() or None
+    pre_registration.terms_version = "2026-09"
+    pre_registration.terms_accepted_at = now
+    pre_registration.marketing_consent = data.marketing_consent
+    pre_registration.status = "email_sent"
+    pre_registration.registration_token_hash = hash_reset_token(token)
+    pre_registration.token_expires_at = now + 72 * 60 * 60
+    pre_registration.token_sent_at = now
+    pre_registration.updated_at = now
+    if not pending:
+        db.add(pre_registration)
+    db.flush()
+    email_sent = send_registration_email(pre_registration, token, resend=bool(pending))
+    create_audit_log(
+        db,
+        None,
+        "registration.email_sent" if pending else "registration.pre_registered",
+        "pre_registration",
+        pre_registration.id,
+        f"Registration link {'resent' if pending else 'sent'} to {mask_email(email)}",
+        {"email_sent": email_sent, "marketing_consent": data.marketing_consent},
+    )
+    db.commit()
+    setup_url = f"{APP_BASE_URL.rstrip('/')}/complete-registration?token={quote(token)}"
+    return {
+        "message": "Check your email for a secure registration link.",
+        "email": mask_email(email),
+        "email_sent": email_sent,
+        "resend_available_at": resend_available_at,
+        "dev_token": None if email_sent else token,
+        "setup_url": None if email_sent else setup_url,
+    }
+
+
+@app.post("/pre-registrations/resend", response_model=PreRegistrationResponse)
+def resend_pre_registration(data: PreRegistrationResendRequest, db: Session = Depends(get_db)):
+    email = normalize_email(data.email)
+    row = (
+        db.query(PreRegistration)
+        .filter(func.lower(PreRegistration.email) == email, PreRegistration.status.in_(["pre_registered", "email_sent", "registration_in_progress", "awaiting_payment"]))
+        .order_by(PreRegistration.created_at.desc())
+        .first()
+    )
+    if not row:
+        return {"message": "If a registration exists for that email, a new secure link has been sent.", "email": mask_email(email), "email_sent": True, "resend_available_at": now_ts() + 60}
+    if row.token_sent_at and row.token_sent_at > now_ts() - 60:
+        return {"message": "Please wait a moment before requesting another email.", "email": mask_email(email), "email_sent": True, "resend_available_at": row.token_sent_at + 60}
+    token = secrets.token_urlsafe(32)
+    now = now_ts()
+    row.registration_token_hash = hash_reset_token(token)
+    row.token_expires_at = now + 72 * 60 * 60
+    row.token_sent_at = now
+    row.status = "email_sent"
+    row.updated_at = now
+    email_sent = send_registration_email(row, token, resend=True)
+    create_audit_log(db, None, "registration.email_resent", "pre_registration", row.id, f"Registration link resent to {mask_email(email)}", {"email_sent": email_sent})
+    db.commit()
+    setup_url = f"{APP_BASE_URL.rstrip('/')}/complete-registration?token={quote(token)}"
+    return {"message": "Check your email for a secure registration link.", "email": mask_email(email), "email_sent": email_sent, "resend_available_at": now + 60, "dev_token": None if email_sent else token, "setup_url": None if email_sent else setup_url}
+
+
+def get_valid_pre_registration(db: Session, token: str) -> PreRegistration:
+    row = db.query(PreRegistration).filter(PreRegistration.registration_token_hash == hash_reset_token(token.strip())).first()
+    if not row:
+        raise HTTPException(status_code=400, detail="Registration link is invalid")
+    if row.token_used_at:
+        raise HTTPException(status_code=400, detail="Registration link has already been used")
+    if row.token_expires_at < now_ts():
+        row.status = "expired"
+        row.updated_at = now_ts()
+        db.commit()
+        raise HTTPException(status_code=400, detail="Registration link has expired")
+    return row
+
+
+@app.post("/registrations/validate", response_model=RegistrationCompletionResponse)
+def validate_registration_token(data: RegistrationTokenValidateRequest, db: Session = Depends(get_db)):
+    row = get_valid_pre_registration(db, data.token)
+    if row.status == "email_sent":
+        row.status = "registration_in_progress"
+        row.updated_at = now_ts()
+        db.commit()
+    return {
+        "status": row.status,
+        "first_name": row.first_name,
+        "last_name": row.last_name,
+        "email": row.email,
+        "phone": row.phone,
+        "country": row.country,
+        "experience_level": row.experience_level,
+        "learning_goal": row.learning_goal_other or row.learning_goal,
+        "program_fee_cents": PROGRAM_FEE_CENTS,
+        "currency": PROGRAM_CURRENCY,
+    }
+
+
+@app.post("/registrations/complete", response_model=RegistrationCompleteResponse)
+def complete_registration(data: RegistrationCompleteRequest, db: Session = Depends(get_db)):
+    password = data.password or ""
+    if password != data.confirm_password:
+        raise HTTPException(status_code=400, detail="Passwords do not match")
+    if len(password) < 12 or len(password) > 72:
+        raise HTTPException(status_code=400, detail="Password must be at least 12 characters")
+    row = get_valid_pre_registration(db, data.token)
+    existing = db.query(User).filter(func.lower(User.email) == row.email.lower()).first()
+    if existing and existing.is_active:
+        raise HTTPException(status_code=409, detail="An active account already exists for this email")
+    student = existing or User(
+        full_name=f"{row.first_name} {row.last_name}".strip(),
+        email=row.email,
+        phone=row.phone,
+        password_hash=hash_password(password),
+        role="student",
+        lifecycle_status="awaiting_payment",
+        is_active=False,
+        email_verified=True,
+    )
+    student.full_name = f"{row.first_name} {row.last_name}".strip()
+    student.phone = row.phone
+    student.password_hash = hash_password(password)
+    student.role = "student"
+    student.lifecycle_status = "awaiting_payment"
+    student.is_active = False
+    student.email_verified = True
+    if not existing:
+        db.add(student)
+        db.flush()
+    row.created_user_id = student.id
+    row.token_used_at = now_ts()
+    row.completed_at = now_ts()
+    row.updated_at = now_ts()
+    if PROGRAM_FEE_CENTS > 0:
+        row.status = "awaiting_payment"
+    else:
+        row.status = "completed"
+        activate_learner_bundle(db, student, "NO_PAYMENT_REQUIRED", None, None, {"pre_registration_id": row.id})
+    create_audit_log(db, student, "registration.completed", "pre_registration", row.id, f"Completed registration for {student.full_name}", {"user_id": student.id, "payment_required": PROGRAM_FEE_CENTS > 0})
+    db.commit()
+    db.refresh(student)
+    session_token = encode_token({"sub": student.id, "role": student.role})
+    return {"message": "Account setup complete. Continue to payment to activate your program access.", "token": session_token, "user": user_to_response(student), "program_fee_cents": PROGRAM_FEE_CENTS, "currency": PROGRAM_CURRENCY, "payment_required": PROGRAM_FEE_CENTS > 0}
+
+
+@app.post("/payments/checkout", response_model=PaymentCreateResponse)
+def create_payment_checkout(data: PaymentCreateRequest, current_user: User = Depends(require_student), db: Session = Depends(get_db)):
+    if current_user.is_active and (current_user.lifecycle_status or "active_student") == "active_student":
+        raise HTTPException(status_code=400, detail="This learner account is already active")
+    if data.provider == "stripe":
+        return create_stripe_checkout_session(db, current_user)
+    return create_paypal_order(db, current_user)
+
+
+@app.get("/payments/{payment_id}/status", response_model=PaymentStatusResponse)
+def get_payment_status(payment_id: int, current_user: User = Depends(require_student), db: Session = Depends(get_db)):
+    payment = db.query(Payment).filter(Payment.id == payment_id, Payment.user_id == current_user.id).first()
+    if not payment:
+        raise HTTPException(status_code=404, detail="Payment not found")
+    if payment.provider == "stripe" and payment.status == "pending":
+        reconcile_stripe_payment_status(db, payment, current_user)
+        db.refresh(payment)
+    db.refresh(current_user)
+    return {
+        "id": payment.id,
+        "provider": payment.provider,
+        "status": payment.status,
+        "amount": payment.amount,
+        "currency": payment.currency,
+        "paid_at": payment.paid_at,
+        "learner_active": bool(current_user.is_active and (current_user.lifecycle_status or "active_student") == "active_student"),
+    }
+
+
+@app.post("/payments/paypal/{order_id}/capture", response_model=PayPalCaptureResponse)
+def capture_paypal_order(order_id: str, current_user: User = Depends(require_student), db: Session = Depends(get_db)):
+    payment = db.query(Payment).filter(Payment.provider == "paypal", Payment.provider_payment_id == order_id, Payment.user_id == current_user.id).first()
+    if not payment:
+        raise HTTPException(status_code=404, detail="Payment order not found")
+    if payment.status == "paid":
+        return {"message": "Payment already confirmed.", "status": payment.status, "dashboard_url": f"{APP_BASE_URL.rstrip('/')}/dashboard"}
+    token = paypal_access_token()
+    response = make_url_request(
+        f"{paypal_api_base()}/v2/checkout/orders/{quote(order_id)}/capture",
+        data=b"{}",
+        headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json", "User-Agent": "three13-lms/1.0"},
+        method="POST",
+    )
+    if response.get("status") != "COMPLETED":
+        payment.status = "failed"
+        create_audit_log(db, current_user, "payment.failed", "payment", payment.id, "PayPal payment was not completed", {"paypal_status": response.get("status")})
+        db.commit()
+        raise HTTPException(status_code=400, detail="PayPal payment was not completed")
+    payment.status = "paid"
+    payment.paid_at = now_ts()
+    payment.metadata_json = {**(payment.metadata_json or {}), "capture": response}
+    activate_learner_bundle(db, current_user, "PAYPAL_PAYMENT", current_user, payment)
+    create_audit_log(db, current_user, "payment.confirmed", "payment", payment.id, "PayPal payment confirmed", {"order_id": order_id})
+    db.commit()
+    return {"message": "Payment confirmed. Your Three13 learner account is active.", "status": payment.status, "dashboard_url": f"{APP_BASE_URL.rstrip('/')}/dashboard"}
+
+
+@app.post("/payments/stripe/webhook")
+async def stripe_webhook(request: Request, stripe_signature: str | None = Header(default=None), db: Session = Depends(get_db)):
+    if not STRIPE_WEBHOOK_SECRET:
+        raise HTTPException(status_code=503, detail="Stripe webhook secret is not configured")
+    payload = await request.body()
+    fields = {}
+    for part in (stripe_signature or "").split(","):
+        if "=" in part:
+            key, value = part.split("=", 1)
+            fields.setdefault(key, []).append(value)
+    timestamp = (fields.get("t") or [None])[0]
+    signatures = fields.get("v1") or []
+    if not timestamp or not signatures:
+        raise HTTPException(status_code=400, detail="Missing Stripe signature")
+    signed_payload = f"{timestamp}.{payload.decode('utf-8')}".encode("utf-8")
+    expected = hmac.new(STRIPE_WEBHOOK_SECRET.encode("utf-8"), signed_payload, sha256).hexdigest()
+    if not any(hmac.compare_digest(expected, signature) for signature in signatures):
+        raise HTTPException(status_code=400, detail="Invalid Stripe signature")
+    event = json.loads(payload.decode("utf-8"))
+    if event.get("type") != "checkout.session.completed":
+        return {"received": True}
+    session = event.get("data", {}).get("object", {})
+    metadata = session.get("metadata") or {}
+    payment = db.query(Payment).filter(Payment.id == int(metadata.get("payment_id") or 0), Payment.provider == "stripe").first()
+    if not payment:
+        payment = db.query(Payment).filter(Payment.provider == "stripe", Payment.provider_payment_id == session.get("id")).first()
+    if not payment:
+        raise HTTPException(status_code=404, detail="Payment not found")
+    if payment.status == "paid":
+        return {"received": True}
+    if int(session.get("amount_total") or 0) != payment.amount or (session.get("currency") or "").upper() != payment.currency.upper():
+        payment.status = "failed"
+        create_audit_log(db, None, "payment.failed", "payment", payment.id, "Stripe payment amount or currency did not match")
+        db.commit()
+        raise HTTPException(status_code=400, detail="Payment amount mismatch")
+    student = db.get(User, payment.user_id)
+    if not student:
+        raise HTTPException(status_code=404, detail="Payment user not found")
+    payment.provider_payment_id = session.get("id") or payment.provider_payment_id
+    payment.provider_customer_id = session.get("customer")
+    payment.status = "paid"
+    payment.paid_at = now_ts()
+    payment.metadata_json = {**(payment.metadata_json or {}), "checkout_session": session}
+    activate_learner_bundle(db, student, "STRIPE_PAYMENT", None, payment)
+    create_audit_log(db, None, "payment.confirmed", "payment", payment.id, "Stripe payment confirmed", {"checkout_session_id": session.get("id")})
+    db.commit()
+    return {"received": True}
 
 
 @app.post("/enrollment-requests", response_model=EnrollmentRegistrationResponse)
@@ -2102,6 +2703,224 @@ def ensure_student_all_active_course_access(db: Session, student: User) -> list[
         db.commit()
 
     return enrollments
+
+
+def activate_learner_bundle(
+    db: Session,
+    student: User,
+    source: str,
+    actor: User | None = None,
+    payment: Payment | None = None,
+    metadata: dict | None = None,
+) -> list[Enrollment]:
+    if student.role != "student":
+        raise HTTPException(status_code=400, detail="Only learner accounts can be activated")
+    student.lifecycle_status = "active_student"
+    student.is_active = True
+    student.email_verified = True
+    enrollments = ensure_student_all_active_course_access(db, student)
+    create_audit_log(
+        db,
+        actor,
+        "learner.activated",
+        "student",
+        student.id,
+        f"Activated learner access for {student.full_name}",
+        {
+            "source": source,
+            "payment_id": payment.id if payment else None,
+            "provider": payment.provider if payment else None,
+            **(metadata or {}),
+        },
+    )
+    send_welcome_email(student)
+    return enrollments
+
+
+def program_fee_label() -> str:
+    return f"{PROGRAM_CURRENCY} {PROGRAM_FEE_CENTS / 100:.2f}"
+
+
+def make_url_request(url: str, data: bytes | None = None, headers: dict | None = None, method: str = "GET") -> dict:
+    request = UrlRequest(url, data=data, headers=headers or {}, method=method)
+    try:
+        with urlopen(request, timeout=20) as response:
+            body = response.read().decode("utf-8")
+            return json.loads(body) if body else {}
+    except HTTPError as exc:
+        error_body = exc.read().decode("utf-8", errors="replace")
+        raise HTTPException(status_code=502, detail=f"Payment provider error: {error_body or exc.reason}") from exc
+
+
+def retrieve_stripe_checkout_session(session_id: str) -> dict:
+    if not STRIPE_SECRET_KEY:
+        raise HTTPException(status_code=503, detail="Stripe is not configured")
+    return make_url_request(
+        f"https://api.stripe.com/v1/checkout/sessions/{quote(session_id)}",
+        headers={
+            "Authorization": "Basic " + base64.b64encode(f"{STRIPE_SECRET_KEY}:".encode("utf-8")).decode("utf-8"),
+            "User-Agent": "three13-lms/1.0",
+        },
+    )
+
+
+def reconcile_stripe_payment_status(db: Session, payment: Payment, actor: User | None = None) -> bool:
+    if payment.provider != "stripe" or payment.status != "pending":
+        return False
+    if not payment.provider_payment_id or payment.provider_payment_id.startswith("pending-"):
+        return False
+
+    session = retrieve_stripe_checkout_session(payment.provider_payment_id)
+    if session.get("status") != "complete" or session.get("payment_status") != "paid":
+        return False
+    if int(session.get("amount_total") or 0) != payment.amount or (session.get("currency") or "").upper() != payment.currency.upper():
+        payment.status = "failed"
+        create_audit_log(db, actor, "payment.failed", "payment", payment.id, "Stripe payment amount or currency did not match")
+        db.commit()
+        raise HTTPException(status_code=400, detail="Payment amount mismatch")
+    if str(session.get("client_reference_id") or "") != str(payment.user_id):
+        payment.status = "failed"
+        create_audit_log(db, actor, "payment.failed", "payment", payment.id, "Stripe payment user did not match")
+        db.commit()
+        raise HTTPException(status_code=400, detail="Payment user mismatch")
+
+    student = db.get(User, payment.user_id)
+    if not student:
+        raise HTTPException(status_code=404, detail="Payment user not found")
+    payment.provider_customer_id = session.get("customer")
+    payment.status = "paid"
+    payment.paid_at = now_ts()
+    payment.metadata_json = {**(payment.metadata_json or {}), "checkout_session": session}
+    activate_learner_bundle(db, student, "STRIPE_API_VERIFICATION", actor, payment)
+    create_audit_log(db, actor, "payment.confirmed", "payment", payment.id, "Stripe payment confirmed", {"checkout_session_id": session.get("id")})
+    db.commit()
+    return True
+
+
+def create_stripe_checkout_session(db: Session, user: User) -> PaymentCreateResponse:
+    if not STRIPE_SECRET_KEY:
+        raise HTTPException(status_code=503, detail="Stripe is not configured")
+    if PROGRAM_FEE_CENTS <= 0:
+        raise HTTPException(status_code=503, detail="Program fee is not configured")
+
+    payment = Payment(
+        user_id=user.id,
+        provider="stripe",
+        provider_payment_id=f"pending-{uuid.uuid4().hex}",
+        amount=PROGRAM_FEE_CENTS,
+        currency=PROGRAM_CURRENCY,
+        status="pending",
+        metadata_json={"source": "self_service_registration"},
+    )
+    db.add(payment)
+    db.flush()
+    success_url = f"{APP_BASE_URL.rstrip('/')}/complete-registration?payment=success&payment_id={payment.id}"
+    cancel_url = f"{APP_BASE_URL.rstrip('/')}/complete-registration?payment=cancelled"
+    form = urlencode(
+        {
+            "mode": "payment",
+            "success_url": success_url,
+            "cancel_url": cancel_url,
+            "client_reference_id": str(user.id),
+            "customer_email": user.email,
+            "line_items[0][quantity]": "1",
+            "line_items[0][price_data][currency]": PROGRAM_CURRENCY.lower(),
+            "line_items[0][price_data][unit_amount]": str(PROGRAM_FEE_CENTS),
+            "line_items[0][price_data][product_data][name]": "Three13 IT Training Program",
+            "line_items[0][price_data][product_data][description]": "Full Program Bundle",
+            "metadata[user_id]": str(user.id),
+            "metadata[payment_id]": str(payment.id),
+        }
+    ).encode("utf-8")
+    response = make_url_request(
+        "https://api.stripe.com/v1/checkout/sessions",
+        data=form,
+        headers={
+            "Authorization": "Basic " + base64.b64encode(f"{STRIPE_SECRET_KEY}:".encode("utf-8")).decode("utf-8"),
+            "Content-Type": "application/x-www-form-urlencoded",
+            "User-Agent": "three13-lms/1.0",
+        },
+        method="POST",
+    )
+    payment.provider_payment_id = response.get("id") or payment.provider_payment_id
+    payment.metadata_json = {**(payment.metadata_json or {}), "checkout_url": response.get("url")}
+    create_audit_log(db, user, "payment.created", "payment", payment.id, f"Created Stripe checkout for {program_fee_label()}", {"provider": "stripe"})
+    db.commit()
+    return {
+        "provider": "stripe",
+        "checkout_url": response.get("url"),
+        "order_id": None,
+        "payment_id": payment.id,
+        "publishable_key": STRIPE_PUBLISHABLE_KEY or None,
+    }
+
+
+def paypal_api_base() -> str:
+    return "https://api-m.paypal.com" if PAYPAL_ENVIRONMENT == "live" else "https://api-m.sandbox.paypal.com"
+
+
+def paypal_access_token() -> str:
+    if not PAYPAL_CLIENT_ID or not PAYPAL_CLIENT_SECRET:
+        raise HTTPException(status_code=503, detail="PayPal is not configured")
+    response = make_url_request(
+        f"{paypal_api_base()}/v1/oauth2/token",
+        data=b"grant_type=client_credentials",
+        headers={
+            "Authorization": "Basic " + base64.b64encode(f"{PAYPAL_CLIENT_ID}:{PAYPAL_CLIENT_SECRET}".encode("utf-8")).decode("utf-8"),
+            "Content-Type": "application/x-www-form-urlencoded",
+            "User-Agent": "three13-lms/1.0",
+        },
+        method="POST",
+    )
+    token = response.get("access_token")
+    if not token:
+        raise HTTPException(status_code=502, detail="PayPal did not return an access token")
+    return token
+
+
+def create_paypal_order(db: Session, user: User) -> PaymentCreateResponse:
+    if PROGRAM_FEE_CENTS <= 0:
+        raise HTTPException(status_code=503, detail="Program fee is not configured")
+    token = paypal_access_token()
+    payment = Payment(
+        user_id=user.id,
+        provider="paypal",
+        provider_payment_id=f"pending-{uuid.uuid4().hex}",
+        amount=PROGRAM_FEE_CENTS,
+        currency=PROGRAM_CURRENCY,
+        status="pending",
+        metadata_json={"source": "self_service_registration"},
+    )
+    db.add(payment)
+    db.flush()
+    payload = {
+        "intent": "CAPTURE",
+        "purchase_units": [
+            {
+                "reference_id": str(payment.id),
+                "custom_id": str(user.id),
+                "amount": {"currency_code": PROGRAM_CURRENCY, "value": f"{PROGRAM_FEE_CENTS / 100:.2f}"},
+                "description": "Three13 IT Training Program - Full Program Bundle",
+            }
+        ],
+        "application_context": {
+            "brand_name": "Three13 IT Solutions",
+            "return_url": f"{APP_BASE_URL.rstrip('/')}/complete-registration?payment=paypal-approved&payment_id={payment.id}",
+            "cancel_url": f"{APP_BASE_URL.rstrip('/')}/complete-registration?payment=cancelled",
+        },
+    }
+    response = make_url_request(
+        f"{paypal_api_base()}/v2/checkout/orders",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json", "User-Agent": "three13-lms/1.0"},
+        method="POST",
+    )
+    payment.provider_payment_id = response.get("id") or payment.provider_payment_id
+    approve_url = next((link.get("href") for link in response.get("links", []) if link.get("rel") == "approve"), None)
+    payment.metadata_json = {**(payment.metadata_json or {}), "approve_url": approve_url}
+    create_audit_log(db, user, "payment.created", "payment", payment.id, f"Created PayPal order for {program_fee_label()}", {"provider": "paypal"})
+    db.commit()
+    return {"provider": "paypal", "checkout_url": approve_url, "order_id": payment.provider_payment_id, "payment_id": payment.id, "publishable_key": None}
 
 
 def assignment_with_student_status(
@@ -6802,7 +7621,7 @@ def admin_create_alumni(
     token = secrets.token_urlsafe(32)
     expires_at = now_ts() + 60 * 60 * 24
     db.add(PasswordResetToken(user_id=student.id, token_hash=hash_reset_token(token), expires_at=expires_at))
-    setup_url = f"{FRONTEND_URL.rstrip('/')}/login?reset_token={token}&email={quote(student.email)}"
+    setup_url = f"{FRONTEND_URL.rstrip('/')}/login?reset_token={token}&email={quote(student.email)}&setup=alumni"
     email_sent = send_email(
         student.email,
         "Set up your Three13 alumni account",
@@ -6841,6 +7660,114 @@ def admin_create_alumni(
         "email_sent": email_sent,
         "dev_token": None if email_sent else token,
         "setup_url": None if email_sent else setup_url,
+    }
+
+
+@app.post("/admin/learners", response_model=AdminLearnerCreateResponse)
+def admin_create_learner(
+    data: AdminLearnerCreateRequest,
+    admin: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    first_name = data.first_name.strip()
+    last_name = data.last_name.strip()
+    email = normalize_email(data.email)
+    phone = (data.phone or "").strip() or None
+    country = (data.country or "").strip() or None
+    if not first_name or not last_name:
+        raise HTTPException(status_code=400, detail="First and last name are required")
+    if not validate_email_address(email):
+        raise HTTPException(status_code=400, detail="A valid email address is required")
+    if data.access_reason == "other" and not (data.access_reason_other or "").strip():
+        raise HTTPException(status_code=400, detail="A note is required when access reason is Other")
+
+    student = db.query(User).filter(func.lower(User.email) == email).first()
+    created = False
+    if student and student.role != "student":
+        raise HTTPException(status_code=409, detail="This email belongs to a non-learner account")
+    if not student:
+        student = User(
+            full_name=f"{first_name} {last_name}".strip(),
+            email=email,
+            phone=phone,
+            password_hash=hash_password(secrets.token_urlsafe(24)),
+            role="student",
+            lifecycle_status="active_student",
+            is_active=True,
+            email_verified=False,
+        )
+        db.add(student)
+        db.flush()
+        created = True
+    else:
+        student.full_name = f"{first_name} {last_name}".strip()
+        student.phone = phone
+        student.lifecycle_status = "active_student"
+        student.is_active = True
+
+    enrollments = activate_learner_bundle(
+        db,
+        student,
+        "ADMIN_MANUAL",
+        admin,
+        None,
+        {
+            "payment_requirement": "waived",
+            "access_reason": data.access_reason,
+            "access_reason_other": (data.access_reason_other or "").strip() or None,
+            "admin_note": (data.admin_note or "").strip() or None,
+            "country": country,
+            "experience_level": (data.experience_level or "").strip() or None,
+            "learning_goal": (data.learning_goal or "").strip() or None,
+        },
+    )
+
+    token = secrets.token_urlsafe(32)
+    expires_at = now_ts() + 72 * 60 * 60
+    email_sent = False
+    setup_url = f"{APP_BASE_URL.rstrip('/')}/login?reset_token={quote(token)}&email={quote(student.email)}"
+    if data.send_setup_email:
+        db.add(PasswordResetToken(user_id=student.id, token_hash=hash_reset_token(token), expires_at=expires_at))
+        email_sent = send_admin_learner_invite(student, token)
+        if not email_sent:
+            print(f"[learner setup] Setup token for {student.email}: {token}")
+
+    create_audit_log(
+        db,
+        admin,
+        "admin.learner_created" if created else "admin.learner_access_granted",
+        "student",
+        student.id,
+        f"{'Created' if created else 'Granted access to'} learner account for {student.full_name}",
+        {
+            "email_sent": email_sent,
+            "send_setup_email": data.send_setup_email,
+            "payment_requirement": "waived",
+            "access_reason": data.access_reason,
+            "course_access_records": len(enrollments),
+        },
+    )
+    db.commit()
+    db.refresh(student)
+    enrollments_rows = (
+        db.query(Enrollment, Course)
+        .join(Course, Enrollment.course_id == Course.id)
+        .filter(Enrollment.student_id == student.id)
+        .order_by(Course.title.asc())
+        .all()
+    )
+    request_rows = (
+        db.query(EnrollmentRequest, Course)
+        .join(Course, EnrollmentRequest.course_id == Course.id)
+        .filter(EnrollmentRequest.student_id == student.id)
+        .order_by(EnrollmentRequest.created_at.desc())
+        .all()
+    )
+    return {
+        "student": student_to_admin_response(student, enrollments_rows, request_rows),
+        "email_sent": email_sent,
+        "dev_token": None if email_sent or not data.send_setup_email else token,
+        "setup_url": None if email_sent or not data.send_setup_email else setup_url,
     }
 
 

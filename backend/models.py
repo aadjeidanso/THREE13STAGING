@@ -74,6 +74,78 @@ class PasswordResetToken(Base):
     created_at = Column(Integer, nullable=False, default=now_ts)
 
 
+class NotificationRead(Base):
+    __tablename__ = "notification_reads"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    notification_id = Column(String(255), nullable=False, index=True)
+    read_at = Column(Integer, nullable=False, default=now_ts)
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "notification_id", name="uq_notification_reads_user_notification"),
+    )
+
+
+class PreRegistration(Base):
+    __tablename__ = "pre_registrations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    first_name = Column(String(120), nullable=False)
+    last_name = Column(String(120), nullable=False)
+    email = Column(String(320), nullable=False, index=True)
+    phone = Column(String(40), nullable=False)
+    country = Column(String(120), nullable=True)
+    experience_level = Column(String(120), nullable=False)
+    learning_goal = Column(String(160), nullable=False)
+    learning_goal_other = Column(Text, nullable=True)
+    referral_source = Column(String(120), nullable=True)
+    referral_source_other = Column(Text, nullable=True)
+    terms_version = Column(String(40), nullable=False, default="2026-09")
+    terms_accepted_at = Column(Integer, nullable=False, default=now_ts)
+    marketing_consent = Column(Boolean, nullable=False, default=False)
+    status = Column(String(40), nullable=False, default="email_sent", index=True)
+    registration_token_hash = Column(Text, nullable=False, unique=True, index=True)
+    token_expires_at = Column(Integer, nullable=False)
+    token_sent_at = Column(Integer, nullable=False, default=now_ts)
+    token_used_at = Column(Integer, nullable=True)
+    created_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(Integer, nullable=False, default=now_ts)
+    updated_at = Column(Integer, nullable=False, default=now_ts)
+    completed_at = Column(Integer, nullable=True)
+
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('pre_registered', 'email_sent', 'registration_in_progress', 'awaiting_payment', 'completed', 'expired', 'cancelled')",
+            name="ck_pre_registrations_status",
+        ),
+    )
+
+
+class Payment(Base):
+    __tablename__ = "payments"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    enrollment_id = Column(Integer, ForeignKey("enrollments.id"), nullable=True)
+    provider = Column(String(32), nullable=False, index=True)
+    provider_payment_id = Column(String(255), nullable=False, index=True)
+    provider_customer_id = Column(String(255), nullable=True)
+    amount = Column(Integer, nullable=False)
+    currency = Column(String(3), nullable=False, default="USD")
+    status = Column(String(32), nullable=False, default="pending", index=True)
+    metadata_json = Column("metadata", JSON, nullable=True)
+    created_at = Column(Integer, nullable=False, default=now_ts)
+    paid_at = Column(Integer, nullable=True)
+    refunded_at = Column(Integer, nullable=True)
+
+    __table_args__ = (
+        CheckConstraint("provider IN ('stripe', 'paypal', 'external')", name="ck_payments_provider"),
+        CheckConstraint("status IN ('pending', 'processing', 'paid', 'failed', 'refunded', 'partially_refunded')", name="ck_payments_status"),
+        UniqueConstraint("provider", "provider_payment_id", name="uq_payments_provider_payment"),
+    )
+
+
 class EnrollmentRequest(Base):
     __tablename__ = "enrollment_requests"
 
