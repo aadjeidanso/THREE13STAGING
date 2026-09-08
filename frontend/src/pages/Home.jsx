@@ -850,7 +850,7 @@ export default function Home() {
 
         <Box id="courses" ref={coursesRef} component="section" sx={{ pt: { xs: 5, md: 8 }, pb: { xs: 7, md: 11 }, bgcolor: '#eef3f8', overflow: 'hidden' }}>
           <Container maxWidth="xl">
-            <SectionHeader title="Courses" body="Start with fundamentals, move into security, or deepen your path with IT audit and governance." />
+            <SectionHeader title="Explore the Program" body="Build practical, career-focused skills across four key areas of modern IT: security, networking, IT audit, and AI for IT professionals, all included in one comprehensive program." />
             <Box
               sx={{
                 display: 'grid',
