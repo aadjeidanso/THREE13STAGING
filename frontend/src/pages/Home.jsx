@@ -284,10 +284,30 @@ const modalStyle = {
   width: { xs: 'min(430px, calc(100vw - 24px))', sm: 760 },
   maxHeight: { xs: 'calc(100dvh - 24px)', sm: '88vh' },
   overflowY: 'auto',
+  overflowX: 'hidden',
+  scrollbarGutter: 'stable',
+  scrollbarWidth: 'thin',
+  scrollbarColor: 'rgba(8, 37, 64, 0.34) transparent',
   bgcolor: '#fff',
   borderRadius: { xs: 2, sm: 3 },
   boxShadow: '0 24px 70px rgba(8, 37, 64, 0.28)',
   p: { xs: 1.6, sm: 3 },
+  '&::-webkit-scrollbar': {
+    width: 12,
+  },
+  '&::-webkit-scrollbar-track': {
+    bgcolor: 'transparent',
+    borderRadius: 999,
+    marginBlock: '16px',
+  },
+  '&::-webkit-scrollbar-thumb': {
+    bgcolor: 'rgba(8, 37, 64, 0.34)',
+    border: '3px solid #fff',
+    borderRadius: 999,
+  },
+  '&::-webkit-scrollbar-thumb:hover': {
+    bgcolor: 'rgba(8, 37, 64, 0.48)',
+  },
 };
 
 function SectionHeader({ eyebrow, title, body, light = false }) {
