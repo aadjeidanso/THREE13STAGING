@@ -278,6 +278,7 @@ const countryOptions = (() => {
 })();
 
 const registrationSelectMenuProps = {
+  variant: 'menu',
   anchorOrigin: {
     vertical: 'bottom',
     horizontal: 'left',
