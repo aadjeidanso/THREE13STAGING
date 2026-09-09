@@ -8273,13 +8273,7 @@ function AdminPortal({ user, onSignOut, onUserUpdated }) {
                 >
                   {adminToast.text}
                 </Alert>
-              ) : (
-                <Box sx={{ width: '100%', px: 2, py: 1.1, border: '1px solid rgba(18,60,105,0.12)', borderRadius: 999, bgcolor: '#f8fafc', color: '#637083', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
-                  <Box component="span" sx={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    Platform alerts will appear here.
-                  </Box>
-                </Box>
-              )}
+              ) : null}
             </Box>
             <Stack direction="row" spacing={1} alignItems="center">
               <IconButton
@@ -14876,13 +14870,7 @@ function TeacherPortal({ user, onSignOut, onUserUpdated }) {
                 >
                   {teacherToast.text}
                 </Alert>
-              ) : (
-                <Box sx={{ width: '100%', px: 2, py: 1.1, border: '1px solid rgba(18,60,105,0.12)', borderRadius: 999, bgcolor: '#f8fafc', color: '#637083', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
-                  <Box component="span" sx={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    Platform alerts will appear here.
-                  </Box>
-                </Box>
-              )}
+              ) : null}
             </Box>
             <Stack direction="row" spacing={1} alignItems="center">
               <IconButton
