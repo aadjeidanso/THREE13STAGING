@@ -803,7 +803,7 @@ export default function Home() {
                   </Button>
                 </Stack>
               </Grid>
-              <Grid item xs={12} md={5} sx={{ display: 'flex', justifyContent: { xs: 'center', md: 'flex-end' } }}>
+              <Grid item xs={12} md={5} sx={{ display: 'flex', justifyContent: { xs: 'center', lg: 'flex-end' } }}>
                 <Box sx={{ bgcolor: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 3, p: { xs: 2, md: 2.5 }, backdropFilter: 'blur(18px)', width: '100%', maxWidth: 440 }}>
                   <Box component="img" src="/images/teaching.png" alt="Instructor teaching online IT students" sx={{ width: '100%', aspectRatio: '4 / 3', objectFit: 'cover', borderRadius: 2, display: 'block' }} />
                   <Typography sx={{ mt: 1.4, fontWeight: 900, fontSize: { xs: '1.15rem', sm: '1.35rem' }, textAlign: 'center', color: '#fff' }}>
