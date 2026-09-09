@@ -1750,6 +1750,7 @@ function AdminStudentsPane({ onAdminDataChanged, onOpenActivityLink, onAdminToas
   const [inviteDialogOpen, setInviteDialogOpen] = React.useState(false);
   const [learnerDialogOpen, setLearnerDialogOpen] = React.useState(false);
   const [learnerSetup, setLearnerSetup] = React.useState(null);
+  const studentTableColumns = '56px minmax(260px, 1.2fr) 130px minmax(360px, 1.5fr) 130px 112px';
   const [learnerForm, setLearnerForm] = React.useState({
     first_name: '',
     last_name: '',
@@ -2372,83 +2373,87 @@ function AdminStudentsPane({ onAdminDataChanged, onOpenActivityLink, onAdminToas
 
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1fr) 300px', xl: 'minmax(0, 1fr) 340px' }, gap: { xs: 2, lg: 1.4, xl: 2 }, alignItems: 'start' }}>
         <Box sx={{ border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, bgcolor: '#fff', overflow: 'hidden', boxShadow: '0 18px 48px rgba(18,60,105,0.06)' }}>
-          <Box sx={{ ...adminTableHeaderSx, gridTemplateColumns: { lg: '34px minmax(185px, 1.25fr) 112px minmax(170px, 1fr) 82px 64px', xl: '44px minmax(230px, 1.35fr) 150px minmax(250px, 1fr) 110px 86px' } }}>
-            {['', 'Learner', 'Status', 'Courses', 'Joined', 'Actions'].map((label) => (
-              <Typography key={label || 'select'} className="admin-table-heading" sx={{ textAlign: label === 'Actions' ? 'center' : 'left' }}>{label}</Typography>
-            ))}
-          </Box>
-          {loading ? (
-            <Stack alignItems="center" sx={{ py: 5 }}><CircularProgress size={28} /></Stack>
-          ) : visibleStudents.length === 0 ? (
-            <Box sx={{ bgcolor: '#fff', p: 2.5 }}>
-              <Typography sx={{ color: 'primary.dark', fontWeight: 800 }}>No learners match this view.</Typography>
-            </Box>
-          ) : (
-            <Stack divider={<Divider />}>
-              {paginatedStudents.map((student) => {
-                const isSelected = selectedStudent?.id === student.id;
-                const isAlumni = (student.lifecycle_status || 'active_student') === 'alumni';
-                const visibleCourses = student.enrolled_courses.slice(0, 3);
-                return (
-                  <Box
-                    key={student.id}
-                    onClick={() => setSelectedStudentId(student.id)}
-                    sx={{
-                      display: 'grid',
-                      gridTemplateColumns: { xs: '1fr', lg: '34px minmax(185px, 1.25fr) 112px minmax(170px, 1fr) 82px 64px', xl: '44px minmax(230px, 1.35fr) 150px minmax(250px, 1fr) 110px 86px' },
-                      gap: 1,
-                      alignItems: 'center',
-                      px: 1.4,
-                      py: 1.25,
-                      cursor: 'pointer',
-                      bgcolor: isSelected ? '#f1f7ff' : '#fff',
-                      borderLeft: isSelected ? '3px solid #1b6ef3' : '3px solid transparent',
-                      '&:hover': { bgcolor: isSelected ? '#f1f7ff' : '#f8fafc' },
-                    }}
-                  >
-                    <Checkbox checked={isSelected} size="small" sx={{ display: { xs: 'none', lg: 'inline-flex' } }} />
-                    <Stack direction="row" spacing={1.1} alignItems="center" sx={{ minWidth: 0 }}>
-                      <UserAvatar user={student} size={42} />
-                      <Box sx={{ minWidth: 0 }}>
-                        <Typography noWrap sx={{ color: 'primary.dark', fontWeight: 900 }}>{student.full_name}</Typography>
-                        <Typography noWrap sx={{ color: '#526273', fontSize: 12.5 }}>{student.email}</Typography>
-                        <Typography noWrap sx={{ color: '#526273', fontSize: 12 }}>{student.phone || 'No phone provided'}</Typography>
-                      </Box>
-                    </Stack>
-                    <Stack direction="row" spacing={0.7} alignItems="center">
-                      <Chip label={learnerStatusLabel(student)} size="small" sx={{ bgcolor: student.is_active ? '#e8f7ef' : '#fff0e7', color: student.is_active ? '#16805f' : '#f05a28', fontWeight: 800 }} />
-                      <Chip label={isAlumni ? 'Alumni' : 'Student'} size="small" sx={{ bgcolor: isAlumni ? '#f4ecff' : '#eaf2ff', color: isAlumni ? '#7c3aed' : '#1b6ef3', fontWeight: 800, display: { xs: 'inline-flex', xl: 'none' } }} />
-                    </Stack>
-                    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))', lg: 'repeat(2, minmax(0, 116px))' }, gap: 0.6, alignItems: 'center', minWidth: 0 }}>
-                      {isAlumni ? (
-                        <Chip label="Community access" size="small" sx={{ bgcolor: '#f4ecff', color: '#7c3aed', fontWeight: 750, justifyContent: 'flex-start', '& .MuiChip-label': { overflow: 'hidden', textOverflow: 'ellipsis' } }} />
-                      ) : visibleCourses.length === 0 ? (
-                        <Typography sx={{ color: '#637083', fontSize: 13 }}>No courses</Typography>
-                      ) : (
-                        <>
-                          {visibleCourses.map((course) => (
-                            <Chip key={course.enrollment_id || course.id} label={course.title} size="small" sx={{ bgcolor: '#eef6ff', color: '#1b6ef3', fontWeight: 750, width: '100%', justifyContent: 'flex-start', '& .MuiChip-label': { overflow: 'hidden', textOverflow: 'ellipsis' } }} />
-                          ))}
-                          {student.enrolled_courses.length > visibleCourses.length && (
-                            <Chip label={`+${student.enrolled_courses.length - visibleCourses.length}`} size="small" sx={{ width: { xs: '100%', lg: 42 } }} />
+          <Box sx={{ overflowX: 'auto' }}>
+            <Box sx={{ minWidth: 1120 }}>
+              <Box sx={{ ...adminTableHeaderSx, gridTemplateColumns: studentTableColumns }}>
+                {['', 'Learner', 'Status', 'Courses', 'Joined', 'Actions'].map((label) => (
+                  <Typography key={label || 'select'} className="admin-table-heading" sx={{ textAlign: label === 'Actions' ? 'center' : 'left' }}>{label}</Typography>
+                ))}
+              </Box>
+              {loading ? (
+                <Stack alignItems="center" sx={{ py: 5 }}><CircularProgress size={28} /></Stack>
+              ) : visibleStudents.length === 0 ? (
+                <Box sx={{ bgcolor: '#fff', p: 2.5 }}>
+                  <Typography sx={{ color: 'primary.dark', fontWeight: 800 }}>No learners match this view.</Typography>
+                </Box>
+              ) : (
+                <Stack divider={<Divider />}>
+                  {paginatedStudents.map((student) => {
+                    const isSelected = selectedStudent?.id === student.id;
+                    const isAlumni = (student.lifecycle_status || 'active_student') === 'alumni';
+                    const visibleCourses = student.enrolled_courses.slice(0, 3);
+                    return (
+                      <Box
+                        key={student.id}
+                        onClick={() => setSelectedStudentId(student.id)}
+                        sx={{
+                          display: 'grid',
+                          gridTemplateColumns: studentTableColumns,
+                          gap: 1,
+                          alignItems: 'center',
+                          px: 1.4,
+                          py: 1.25,
+                          cursor: 'pointer',
+                          bgcolor: isSelected ? '#f1f7ff' : '#fff',
+                          borderLeft: isSelected ? '3px solid #1b6ef3' : '3px solid transparent',
+                          '&:hover': { bgcolor: isSelected ? '#f1f7ff' : '#f8fafc' },
+                        }}
+                      >
+                        <Checkbox checked={isSelected} size="small" />
+                        <Stack direction="row" spacing={1.1} alignItems="center" sx={{ minWidth: 0 }}>
+                          <UserAvatar user={student} size={42} />
+                          <Box sx={{ minWidth: 0 }}>
+                            <Typography noWrap sx={{ color: 'primary.dark', fontWeight: 900 }}>{student.full_name}</Typography>
+                            <Typography noWrap sx={{ color: '#526273', fontSize: 12.5 }}>{student.email}</Typography>
+                            <Typography noWrap sx={{ color: '#526273', fontSize: 12 }}>{student.phone || 'No phone provided'}</Typography>
+                          </Box>
+                        </Stack>
+                        <Stack direction="row" spacing={0.7} alignItems="center">
+                          <Chip label={learnerStatusLabel(student)} size="small" sx={{ bgcolor: student.is_active ? '#e8f7ef' : '#fff0e7', color: student.is_active ? '#16805f' : '#f05a28', fontWeight: 800 }} />
+                          <Chip label={isAlumni ? 'Alumni' : 'Student'} size="small" sx={{ bgcolor: isAlumni ? '#f4ecff' : '#eaf2ff', color: isAlumni ? '#7c3aed' : '#1b6ef3', fontWeight: 800, display: { xl: 'none' } }} />
+                        </Stack>
+                        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 150px))', gap: 0.6, alignItems: 'center', minWidth: 0 }}>
+                          {isAlumni ? (
+                            <Chip label="Community access" size="small" sx={{ bgcolor: '#f4ecff', color: '#7c3aed', fontWeight: 750, justifyContent: 'flex-start', '& .MuiChip-label': { overflow: 'hidden', textOverflow: 'ellipsis' } }} />
+                          ) : visibleCourses.length === 0 ? (
+                            <Typography sx={{ color: '#637083', fontSize: 13 }}>No courses</Typography>
+                          ) : (
+                            <>
+                              {visibleCourses.map((course) => (
+                                <Chip key={course.enrollment_id || course.id} label={course.title} size="small" sx={{ bgcolor: '#eef6ff', color: '#1b6ef3', fontWeight: 750, width: '100%', justifyContent: 'flex-start', '& .MuiChip-label': { overflow: 'hidden', textOverflow: 'ellipsis' } }} />
+                              ))}
+                              {student.enrolled_courses.length > visibleCourses.length && (
+                                <Chip label={`+${student.enrolled_courses.length - visibleCourses.length}`} size="small" sx={{ width: 46 }} />
+                              )}
+                            </>
                           )}
-                        </>
-                      )}
-                    </Box>
-                    <Typography sx={{ color: '#526273', fontSize: 12.5 }}>{formatDate(student.created_at)}</Typography>
-                    <Stack direction="row" spacing={0.7} justifyContent={{ xs: 'flex-start', lg: 'flex-end' }}>
-                      <IconButton size="small" onClick={(event) => { event.stopPropagation(); setSelectedStudentId(student.id); }} sx={{ border: '1px solid rgba(18,60,105,0.14)', borderRadius: 1 }}>
-                        <VisibilityOutlined fontSize="small" />
-                      </IconButton>
-                      <IconButton size="small" disabled sx={{ border: '1px solid rgba(18,60,105,0.14)', borderRadius: 1 }}>
-                        <MoreHorizOutlined fontSize="small" />
-                      </IconButton>
-                    </Stack>
-                  </Box>
-                );
-              })}
-            </Stack>
-          )}
+                        </Box>
+                        <Typography sx={{ color: '#526273', fontSize: 12.5 }}>{formatDate(student.created_at)}</Typography>
+                        <Stack direction="row" spacing={0.7} justifyContent="flex-end">
+                          <IconButton size="small" onClick={(event) => { event.stopPropagation(); setSelectedStudentId(student.id); }} sx={{ border: '1px solid rgba(18,60,105,0.14)', borderRadius: 1 }}>
+                            <VisibilityOutlined fontSize="small" />
+                          </IconButton>
+                          <IconButton size="small" disabled sx={{ border: '1px solid rgba(18,60,105,0.14)', borderRadius: 1 }}>
+                            <MoreHorizOutlined fontSize="small" />
+                          </IconButton>
+                        </Stack>
+                      </Box>
+                    );
+                  })}
+                </Stack>
+              )}
+            </Box>
+          </Box>
           <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }} spacing={1.2} sx={{ px: 1.5, py: 1.4, borderTop: '1px solid rgba(18,60,105,0.1)', bgcolor: '#fff' }}>
             <Typography sx={{ color: '#526273', fontSize: 12.5 }}>
               Showing {visibleStudents.length ? pageStartIndex + 1 : 0}-{Math.min(pageStartIndex + rowsPerPage, visibleStudents.length)} of {visibleStudents.length} learner{visibleStudents.length === 1 ? '' : 's'}
