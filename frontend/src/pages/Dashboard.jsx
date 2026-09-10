@@ -2430,16 +2430,20 @@ function AdminStudentsPane({ onAdminDataChanged, onOpenActivityLink, onAdminToas
                           <Chip label={learnerStatusLabel(student)} size="small" sx={{ bgcolor: student.is_active ? '#e8f7ef' : '#fff0e7', color: student.is_active ? '#16805f' : '#f05a28', fontWeight: 800 }} />
                           <Chip label={isAlumni ? 'Alumni' : 'Student'} size="small" sx={{ bgcolor: isAlumni ? '#f4ecff' : '#eaf2ff', color: isAlumni ? '#7c3aed' : '#1b6ef3', fontWeight: 800, display: { xl: 'none' } }} />
                         </Stack>
-                        <Chip
-                          label={isAlumni ? 'Community access' : 'Learner access'}
-                          size="small"
-                          sx={{
-                            justifySelf: 'start',
-                            bgcolor: isAlumni ? '#f4ecff' : '#eaf2ff',
-                            color: isAlumni ? '#7c3aed' : '#1b6ef3',
-                            fontWeight: 800,
-                          }}
-                        />
+                        <Stack spacing={0.55} alignItems="flex-start" sx={{ justifySelf: 'start' }}>
+                          {!isAlumni && (
+                            <Chip
+                              label="Learner access"
+                              size="small"
+                              sx={{ bgcolor: '#eaf2ff', color: '#1b6ef3', fontWeight: 800 }}
+                            />
+                          )}
+                          <Chip
+                            label="Community access"
+                            size="small"
+                            sx={{ bgcolor: '#f4ecff', color: '#7c3aed', fontWeight: 800 }}
+                          />
+                        </Stack>
                         <Typography sx={{ color: '#526273', fontSize: 12.5 }}>{formatDate(student.created_at)}</Typography>
                         <Button
                           size="small"
