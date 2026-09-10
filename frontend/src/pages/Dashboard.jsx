@@ -1740,17 +1740,16 @@ function AdminStudentsPane({ onAdminDataChanged, onOpenActivityLink, onAdminToas
   const [activityLoadingKey, setActivityLoadingKey] = React.useState('');
   const [loading, setLoading] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
-  const [certificateFiles, setCertificateFiles] = React.useState({});
   const [certificateUploadingKey, setCertificateUploadingKey] = React.useState('');
   const [message, setMessage] = React.useState('');
   const [error, setError] = React.useState('');
   useAdminPaneToast(message, setMessage, error, setError, onAdminToast);
-  const [alumniForm, setAlumniForm] = React.useState({ full_name: '', email: '', phone: '', cohort_id: '' });
+  const [alumniForm, setAlumniForm] = React.useState({ first_name: '', last_name: '', email: '', phone: '', cohort_id: '' });
   const [alumniSetup, setAlumniSetup] = React.useState(null);
   const [inviteDialogOpen, setInviteDialogOpen] = React.useState(false);
   const [learnerDialogOpen, setLearnerDialogOpen] = React.useState(false);
   const [learnerSetup, setLearnerSetup] = React.useState(null);
-  const studentTableColumns = '56px minmax(260px, 1.2fr) 130px minmax(360px, 1.5fr) 130px 112px';
+  const studentTableColumns = '56px minmax(260px, 1.2fr) 130px minmax(230px, 0.9fr) 130px 170px';
   const [learnerForm, setLearnerForm] = React.useState({
     first_name: '',
     last_name: '',
@@ -1940,6 +1939,7 @@ function AdminStudentsPane({ onAdminDataChanged, onOpenActivityLink, onAdminToas
 
   const createAlumni = async (event) => {
     event.preventDefault();
+    const fullName = `${alumniForm.first_name || ''} ${alumniForm.last_name || ''}`.trim();
     setSaving(true);
     setError('');
     setMessage('');
@@ -1951,7 +1951,7 @@ function AdminStudentsPane({ onAdminDataChanged, onOpenActivityLink, onAdminToas
           Authorization: `Bearer ${getToken()}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(alumniForm),
+        body: JSON.stringify({ ...alumniForm, full_name: fullName }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.detail || 'Unable to add alumni');
@@ -1963,7 +1963,7 @@ function AdminStudentsPane({ onAdminDataChanged, onOpenActivityLink, onAdminToas
       setCohortFilter('all');
       setRoleFilter('all');
       setSortBy('az');
-      setAlumniForm({ full_name: '', email: '', phone: '', cohort_id: '' });
+      setAlumniForm({ first_name: '', last_name: '', email: '', phone: '', cohort_id: '' });
       setAlumniSetup(data.email_sent ? null : data);
       setInviteDialogOpen(false);
       onAdminDataChanged?.();
@@ -2042,11 +2042,19 @@ function AdminStudentsPane({ onAdminDataChanged, onOpenActivityLink, onAdminToas
     }
   };
 
-  const uploadCertificate = async (studentId, courseId) => {
-    const key = `${studentId}-${courseId}`;
-    const file = certificateFiles[key];
+  const uploadProgramCertificate = async (student, file) => {
+    const key = `program-${student.id}`;
+    const course = student.enrolled_courses?.[0];
     if (!file) {
       setError('Choose a certificate file before uploading.');
+      return;
+    }
+    if ((student.lifecycle_status || 'active_student') === 'alumni') {
+      setError('Certificates are for learner access accounts.');
+      return;
+    }
+    if (!course) {
+      setError('This learner needs approved program access before a certificate can be added.');
       return;
     }
     setCertificateUploadingKey(key);
@@ -2055,15 +2063,14 @@ function AdminStudentsPane({ onAdminDataChanged, onOpenActivityLink, onAdminToas
     try {
       const body = new FormData();
       body.append('file', file);
-      const response = await fetch(`${apiBaseUrl.replace(/\/$/, '')}/admin/students/${studentId}/courses/${courseId}/certificate/upload`, {
+      const response = await fetch(`${apiBaseUrl.replace(/\/$/, '')}/admin/students/${student.id}/courses/${course.id}/certificate/upload`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${getToken()}` },
         body,
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.detail || 'Unable to upload certificate');
-      setCertificateFiles((current) => ({ ...current, [key]: null }));
-      setMessage(`Certificate uploaded for ${data.student.full_name} in ${data.course.title}.`);
+      setMessage(`Program certificate added for ${data.student.full_name}.`);
       onAdminDataChanged?.();
     } catch (err) {
       setError(err.message);
@@ -2376,8 +2383,8 @@ function AdminStudentsPane({ onAdminDataChanged, onOpenActivityLink, onAdminToas
           <Box sx={{ overflowX: 'auto' }}>
             <Box sx={{ minWidth: 1120 }}>
               <Box sx={{ ...adminTableHeaderSx, gridTemplateColumns: studentTableColumns }}>
-                {['', 'Learner', 'Status', 'Courses', 'Joined', 'Actions'].map((label) => (
-                  <Typography key={label || 'select'} className="admin-table-heading" sx={{ textAlign: label === 'Actions' ? 'center' : 'left' }}>{label}</Typography>
+                {['', 'Learner', 'Status', 'Access', 'Joined', 'Add Certificate'].map((label) => (
+                  <Typography key={label || 'select'} className="admin-table-heading" sx={{ textAlign: label === 'Add Certificate' ? 'center' : 'left' }}>{label}</Typography>
                 ))}
               </Box>
               {loading ? (
@@ -2391,7 +2398,8 @@ function AdminStudentsPane({ onAdminDataChanged, onOpenActivityLink, onAdminToas
                   {paginatedStudents.map((student) => {
                     const isSelected = selectedStudent?.id === student.id;
                     const isAlumni = (student.lifecycle_status || 'active_student') === 'alumni';
-                    const visibleCourses = student.enrolled_courses.slice(0, 3);
+                    const uploadKey = `program-${student.id}`;
+                    const canAddCertificate = !isAlumni && student.enrolled_courses.length > 0;
                     return (
                       <Box
                         key={student.id}
@@ -2422,31 +2430,38 @@ function AdminStudentsPane({ onAdminDataChanged, onOpenActivityLink, onAdminToas
                           <Chip label={learnerStatusLabel(student)} size="small" sx={{ bgcolor: student.is_active ? '#e8f7ef' : '#fff0e7', color: student.is_active ? '#16805f' : '#f05a28', fontWeight: 800 }} />
                           <Chip label={isAlumni ? 'Alumni' : 'Student'} size="small" sx={{ bgcolor: isAlumni ? '#f4ecff' : '#eaf2ff', color: isAlumni ? '#7c3aed' : '#1b6ef3', fontWeight: 800, display: { xl: 'none' } }} />
                         </Stack>
-                        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 150px))', gap: 0.6, alignItems: 'center', minWidth: 0 }}>
-                          {isAlumni ? (
-                            <Chip label="Community access" size="small" sx={{ bgcolor: '#f4ecff', color: '#7c3aed', fontWeight: 750, justifyContent: 'flex-start', '& .MuiChip-label': { overflow: 'hidden', textOverflow: 'ellipsis' } }} />
-                          ) : visibleCourses.length === 0 ? (
-                            <Typography sx={{ color: '#637083', fontSize: 13 }}>No courses</Typography>
-                          ) : (
-                            <>
-                              {visibleCourses.map((course) => (
-                                <Chip key={course.enrollment_id || course.id} label={course.title} size="small" sx={{ bgcolor: '#eef6ff', color: '#1b6ef3', fontWeight: 750, width: '100%', justifyContent: 'flex-start', '& .MuiChip-label': { overflow: 'hidden', textOverflow: 'ellipsis' } }} />
-                              ))}
-                              {student.enrolled_courses.length > visibleCourses.length && (
-                                <Chip label={`+${student.enrolled_courses.length - visibleCourses.length}`} size="small" sx={{ width: 46 }} />
-                              )}
-                            </>
-                          )}
-                        </Box>
+                        <Chip
+                          label={isAlumni ? 'Community access' : 'Learner access'}
+                          size="small"
+                          sx={{
+                            justifySelf: 'start',
+                            bgcolor: isAlumni ? '#f4ecff' : '#eaf2ff',
+                            color: isAlumni ? '#7c3aed' : '#1b6ef3',
+                            fontWeight: 800,
+                          }}
+                        />
                         <Typography sx={{ color: '#526273', fontSize: 12.5 }}>{formatDate(student.created_at)}</Typography>
-                        <Stack direction="row" spacing={0.7} justifyContent="flex-end">
-                          <IconButton size="small" onClick={(event) => { event.stopPropagation(); setSelectedStudentId(student.id); }} sx={{ border: '1px solid rgba(18,60,105,0.14)', borderRadius: 1 }}>
-                            <VisibilityOutlined fontSize="small" />
-                          </IconButton>
-                          <IconButton size="small" disabled sx={{ border: '1px solid rgba(18,60,105,0.14)', borderRadius: 1 }}>
-                            <MoreHorizOutlined fontSize="small" />
-                          </IconButton>
-                        </Stack>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          component="label"
+                          disabled={!canAddCertificate || certificateUploadingKey === uploadKey}
+                          startIcon={<VerifiedOutlined />}
+                          onClick={(event) => event.stopPropagation()}
+                          sx={{ justifySelf: 'end', minWidth: 148 }}
+                        >
+                          {certificateUploadingKey === uploadKey ? 'Adding...' : 'Add certificate'}
+                          <input
+                            type="file"
+                            hidden
+                            accept={lmsFileAccept}
+                            onChange={(event) => {
+                              const file = event.target.files?.[0] || null;
+                              if (file) uploadProgramCertificate(student, file);
+                              event.target.value = '';
+                            }}
+                          />
+                        </Button>
                       </Box>
                     );
                   })}
@@ -2519,6 +2534,28 @@ function AdminStudentsPane({ onAdminDataChanged, onOpenActivityLink, onAdminToas
               <Box>
                 <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
                   <Typography sx={{ color: 'primary.dark', fontWeight: 950 }}>{selectedIsAlumni ? 'Community Access' : `Enrolled Courses (${selectedStudent.enrolled_courses.length})`}</Typography>
+                  {!selectedIsAlumni && (
+                    <Button
+                      size="small"
+                      variant="contained"
+                      color="secondary"
+                      component="label"
+                      disabled={certificateUploadingKey === `program-${selectedStudent.id}` || selectedStudent.enrolled_courses.length === 0}
+                      startIcon={<VerifiedOutlined />}
+                    >
+                      {certificateUploadingKey === `program-${selectedStudent.id}` ? 'Adding...' : 'Add certificate'}
+                      <input
+                        type="file"
+                        hidden
+                        accept={lmsFileAccept}
+                        onChange={(event) => {
+                          const file = event.target.files?.[0] || null;
+                          if (file) uploadProgramCertificate(selectedStudent, file);
+                          event.target.value = '';
+                        }}
+                      />
+                    </Button>
+                  )}
                 </Stack>
                 {selectedIsAlumni ? (
                   <Box sx={{ bgcolor: '#f4ecff', borderRadius: 1, p: 1.2 }}>
@@ -2538,18 +2575,6 @@ function AdminStudentsPane({ onAdminDataChanged, onOpenActivityLink, onAdminToas
                           <Stack direction="row" spacing={0.7} sx={{ mt: 1, flexWrap: 'wrap' }}>
                             <Button size="small" variant="outlined" disabled={activityLoadingKey === key} onClick={() => loadStudentCourseActivity(selectedStudent.id, course.id)}>
                               {activityLoadingKey === key ? 'Loading...' : 'View activity'}
-                            </Button>
-                            <Button variant="outlined" size="small" component="label" disabled={certificateUploadingKey === key}>
-                              {certificateFiles[key]?.name || 'Choose cert'}
-                              <input
-                                type="file"
-                                hidden
-                                accept={lmsFileAccept}
-                                onChange={(event) => setCertificateFiles((current) => ({ ...current, [key]: event.target.files?.[0] || null }))}
-                              />
-                            </Button>
-                            <Button size="small" variant="contained" color="secondary" disabled={certificateUploadingKey === key || !certificateFiles[key]} onClick={() => uploadCertificate(selectedStudent.id, course.id)}>
-                              {certificateUploadingKey === key ? 'Uploading...' : 'Upload'}
                             </Button>
                           </Stack>
                           {activityLoadingKey === key && <Stack alignItems="center" sx={{ py: 1.5 }}><CircularProgress size={20} /></Stack>}
@@ -2653,7 +2678,10 @@ function AdminStudentsPane({ onAdminDataChanged, onOpenActivityLink, onAdminToas
         <DialogContent>
           <Stack component="form" id="admin-alumni-invite-form" onSubmit={createAlumni} spacing={1.5} sx={{ pt: 1 }}>
             <Typography sx={{ color: '#526273', fontSize: 14 }}>Create an alumni account with community-only access and email a password setup link.</Typography>
-            <TextField label="Full name" value={alumniForm.full_name} onChange={(event) => updateAlumniForm('full_name', event.target.value)} required />
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' }, gap: 1.2 }}>
+              <TextField label="First name" value={alumniForm.first_name} onChange={(event) => updateAlumniForm('first_name', event.target.value)} required />
+              <TextField label="Last name" value={alumniForm.last_name} onChange={(event) => updateAlumniForm('last_name', event.target.value)} required />
+            </Box>
             <TextField label="Email" type="email" value={alumniForm.email} onChange={(event) => updateAlumniForm('email', event.target.value)} required />
             <TextField label="Phone" value={alumniForm.phone} onChange={(event) => updateAlumniForm('phone', event.target.value)} />
             <Autocomplete
@@ -2673,7 +2701,7 @@ function AdminStudentsPane({ onAdminDataChanged, onOpenActivityLink, onAdminToas
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button variant="outlined" onClick={() => setInviteDialogOpen(false)} disabled={saving}>Cancel</Button>
-          <Button type="submit" form="admin-alumni-invite-form" variant="contained" color="secondary" disabled={saving} startIcon={<SendOutlined />}>
+          <Button type="submit" form="admin-alumni-invite-form" variant="contained" color="secondary" disabled={saving || !alumniForm.first_name.trim() || !alumniForm.last_name.trim() || !alumniForm.email.trim()} startIcon={<SendOutlined />}>
             {saving ? 'Sending...' : 'Send invite'}
           </Button>
         </DialogActions>
