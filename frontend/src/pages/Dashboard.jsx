@@ -691,16 +691,37 @@ function UserAvatar({ user, size = 44 }) {
   );
 }
 
+function readableError(detail, fallback = 'Something went wrong') {
+  if (!detail) return fallback;
+  if (typeof detail === 'string') return detail;
+  if (Array.isArray(detail)) {
+    const messages = detail
+      .map((item) => {
+        if (typeof item === 'string') return item;
+        if (!item || typeof item !== 'object') return '';
+        const location = Array.isArray(item.loc) ? item.loc.filter((part) => part !== 'body').join(' ') : '';
+        const message = item.msg || item.message || item.detail || '';
+        return [location, message].filter(Boolean).join(': ');
+      })
+      .filter(Boolean);
+    return messages.length ? messages.join('; ') : fallback;
+  }
+  if (typeof detail === 'object') {
+    return detail.message || detail.msg || detail.detail || fallback;
+  }
+  return String(detail);
+}
+
 function useAdminPaneToast(message, setMessage, error, setError, onAdminToast) {
   React.useEffect(() => {
     if (!onAdminToast || !message) return;
-    onAdminToast(message, 'success');
+    onAdminToast(readableError(message, 'Done.'), 'success');
     setMessage('');
   }, [message, onAdminToast, setMessage]);
 
   React.useEffect(() => {
     if (!onAdminToast || !error) return;
-    onAdminToast(error, 'error');
+    onAdminToast(readableError(error, 'Something went wrong'), 'error');
     setError('');
   }, [error, onAdminToast, setError]);
 }
@@ -2946,7 +2967,7 @@ function AdminTeachersPane({ onAdminDataChanged, onAdminToast }) {
         body: JSON.stringify(form),
       });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.detail || 'Unable to add teacher');
+      if (!response.ok) throw new Error(readableError(data.detail, 'Unable to add teacher'));
       setTeachers((current) => [...current, data.teacher].sort((a, b) => a.full_name.localeCompare(b.full_name)));
       setSearch('');
       setStatusFilter('all');
