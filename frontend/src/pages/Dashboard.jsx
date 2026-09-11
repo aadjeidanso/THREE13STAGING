@@ -2921,6 +2921,15 @@ function AdminTeachersPane({ onAdminDataChanged, onAdminToast }) {
     if (courses.length === 1) return courses[0].title;
     return `${courses[0].title} +${courses.length - 1}`;
   };
+  const teacherStatusMeta = (teacher) => {
+    if (!teacher?.email_verified) {
+      return { label: 'Pending setup', bg: '#fff2dd', color: '#b45309' };
+    }
+    if (teacher.is_active) {
+      return { label: 'Active', bg: '#e8f7ef', color: '#16805f' };
+    }
+    return { label: 'Inactive', bg: '#eef3f8', color: '#526273' };
+  };
 
   const teacherStats = [
     { label: 'Total Teachers', value: teachers.length, detail: 'Instructor accounts', icon: GroupOutlined, color: '#1b6ef3', bg: '#eaf2ff' },
@@ -3185,6 +3194,7 @@ function AdminTeachersPane({ onAdminDataChanged, onAdminToast }) {
             <Stack divider={<Divider />}>
               {paginatedTeachers.map((teacher) => {
                 const isSelected = selectedTeacher?.id === teacher.id;
+                const statusMeta = teacherStatusMeta(teacher);
                 return (
                   <Box key={teacher.id} onClick={() => setSelectedTeacherId(teacher.id)} sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(180px, 1.35fr) 92px 130px 82px 54px', xl: 'minmax(220px, 1.4fr) 104px 160px 104px 64px' }, gap: 1, alignItems: 'center', px: 1.2, py: 1.25, cursor: 'pointer', bgcolor: isSelected ? '#f1f7ff' : '#fff', borderLeft: isSelected ? '3px solid #1b6ef3' : '3px solid transparent', '&:hover': { bgcolor: '#f8fafc' } }}>
                     <Stack direction="row" spacing={1.1} alignItems="center" sx={{ minWidth: 0 }}>
@@ -3195,7 +3205,7 @@ function AdminTeachersPane({ onAdminDataChanged, onAdminToast }) {
                         <Typography noWrap sx={{ color: '#526273', fontSize: 12 }}>{teacher.phone || 'No phone provided'}</Typography>
                       </Box>
                     </Stack>
-                    <Chip label={teacher.is_active ? 'Active' : 'Inactive'} size="small" sx={{ bgcolor: teacher.is_active ? '#e8f7ef' : '#eef3f8', color: teacher.is_active ? '#16805f' : '#526273', fontWeight: 850, width: 'fit-content' }} />
+                    <Chip label={statusMeta.label} size="small" sx={{ bgcolor: statusMeta.bg, color: statusMeta.color, fontWeight: 850, width: 'fit-content' }} />
                     <Typography noWrap sx={{ color: 'primary.dark', fontSize: 12.5 }}>{assignedCourseSummary(teacher)}</Typography>
                     <Typography sx={{ color: '#0b67c2', fontWeight: 850, fontSize: 12.5 }}>{teacher.assigned_courses.length} Course{teacher.assigned_courses.length === 1 ? '' : 's'}</Typography>
                     <Stack direction="row" spacing={0.7} justifyContent={{ xs: 'flex-start', lg: 'center' }} sx={{ minWidth: { lg: 44 } }}>
@@ -3219,6 +3229,11 @@ function AdminTeachersPane({ onAdminDataChanged, onAdminToast }) {
             <Typography sx={{ color: '#526273' }}>Select a teacher to view details.</Typography>
           ) : (
             <Stack spacing={2}>
+              {(() => {
+                const statusMeta = teacherStatusMeta(selectedTeacher);
+                const setupPending = !selectedTeacher.email_verified;
+                return (
+                  <>
               <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
                 <Stack direction="row" spacing={1.2} alignItems="center">
                   <Box sx={{ position: 'relative', width: 62, height: 62, flexShrink: 0 }}>
@@ -3226,10 +3241,11 @@ function AdminTeachersPane({ onAdminDataChanged, onAdminToast }) {
                     {selectedTeacher.is_active && <Box sx={{ position: 'absolute', right: 2, bottom: 3, width: 14, height: 14, borderRadius: '50%', bgcolor: '#16a36d', border: '2px solid #fff' }} />}
                   </Box>
                   <Box>
-                    <Chip label={selectedTeacher.is_active ? 'Active' : 'Inactive'} size="small" sx={{ mb: 0.5, bgcolor: selectedTeacher.is_active ? '#e8f7ef' : '#eef3f8', color: selectedTeacher.is_active ? '#16805f' : '#526273', fontWeight: 800 }} />
+                    <Chip label={statusMeta.label} size="small" sx={{ mb: 0.5, bgcolor: statusMeta.bg, color: statusMeta.color, fontWeight: 800 }} />
                     <Typography sx={{ color: 'primary.dark', fontWeight: 950, fontSize: '1.1rem' }}>{selectedTeacher.full_name}</Typography>
                     <Typography sx={{ color: '#526273', fontSize: 13 }}>{selectedTeacher.email}</Typography>
                     <Typography sx={{ color: '#526273', fontSize: 13 }}>{selectedTeacher.phone || 'No phone provided'}</Typography>
+                    {setupPending && <Typography sx={{ color: '#b45309', fontSize: 12.5, fontWeight: 750, mt: 0.4 }}>Waiting for teacher to complete email setup.</Typography>}
                   </Box>
                 </Stack>
                 <IconButton size="small" disabled><CloseOutlined /></IconButton>
@@ -3238,7 +3254,7 @@ function AdminTeachersPane({ onAdminDataChanged, onAdminToast }) {
                 {[
                   ['Assigned Course', assignedCourseSummary(selectedTeacher), MenuBookOutlined],
                   ['Joined', selectedTeacher.created_at ? formatTimestamp(selectedTeacher.created_at, { month: 'short', day: 'numeric', year: 'numeric' }) : 'Not set', CalendarTodayOutlined],
-                  ['Status', selectedTeacher.is_active ? 'Active' : 'Inactive', ShieldOutlined],
+                  ['Status', statusMeta.label, ShieldOutlined],
                   ['Total Courses', `${selectedTeacher.assigned_courses.length} Course${selectedTeacher.assigned_courses.length === 1 ? '' : 's'}`, MenuBookOutlined],
                 ].map(([label, value, Icon]) => (
                   <Stack key={label} direction="row" justifyContent="space-between" spacing={1} sx={{ py: 0.7, borderBottom: '1px solid rgba(18,60,105,0.08)' }}>
@@ -3286,10 +3302,14 @@ function AdminTeachersPane({ onAdminDataChanged, onAdminToast }) {
               <Divider />
               <Stack spacing={1}>
                 <Button variant="outlined" startIcon={<EditOutlined />} onClick={() => openEditTeacher(selectedTeacher)}>Edit Teacher</Button>
-                <Button variant="outlined" color={selectedTeacher.is_active ? 'error' : 'success'} disabled={saving} onClick={() => updateTeacherStatus(selectedTeacher.id, !selectedTeacher.is_active)}>
+                <Button variant="outlined" color={selectedTeacher.is_active ? 'error' : 'success'} disabled={saving || setupPending} onClick={() => updateTeacherStatus(selectedTeacher.id, !selectedTeacher.is_active)}>
                   {selectedTeacher.is_active ? 'Deactivate Teacher' : 'Activate Teacher'}
                 </Button>
+                {setupPending && <Typography sx={{ color: '#637083', fontSize: 12.5 }}>Activation is available only after the teacher completes setup.</Typography>}
               </Stack>
+                  </>
+                );
+              })()}
             </Stack>
           )}
         </Box>

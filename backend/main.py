@@ -8385,6 +8385,8 @@ def admin_update_teacher_status(
     teacher = db.query(User).filter(User.id == teacher_id, User.role == "teacher").first()
     if not teacher:
         raise HTTPException(status_code=404, detail="Teacher not found")
+    if data.is_active and not teacher.email_verified:
+        raise HTTPException(status_code=400, detail="Teacher must complete the email setup link before the account can be activated")
 
     before_status = teacher.is_active
     teacher.is_active = data.is_active
