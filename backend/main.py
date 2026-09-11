@@ -1880,8 +1880,11 @@ def confirm_password_reset(data: PasswordResetConfirmRequest, db: Session = Depe
             )
             user.alumni_cohort_id = fallback_cohort.id if fallback_cohort else None
 
+    should_activate_teacher_invite = user.role == "teacher" and not user.email_verified
     user.password_hash = hash_password(new_password)
     user.email_verified = True
+    if should_activate_teacher_invite:
+        user.is_active = True
     reset_row.used_at = now_ts()
     db.commit()
     return {"message": "Password reset successfully. You can sign in with your new password."}
@@ -8342,7 +8345,7 @@ def admin_create_teacher(
         phone=data.phone.strip() if data.phone else None,
         password_hash=hash_password(secrets.token_urlsafe(24)),
         role="teacher",
-        is_active=True,
+        is_active=False,
         email_verified=False,
     )
     db.add(teacher)
