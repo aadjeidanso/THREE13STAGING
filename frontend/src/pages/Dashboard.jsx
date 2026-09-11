@@ -691,6 +691,31 @@ function UserAvatar({ user, size = 44 }) {
   );
 }
 
+function StackedBooksIcon({ sx, fontSize, ...props }) {
+  const iconSize = fontSize === 'small' ? 20 : fontSize === 'large' ? 34 : 24;
+  return (
+    <Box
+      component="svg"
+      viewBox="0 0 64 64"
+      aria-hidden="true"
+      focusable="false"
+      sx={{ width: iconSize, height: iconSize, display: 'block', ...sx }}
+      {...props}
+    >
+      <defs>
+        <linearGradient id="stacked-books-main" x1="12" y1="8" x2="54" y2="56" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#0b4b9b" />
+          <stop offset="1" stopColor="#082540" />
+        </linearGradient>
+      </defs>
+      <path d="M10 38.5c0-2 1.1-3.8 2.9-4.7l31.7-16.7c1.7-.9 3.7-.8 5.3.2l5.3 3.2c1.8 1.1 1.8 3.7-.1 4.7L23.5 42.1c-1.6.9-3.6.9-5.2 0l-5.7-3.1c-1-.5-1.8-1.5-2.2-2.6-.3.7-.4 1.4-.4 2.1Z" fill="url(#stacked-books-main)" opacity="0.42" />
+      <path d="M10 27.1c0-2 1.1-3.8 2.9-4.7L44.6 5.7c1.7-.9 3.7-.8 5.3.2l5.3 3.2c1.8 1.1 1.8 3.7-.1 4.7L23.5 30.7c-1.6.9-3.6.9-5.2 0l-5.7-3.1c-1-.5-1.8-1.5-2.2-2.6-.3.7-.4 1.4-.4 2.1Z" fill="url(#stacked-books-main)" />
+      <path d="M12.7 37.4 20 41.3c.6.3 1.4.3 2.1-.1l33.3-17.8v4.7c0 1-.6 2-1.5 2.5L23.4 47c-1.6.9-3.6.9-5.2 0l-5.7-3.1c-1.6-.9-2.6-2.6-2.6-4.4v-2.2c.8.7 1.7 1.3 2.8 1.8Z" fill="url(#stacked-books-main)" opacity="0.88" />
+      <path d="M12.7 49.1 20 53c.6.3 1.4.3 2.1-.1l33.3-17.8v4.7c0 1-.6 2-1.5 2.5L23.4 58.7c-1.6.9-3.6.9-5.2 0l-5.7-3.1C10.9 54.7 10 53 10 51.2V49c.8.7 1.7 1.3 2.7 1.9Z" fill="url(#stacked-books-main)" opacity="0.68" />
+    </Box>
+  );
+}
+
 function readableError(detail, fallback = 'Something went wrong') {
   if (!detail) return fallback;
   if (typeof detail === 'string') return detail;
@@ -953,7 +978,7 @@ function AdminDashboardHome({ refreshKey, setActivePane }) {
   const backendRecentActivity = summary?.recent_activity || [];
   const stats = [
     { label: 'Current Students', value: totals.students ?? 0, source: 'Active cohort learners', icon: GroupOutlined, color: '#8b5cf6', bg: '#f0e7ff' },
-    { label: 'Total Courses', value: totals.courses ?? 0, source: 'Live course count', icon: MenuBookOutlined, color: '#1b7df3', bg: '#e6f0ff' },
+    { label: 'Total Courses', value: totals.courses ?? 0, source: 'Live course count', icon: StackedBooksIcon, color: '#1b7df3', bg: '#e6f0ff' },
     { label: 'Pending Students', value: totals.pending_enrollment_requests ?? 0, source: 'Awaiting approval', icon: AssignmentOutlined, color: '#f05a28', bg: '#fff0e7' },
     { label: 'Program Participants', value: totals.program_participants ?? 0, source: 'All registered students', icon: DashboardOutlined, color: '#8b5cf6', bg: '#f0e7ff' },
   ];
@@ -963,7 +988,7 @@ function AdminDashboardHome({ refreshKey, setActivePane }) {
     material: { icon: InsertDriveFileOutlined, color: '#1b6ef3', bg: '#e8f1ff', dot: '#1b6ef3' },
     module: { icon: ViewModuleOutlined, color: '#7a4fe8', bg: '#f1e9ff', dot: '#8b5cf6' },
     enrollment: { icon: PersonOutlineOutlined, color: '#8b5cf6', bg: '#f0e7ff', dot: '#c4b5fd' },
-    course: { icon: MenuBookOutlined, color: '#1b6ef3', bg: '#e8f1ff', dot: '#1b6ef3' },
+    course: { icon: StackedBooksIcon, color: '#1b6ef3', bg: '#e8f1ff', dot: '#1b6ef3' },
     support: { icon: SupportAgentOutlined, color: '#d32f2f', bg: '#ffe8e8', dot: '#f05a28' },
   };
   const recentActivity = backendRecentActivity.length ? backendRecentActivity : [
@@ -2003,7 +2028,7 @@ function AdminStudentsPane({ onAdminDataChanged, onOpenActivityLink, onAdminToas
       { label: 'Alumni', value: alumni.length, detail: 'Community members', icon: SchoolOutlined, color: '#7c3aed', bg: '#f4ecff' },
       { label: 'Pending Accounts', value: students.filter((student) => !student.is_active).length, detail: 'Awaiting activation', icon: AccessTimeOutlined, color: '#f59e0b', bg: '#fff7e8' },
       { label: 'Active Accounts', value: students.filter((student) => student.is_active).length, detail: 'Can sign in now', icon: CheckCircleOutlined, color: '#16805f', bg: '#e8f7ef' },
-      { label: 'Total Courses', value: courses.length, detail: 'Course catalog', icon: MenuBookOutlined, color: '#1b6ef3', bg: '#eaf2ff' },
+      { label: 'Total Courses', value: courses.length, detail: 'Course catalog', icon: StackedBooksIcon, color: '#1b6ef3', bg: '#eaf2ff' },
     ];
   }, [students, courses]);
 
@@ -8686,7 +8711,7 @@ function StudentDashboardHome({ setActivePane, user, onOpenCourse }) {
   const pendingActivation = user && !user.is_active;
   const firstName = user?.full_name?.split(' ')[0] || 'student';
   const dashboardStats = [
-    { label: 'Enrolled courses', value: approvedCourses.length, action: 'View all courses', icon: MenuBookOutlined, color: '#1b6ef3', bg: '#eaf2ff', pane: 'my-courses' },
+    { label: 'Enrolled courses', value: approvedCourses.length, action: 'View all courses', icon: StackedBooksIcon, color: '#1b6ef3', bg: '#eaf2ff', pane: 'my-courses' },
     { label: 'Recent materials', value: summary?.recent_materials?.length || 0, action: 'View materials', icon: FolderCopyOutlined, color: '#15965f', bg: '#e8f7ef', pane: 'materials' },
     { label: 'Upcoming assignments', value: summary?.upcoming_assignments?.length || 0, action: 'View assignments', icon: AssignmentOutlined, color: '#f05a28', bg: '#fff0e9', pane: 'assignments' },
     { label: 'Announcements', value: summary?.announcements?.length || 0, action: 'View announcements', icon: CampaignOutlined, color: '#7c3aed', bg: '#f2eaff', pane: 'announcements' },
@@ -12060,13 +12085,13 @@ function StudentProfilePane({ user, onUserUpdated }) {
   const memberSince = user?.created_at ? formatTimestamp(user.created_at, { month: 'short', day: 'numeric', year: 'numeric' }) : (isAlumni ? 'Alumni' : 'Active student');
   const hoursLearned = Math.max(approvedCourses.length * 8 + submittedAssignments * 2 + certificates.length * 6, 0);
   const profileStats = [
-    { label: 'Courses Enrolled', value: approvedCourses.length, icon: MenuBookOutlined, color: '#1b6ef3', bg: '#eaf2ff' },
+    { label: 'Courses Enrolled', value: approvedCourses.length, icon: StackedBooksIcon, color: '#1b6ef3', bg: '#eaf2ff' },
     { label: 'Assignments Submitted', value: submittedAssignments, icon: AssignmentOutlined, color: '#f05a28', bg: '#fff0e9' },
     { label: 'Certificates Earned', value: certificates.length, icon: EmojiEventsOutlined, color: '#e86a00', bg: '#fff2df' },
     { label: 'Hours Learned', value: hoursLearned, icon: AccessTimeOutlined, color: '#1b6ef3', bg: '#eaf2ff' },
   ];
   const progressStats = [
-    { label: 'Courses in Progress', value: approvedCourses.length, icon: MenuBookOutlined, color: '#16805f', bg: '#e8f7ef' },
+    { label: 'Courses in Progress', value: approvedCourses.length, icon: StackedBooksIcon, color: '#16805f', bg: '#e8f7ef' },
     { label: 'Assignments Submitted', value: submittedAssignments, icon: AssignmentOutlined, color: '#7c3aed', bg: '#f2eaff' },
     { label: 'Certificates Earned', value: certificates.length, icon: EmojiEventsOutlined, color: '#f05a28', bg: '#fff0e9' },
   ];
@@ -12460,7 +12485,7 @@ function TeacherDashboardHome({ setActivePane, user, onTeacherToast }) {
   const activityRangeOptions = [7, 15, 30, 60, 90];
 
   const statCards = [
-    { label: 'Assigned Courses', value: courses.length, helper: courses.length ? 'Courses you manage' : 'No courses assigned', color: '#2678f3', icon: MenuBookOutlined },
+    { label: 'Assigned Courses', value: courses.length, helper: courses.length ? 'Courses you manage' : 'No courses assigned', color: '#2678f3', icon: StackedBooksIcon },
     { label: 'Enrolled Students', value: summary?.total_students || 0, helper: 'Across your courses', color: '#14a36f', icon: GroupOutlined },
     { label: 'Pending Submissions', value: pendingSubmissions, helper: `${lastSevenDelta >= 0 ? '+' : ''}${lastSevenDelta} from last 7 days`, color: '#f05a28', icon: AssignmentOutlined },
     { label: 'Upcoming Deadlines', value: summary?.upcoming_deadlines || 0, helper: 'View all', color: '#7a4fe8', icon: CalendarTodayOutlined, action: () => setActivePane('assignments') },
