@@ -222,13 +222,13 @@ const studentNavItems = [
   { key: 'community', label: 'Community', icon: ForumOutlined },
   { key: 'support', label: 'Support', icon: SupportAgentOutlined },
   { key: 'profile', label: 'Profile', icon: AccountCircleOutlined },
+  { key: 'certificates', label: 'View Certificate', icon: VerifiedOutlined },
 ];
 
 const studentCourseNavItems = [
   { key: 'modules', label: 'Modules', icon: ViewModuleOutlined },
   { key: 'materials', label: 'Course Materials', icon: FolderCopyOutlined },
   { key: 'assignments', label: 'Assignments', icon: AssignmentOutlined },
-  { key: 'certificates', label: 'Certificates', icon: VerifiedOutlined },
 ];
 
 const studentPaneKeys = [
@@ -11382,7 +11382,7 @@ function AlumniProfilePane({ user, onUserUpdated }) {
   );
 }
 
-function StudentCertificatesPane({ selectedCourseId }) {
+function StudentCertificatesPane() {
   const [certificates, setCertificates] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState('');
@@ -11410,17 +11410,13 @@ function StudentCertificatesPane({ selectedCourseId }) {
     return () => { mounted = false; };
   }, []);
 
-  const visibleCertificates = certificates.filter((certificate) => (
-    selectedCourseId ? certificate.course.id === Number(selectedCourseId) : true
-  ));
-
   if (viewingCertificate) {
     return (
       <Box sx={{ height: { xs: 'calc(100vh - 96px)', md: 'calc(100vh - 116px)' }, display: 'flex', flexDirection: 'column', minHeight: 560 }}>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }} sx={{ mb: 1.2 }}>
           <Box sx={{ minWidth: 0 }}>
             <Typography variant="h3" sx={{ color: 'primary.dark', fontSize: { xs: '1.55rem', md: '1.9rem' }, lineHeight: 1.1 }}>
-              {viewingCertificate.course.title}
+              Program Certificate
             </Typography>
             <Typography sx={{ color: '#637083', fontSize: 13 }}>{viewingCertificate.file_name}</Typography>
           </Box>
@@ -11453,21 +11449,21 @@ function StudentCertificatesPane({ selectedCourseId }) {
   return (
     <Stack spacing={3}>
       <StudentPageHeader
-        title="Certificates"
-        subtitle="View and download certificates issued for your completed courses."
+        title="View Certificate"
+        subtitle="View and download your certificate for the full Three13 IT Training Program."
         icon={VerifiedOutlined}
       />
       <Box sx={{ borderTop: '1px solid rgba(18,60,105,0.14)' }} />
       {loading ? (
         <Stack alignItems="center" sx={{ py: 5 }}><CircularProgress size={28} /></Stack>
-      ) : visibleCertificates.length === 0 ? (
+      ) : certificates.length === 0 ? (
         <Box sx={{ p: 1 }}>
           <Typography sx={{ color: 'primary.dark', fontWeight: 900 }}>No certificates issued yet.</Typography>
-          <Typography sx={{ color: '#637083' }}>When your course is completed and the admin uploads your certificate, it will appear here.</Typography>
+          <Typography sx={{ color: '#637083' }}>When your program certificate is issued by the admin, it will appear here.</Typography>
         </Box>
       ) : (
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)', xl: 'repeat(3, 1fr)' }, gap: 1.5 }}>
-          {visibleCertificates.map((certificate) => (
+          {certificates.map((certificate) => (
             <Box key={certificate.id} sx={{ p: { xs: 0.5, md: 0.8 } }}>
               <Stack spacing={1.4}>
                 <Stack direction="row" spacing={1.2} alignItems="center">
@@ -11475,7 +11471,7 @@ function StudentCertificatesPane({ selectedCourseId }) {
                     <VerifiedOutlined />
                   </Box>
                   <Box sx={{ minWidth: 0 }}>
-                    <Typography noWrap sx={{ color: 'primary.dark', fontWeight: 950 }}>{certificate.course.title}</Typography>
+                    <Typography noWrap sx={{ color: 'primary.dark', fontWeight: 950 }}>Program Certificate</Typography>
                     <Typography sx={{ color: '#637083', fontSize: 13 }}>
                       Issued {formatTimestamp(certificate.created_at, { month: 'short', day: 'numeric', year: 'numeric' })}
                     </Typography>
@@ -11585,7 +11581,7 @@ function StudentSupportPane({ user, supportRole = 'student' }) {
   ] : [
     { question: 'How do I reset my password?', answer: 'Use the sign-in page password reset option, then check your email for the reset link.' },
     { question: 'How do I submit an assignment?', answer: 'Open the course module or Assignments page, choose the assignment, attach your file, and submit before the due date.' },
-    { question: 'Where can I download my certificate?', answer: 'Open Certificates from the student sidebar. Issued certificates can be viewed or downloaded there.' },
+    { question: 'Where can I download my certificate?', answer: 'Open View Certificate from the student sidebar. Issued program certificates can be viewed or downloaded there.' },
     { question: "Why can't I access my course materials?", answer: 'Course access depends on admin approval. If your enrollment is pending, wait for admin review before submitting tickets or accessing course tools.' },
   ];
   const ticketIconColors = ['#eaf2ff', '#fff0e9', '#e8f7ef', '#f2eafb'];
@@ -15757,7 +15753,7 @@ function StudentPortal({ user, onSignOut, onUserUpdated, initialPane = 'dashboar
           {activePane === 'modules' && <StudentModulesPane selectedCourseId={selectedSidebarCourseId} setActivePane={setActivePane} />}
           {activePane === 'materials' && <StudentMaterialsPane selectedCourseId={selectedSidebarCourseId} />}
           {activePane === 'assignments' && <StudentAssignmentsPane selectedCourseId={selectedSidebarCourseId} />}
-          {activePane === 'certificates' && <StudentCertificatesPane selectedCourseId={selectedSidebarCourseId} />}
+          {activePane === 'certificates' && <StudentCertificatesPane />}
           {activePane === 'announcements' && <StudentAnnouncementsPane user={user} selectedAnnouncementId={selectedAnnouncementId} onAnnouncementRead={markNotificationRead} />}
           {activePane === 'community' && !isPendingStudent && <StudentCommunityPane />}
           {activePane === 'support' && <StudentSupportPane user={user} />}
