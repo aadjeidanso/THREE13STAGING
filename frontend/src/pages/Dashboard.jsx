@@ -9240,6 +9240,13 @@ function StudentMaterialsPane({ selectedCourseId }) {
     await markMaterialViewed(material);
   };
 
+  const resetMaterialFilters = () => {
+    setCourseFilter('all');
+    setTypeFilter('all');
+    setSortOrder('newest');
+    setSearch('');
+  };
+
   const renderMiniMaterial = (material) => {
     return (
       <Stack key={`${material.course.id}-${material.id}`} direction="row" spacing={1.1} alignItems="center">
@@ -9328,38 +9335,43 @@ function StudentMaterialsPane({ selectedCourseId }) {
           Mark as completed
         </MenuItem>
       </Menu>
-      {loading ? <Stack alignItems="center" sx={{ py: 5 }}><CircularProgress size={28} /></Stack> : visibleMaterials.length === 0 ? (
-        <Box sx={{ bgcolor: '#fff', border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, p: 2.4 }}>
-          <Typography sx={{ color: 'primary.dark', fontWeight: 900 }}>No materials match these filters.</Typography>
-          <Typography sx={{ color: '#637083' }}>Try a different course, type, or search term.</Typography>
-        </Box>
-      ) : (
+      {loading ? <Stack alignItems="center" sx={{ py: 5 }}><CircularProgress size={28} /></Stack> : (
         <Stack spacing={1.4}>
-            <Box sx={{ bgcolor: '#fff', border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, p: 1.2 }}>
-              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', xl: '1.2fr 1fr 1fr auto' }, gap: 1 }}>
-                <TextField select size="small" label="Course" value={courseFilter} onChange={(event) => setCourseFilter(event.target.value)}>
-                  <MenuItem value="all">All courses</MenuItem>
-                  {courses.map((course) => <MenuItem key={course.id} value={course.id}>{course.title}</MenuItem>)}
-                </TextField>
-                <TextField select size="small" label="Type" value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)}>
-                  <MenuItem value="all">All types</MenuItem>
-                  {materialTypes.map((option) => <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>)}
-                </TextField>
-                <TextField select size="small" label="Sort by" value={sortOrder} onChange={(event) => setSortOrder(event.target.value)}>
-                  <MenuItem value="newest">Newest</MenuItem>
-                  <MenuItem value="oldest">Oldest</MenuItem>
-                  <MenuItem value="title">Title</MenuItem>
-                </TextField>
-                <Button
-                  variant="text"
-                  startIcon={<FilterAltOffOutlined />}
-                  onClick={() => { setCourseFilter('all'); setTypeFilter('all'); setSortOrder('newest'); setSearch(''); }}
-                  sx={{ justifySelf: { xs: 'stretch', xl: 'end' } }}
-                >
-                  Clear
-                </Button>
-              </Box>
+          <Box sx={{ bgcolor: '#fff', border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, p: 1.2 }}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', xl: '1.2fr 1fr 1fr auto' }, gap: 1 }}>
+              <TextField select size="small" label="Course" value={courseFilter} onChange={(event) => setCourseFilter(event.target.value)}>
+                <MenuItem value="all">All courses</MenuItem>
+                {courses.map((course) => <MenuItem key={course.id} value={course.id}>{course.title}</MenuItem>)}
+              </TextField>
+              <TextField select size="small" label="Type" value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)}>
+                <MenuItem value="all">All types</MenuItem>
+                {materialTypes.map((option) => <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>)}
+              </TextField>
+              <TextField select size="small" label="Sort by" value={sortOrder} onChange={(event) => setSortOrder(event.target.value)}>
+                <MenuItem value="newest">Newest</MenuItem>
+                <MenuItem value="oldest">Oldest</MenuItem>
+                <MenuItem value="title">Title</MenuItem>
+              </TextField>
+              <Button
+                variant="text"
+                startIcon={<FilterAltOffOutlined />}
+                onClick={resetMaterialFilters}
+                sx={{ justifySelf: { xs: 'stretch', xl: 'end' } }}
+              >
+                Clear
+              </Button>
             </Box>
+          </Box>
+          {visibleMaterials.length === 0 ? (
+            <Box sx={{ bgcolor: '#fff', border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, p: 2.4 }}>
+              <Typography sx={{ color: 'primary.dark', fontWeight: 900 }}>No materials match these filters.</Typography>
+              <Typography sx={{ color: '#637083', mb: 1.5 }}>Try a different course, type, or search term.</Typography>
+              <Button variant="outlined" startIcon={<FilterAltOffOutlined />} onClick={resetMaterialFilters}>
+                Reset filters
+              </Button>
+            </Box>
+          ) : (
+            <>
             <Stack spacing={1.2}>
               {groupedMaterials.map((group, index) => {
                 const isExpanded = expandedGroup ? expandedGroup === group.key : index === 0;
@@ -9392,6 +9404,8 @@ function StudentMaterialsPane({ selectedCourseId }) {
                 <Chip icon={<CheckCircleOutlined />} label="Organized by module/week" size="small" variant="outlined" />
               </Stack>
             </Stack>
+            </>
+          )}
         </Stack>
       )}
     </Stack>
