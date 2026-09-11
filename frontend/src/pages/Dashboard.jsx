@@ -9365,10 +9365,7 @@ function StudentMaterialsPane({ selectedCourseId }) {
           {visibleMaterials.length === 0 ? (
             <Box sx={{ bgcolor: '#fff', border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, p: 2.4 }}>
               <Typography sx={{ color: 'primary.dark', fontWeight: 900 }}>No materials match these filters.</Typography>
-              <Typography sx={{ color: '#637083', mb: 1.5 }}>Try a different course, type, or search term.</Typography>
-              <Button variant="outlined" startIcon={<FilterAltOffOutlined />} onClick={resetMaterialFilters}>
-                Reset filters
-              </Button>
+              <Typography sx={{ color: '#637083' }}>Try a different course, type, or search term.</Typography>
             </Box>
           ) : (
             <>
