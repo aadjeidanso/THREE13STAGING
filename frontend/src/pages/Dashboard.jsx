@@ -9318,20 +9318,6 @@ function StudentMaterialsPane({ selectedCourseId }) {
           />
         )}
       />
-      <Stack direction="row" spacing={1.4} sx={{ flexWrap: 'wrap' }}>
-        {[
-          ['Videos', OndemandVideoOutlined, '#0f63c7'],
-          ['PDFs', PictureAsPdfOutlined, '#d93025'],
-          ['Slides', SlideshowOutlined, '#6f42c1'],
-          ['Links', LinkOutlined, '#15965f'],
-          ['Downloads', DownloadOutlined, '#0089a7'],
-        ].map(([label, Icon, color]) => (
-          <Stack key={label} direction="row" spacing={0.5} alignItems="center">
-            <Icon sx={{ color, fontSize: 17 }} />
-            <Typography sx={{ color: '#526273', fontWeight: 750, fontSize: 13 }}>{label}</Typography>
-          </Stack>
-        ))}
-      </Stack>
       {error && <Alert severity="error">{error}</Alert>}
       <Menu
         anchorEl={materialMenu.anchorEl}
@@ -9348,41 +9334,7 @@ function StudentMaterialsPane({ selectedCourseId }) {
           <Typography sx={{ color: '#637083' }}>Try a different course, type, or search term.</Typography>
         </Box>
       ) : (
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '270px 1fr' }, gap: 1.8, alignItems: 'start' }}>
-          <Stack spacing={1.6}>
-            <Box sx={{ bgcolor: '#fff', border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, p: 1.6 }}>
-              <Typography sx={{ color: 'primary.dark', fontWeight: 950, mb: 1.4 }}>Quick Stats</Typography>
-              {[
-                ['Total Materials', stats.total, InsertDriveFileOutlined, '#29a7df'],
-                ['Videos', stats.videos, OndemandVideoOutlined, '#0f63c7'],
-                ['Documents', stats.documents, PictureAsPdfOutlined, '#6f42c1'],
-                ['Links', stats.links, LinkOutlined, '#15965f'],
-              ].map(([label, value, Icon, color]) => (
-                <Stack key={label} direction="row" spacing={1.1} alignItems="center" sx={{ py: 0.65 }}>
-                  <Box sx={{ width: 28, height: 28, borderRadius: 1, bgcolor: `${color}18`, color, display: 'grid', placeItems: 'center' }}>
-                    <Icon sx={{ fontSize: 17 }} />
-                  </Box>
-                  <Box>
-                    <Typography sx={{ color: 'primary.dark', fontWeight: 900, fontSize: 13, lineHeight: 1 }}>{value}</Typography>
-                    <Typography sx={{ color: '#526273', fontSize: 12 }}>{label}</Typography>
-                  </Box>
-                </Stack>
-              ))}
-            </Box>
-            {quickPicks.length > 0 && (
-              <Box sx={{ bgcolor: '#fff', border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, p: 1.6 }}>
-                <Typography sx={{ color: 'primary.dark', fontWeight: 950, mb: 1.3 }}>Quick Picks</Typography>
-                <Stack spacing={1.3}>{quickPicks.map(renderMiniMaterial)}</Stack>
-              </Box>
-            )}
-            {recentlyAdded.length > 0 && (
-              <Box sx={{ bgcolor: '#fff', border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, p: 1.6 }}>
-                <Typography sx={{ color: 'primary.dark', fontWeight: 950, mb: 1.3 }}>Recently Added</Typography>
-                <Stack spacing={1.3}>{recentlyAdded.map(renderMiniMaterial)}</Stack>
-              </Box>
-            )}
-          </Stack>
-          <Stack spacing={1.4}>
+        <Stack spacing={1.4}>
             <Box sx={{ bgcolor: '#fff', border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, p: 1.2 }}>
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', xl: '1.2fr 1fr 1fr auto' }, gap: 1 }}>
                 <TextField select size="small" label="Course" value={courseFilter} onChange={(event) => setCourseFilter(event.target.value)}>
@@ -9440,8 +9392,7 @@ function StudentMaterialsPane({ selectedCourseId }) {
                 <Chip icon={<CheckCircleOutlined />} label="Organized by module/week" size="small" variant="outlined" />
               </Stack>
             </Stack>
-          </Stack>
-        </Box>
+        </Stack>
       )}
     </Stack>
   );
