@@ -2814,8 +2814,9 @@ function AdminTeachersPane({ onAdminDataChanged, onAdminToast }) {
   const [message, setMessage] = React.useState('');
   const [error, setError] = React.useState('');
   useAdminPaneToast(message, setMessage, error, setError, onAdminToast);
-  const [form, setForm] = React.useState({ full_name: '', email: '', phone: '', password: '' });
+  const [form, setForm] = React.useState({ full_name: '', email: '', phone: '' });
   const [editForm, setEditForm] = React.useState({ full_name: '', email: '', phone: '' });
+  const [teacherSetup, setTeacherSetup] = React.useState(null);
   const [courseSelections, setCourseSelections] = React.useState({});
 
   const loadTeachers = React.useCallback(async () => {
@@ -2934,6 +2935,7 @@ function AdminTeachersPane({ onAdminDataChanged, onAdminToast }) {
     setSaving(true);
     setError('');
     setMessage('');
+    setTeacherSetup(null);
     try {
       const response = await fetch(`${apiBaseUrl.replace(/\/$/, '')}/admin/teachers`, {
         method: 'POST',
@@ -2945,16 +2947,17 @@ function AdminTeachersPane({ onAdminDataChanged, onAdminToast }) {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.detail || 'Unable to add teacher');
-      setTeachers((current) => [...current, data].sort((a, b) => a.full_name.localeCompare(b.full_name)));
+      setTeachers((current) => [...current, data.teacher].sort((a, b) => a.full_name.localeCompare(b.full_name)));
       setSearch('');
       setStatusFilter('all');
       setCourseFilter('all');
       setSortBy('az');
-      setSelectedTeacherId(data.id);
-      setForm({ full_name: '', email: '', phone: '', password: '' });
-      setCreateDialogOpen(false);
+      setSelectedTeacherId(data.teacher.id);
+      setForm({ full_name: '', email: '', phone: '' });
+      setTeacherSetup(data.email_sent ? null : data);
+      if (data.email_sent) setCreateDialogOpen(false);
       onAdminDataChanged?.();
-      setMessage('Teacher account created.');
+      setMessage(data.email_sent ? 'Teacher invite sent.' : 'Teacher account created. Email was not delivered, so use the development setup link below.');
     } catch (err) {
       setError(err.message);
     } finally {
@@ -3275,15 +3278,24 @@ function AdminTeachersPane({ onAdminDataChanged, onAdminToast }) {
         <DialogTitle sx={{ color: 'primary.dark', fontWeight: 950 }}>Add New Teacher</DialogTitle>
         <DialogContent>
           <Stack component="form" id="admin-create-teacher-form" onSubmit={createTeacher} spacing={1.4} sx={{ pt: 1 }}>
+            <Typography sx={{ color: '#526273', fontSize: 14 }}>
+              Create a teacher account and email a secure setup link. The teacher creates their own password.
+            </Typography>
             <TextField label="Full name" value={form.full_name} onChange={(event) => updateForm('full_name', event.target.value)} required />
             <TextField label="Email" type="email" value={form.email} onChange={(event) => updateForm('email', event.target.value)} required />
             <TextField label="Phone" value={form.phone} onChange={(event) => updateForm('phone', event.target.value)} />
-            <TextField label="Temporary password" type="password" value={form.password} onChange={(event) => updateForm('password', event.target.value)} required helperText="At least 9 characters" />
           </Stack>
+          {teacherSetup?.setup_url && (
+            <Alert severity="info" sx={{ mt: 2 }}>
+              Development setup link: <Button size="small" href={teacherSetup.setup_url} sx={{ ml: 1, color: '#0b67c2', fontWeight: 850 }}>Open setup link</Button>
+            </Alert>
+          )}
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button variant="outlined" onClick={() => setCreateDialogOpen(false)} disabled={saving}>Cancel</Button>
-          <Button type="submit" form="admin-create-teacher-form" variant="contained" color="secondary" disabled={saving || !form.full_name.trim() || !form.email.trim() || form.password.length < 9}>{saving ? 'Creating...' : 'Create teacher'}</Button>
+          <Button type="submit" form="admin-create-teacher-form" variant="contained" color="secondary" disabled={saving || !form.full_name.trim() || !form.email.trim()} startIcon={<SendOutlined />}>
+            {saving ? 'Sending...' : 'Create & Send Invite'}
+          </Button>
         </DialogActions>
       </Dialog>
 

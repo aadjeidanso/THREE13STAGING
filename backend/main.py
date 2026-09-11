@@ -592,7 +592,6 @@ class TeacherCreateRequest(BaseModel):
     full_name: str
     email: str
     phone: str | None = None
-    password: str
 
 
 class TeacherUpdateRequest(BaseModel):
@@ -634,6 +633,13 @@ class TeacherResponse(BaseModel):
     email_verified: bool
     created_at: int
     assigned_courses: list[dict]
+
+
+class TeacherCreateResponse(BaseModel):
+    teacher: TeacherResponse
+    email_sent: bool
+    dev_token: str | None = None
+    setup_url: str | None = None
 
 
 class StudentAdminResponse(BaseModel):
@@ -1048,6 +1054,26 @@ def send_admin_learner_invite(user: User, token: str) -> bool:
             "You've been invited to Three13",
             f"<p>Hi {user.full_name},</p><p>Your enrollment in the Three13 IT Solutions training program has been created.</p><p>Use the secure link below to create your password and activate your learner account.</p><p style=\"color:#526273;\">This setup token expires in 72 hours.</p>",
             "Complete Account Setup",
+            setup_url,
+        ),
+    )
+
+
+def send_admin_teacher_invite(user: User, token: str) -> bool:
+    setup_url = f"{APP_BASE_URL.rstrip('/')}/login?reset_token={quote(token)}&email={quote(user.email)}"
+    return send_email(
+        user.email,
+        "Complete your Three13 teacher account setup",
+        (
+            f"Hi {user.full_name},\n\n"
+            "Your Three13 teacher account has been created.\n\n"
+            f"Use this secure link to create your password and complete your teacher account setup: {setup_url}\n\n"
+            "This setup token expires in 72 hours."
+        ),
+        branded_email_html(
+            "Complete your Three13 teacher account setup",
+            f"<p>Hi {user.full_name},</p><p>Your Three13 teacher account has been created.</p><p>Use the secure link below to create your password and complete your teacher account setup.</p><p style=\"color:#526273;\">This setup token expires in 72 hours.</p>",
+            "Complete Teacher Setup",
             setup_url,
         ),
     )
@@ -1855,6 +1881,7 @@ def confirm_password_reset(data: PasswordResetConfirmRequest, db: Session = Depe
             user.alumni_cohort_id = fallback_cohort.id if fallback_cohort else None
 
     user.password_hash = hash_password(new_password)
+    user.email_verified = True
     reset_row.used_at = now_ts()
     db.commit()
     return {"message": "Password reset successfully. You can sign in with your new password."}
@@ -8294,31 +8321,37 @@ def admin_list_teachers(
     return [teacher_to_response(teacher, courses_by_teacher.get(teacher.id, [])) for teacher in teachers]
 
 
-@app.post("/admin/teachers", response_model=TeacherResponse)
+@app.post("/admin/teachers", response_model=TeacherCreateResponse)
 def admin_create_teacher(
     data: TeacherCreateRequest,
     admin: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
-    if len(data.password) < 9 or len(data.password) > 72:
-        raise HTTPException(status_code=400, detail="Password must be at least 9 characters")
-
     normalized_email = data.email.strip().lower()
     existing_user = db.query(User).filter(func.lower(User.email) == normalized_email).first()
     if existing_user:
         raise HTTPException(status_code=409, detail="An account with this email already exists")
 
+    full_name = data.full_name.strip()
+    if not full_name:
+        raise HTTPException(status_code=400, detail="Teacher name is required")
+
     teacher = User(
-        full_name=data.full_name.strip(),
+        full_name=full_name,
         email=normalized_email,
         phone=data.phone.strip() if data.phone else None,
-        password_hash=hash_password(data.password),
+        password_hash=hash_password(secrets.token_urlsafe(24)),
         role="teacher",
         is_active=True,
-        email_verified=True,
+        email_verified=False,
     )
     db.add(teacher)
     db.flush()
+    setup_token = secrets.token_urlsafe(32)
+    db.add(PasswordResetToken(user_id=teacher.id, token_hash=hash_reset_token(setup_token), expires_at=now_ts() + 72 * 60 * 60))
+    email_sent = send_admin_teacher_invite(teacher, setup_token)
+    if not email_sent:
+        print(f"[teacher invite] Setup token for {teacher.email}: {setup_token}")
     create_audit_log(
         db,
         admin,
@@ -8330,7 +8363,13 @@ def admin_create_teacher(
     )
     db.commit()
     db.refresh(teacher)
-    return teacher_to_response(teacher, [])
+    setup_url = f"{APP_BASE_URL.rstrip('/')}/login?reset_token={quote(setup_token)}&email={quote(teacher.email)}"
+    return {
+        "teacher": teacher_to_response(teacher, []),
+        "email_sent": email_sent,
+        "dev_token": None if email_sent else setup_token,
+        "setup_url": None if email_sent else setup_url,
+    }
 
 
 @app.patch("/admin/teachers/{teacher_id}/status", response_model=TeacherResponse)
