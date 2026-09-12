@@ -11609,7 +11609,7 @@ function StudentSupportPane({ user, supportRole = 'student' }) {
 
   return (
     <Stack spacing={3}>
-      <StudentPageHeader title={supportTitle} subtitle={supportSubtitle} icon={SupportAgentOutlined} />
+      <StudentPageHeader title={supportTitle} subtitle={supportSubtitle} icon={null} />
       {message && <Alert severity="success">{message}</Alert>}
       {error && <Alert severity="error">{error}</Alert>}
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1fr 1.05fr' }, gap: 3 }}>
