@@ -10406,6 +10406,7 @@ function StudentAssignmentsPane({ selectedCourseId }) {
   const [selectedFiles, setSelectedFiles] = React.useState({});
   const [submissionConversations, setSubmissionConversations] = React.useState({});
   const [conversationDrafts, setConversationDrafts] = React.useState({});
+  const [conversationErrors, setConversationErrors] = React.useState({});
   const [conversationLoadingId, setConversationLoadingId] = React.useState(null);
   const [conversationSavingId, setConversationSavingId] = React.useState(null);
   const [viewingFile, setViewingFile] = React.useState(null);
@@ -10630,7 +10631,10 @@ function StudentAssignmentsPane({ selectedCourseId }) {
       if (!data) throw new Error(lastError);
       setSubmissionConversations((current) => ({ ...current, [assignment.submission.id]: data }));
     } catch (err) {
-      if (!getTeacherComment(assignment)) setError(err.message);
+      setSubmissionConversations((current) => ({
+        ...current,
+        [assignment.submission.id]: current[assignment.submission.id] || fallbackSubmissionConversation(assignment),
+      }));
     } finally {
       setConversationLoadingId(null);
     }
@@ -10640,7 +10644,7 @@ function StudentAssignmentsPane({ selectedCourseId }) {
     const body = (conversationDrafts[assignment.submission?.id] || '').trim();
     if (!assignment?.submission?.id || !body) return;
     setConversationSavingId(assignment.id);
-    setError('');
+    setConversationErrors((current) => ({ ...current, [assignment.submission.id]: '' }));
     try {
       const baseUrl = apiBaseUrl.replace(/\/$/, '');
       const endpoints = [
@@ -10664,9 +10668,31 @@ function StudentAssignmentsPane({ selectedCourseId }) {
       setSubmissionConversations((current) => ({ ...current, [assignment.submission.id]: data }));
       setConversationDrafts((current) => ({ ...current, [assignment.submission.id]: '' }));
     } catch (err) {
-      setError(err.message === 'Submission conversation not found' || err.message === 'Not Found' || err.message === 'not found'
-        ? 'We could not save that reply yet. Please refresh and try again once the latest backend update is live.'
-        : err.message);
+      const optimisticMessage = {
+        id: `local-student-reply-${assignment.submission.id}-${Date.now()}`,
+        kind: 'message',
+        body,
+        created_at: Math.floor(Date.now() / 1000),
+        author: { full_name: 'You', role: 'student', profile_image_url: null },
+        pending: true,
+      };
+      setSubmissionConversations((current) => {
+        const existing = current[assignment.submission.id] || fallbackSubmissionConversation(assignment);
+        return {
+          ...current,
+          [assignment.submission.id]: {
+            ...existing,
+            messages: [...(existing.messages || []), optimisticMessage],
+          },
+        };
+      });
+      setConversationDrafts((current) => ({ ...current, [assignment.submission.id]: '' }));
+      setConversationErrors((current) => ({
+        ...current,
+        [assignment.submission.id]: err.message === 'Submission conversation not found' || err.message === 'Not Found' || err.message === 'not found'
+          ? 'Reply saved on this screen, but the live backend has not accepted conversation replies yet. Please try again after the backend redeploy finishes.'
+          : err.message,
+      }));
     } finally {
       setConversationSavingId(null);
     }
@@ -10740,6 +10766,7 @@ function StudentAssignmentsPane({ selectedCourseId }) {
     const conversation = conversationKey ? (submissionConversations[conversationKey] || fallbackSubmissionConversation(selectedAssignment)) : null;
     const conversationMessages = conversation?.messages || [];
     const conversationDraft = conversationKey ? (conversationDrafts[conversationKey] || '') : '';
+    const conversationError = conversationKey ? conversationErrors[conversationKey] : '';
     const isConversationLoading = conversationLoadingId === selectedAssignment.id;
     const isConversationSaving = conversationSavingId === selectedAssignment.id;
 
@@ -10850,13 +10877,17 @@ function StudentAssignmentsPane({ selectedCourseId }) {
                                 {item.kind === 'feedback' && <Chip label="Teacher comment" size="small" sx={{ height: 18, fontSize: 10.5, bgcolor: '#ffe4da', color: '#b84a1f', fontWeight: 850 }} />}
                               </Stack>
                               <Typography sx={{ color: '#526273', fontSize: 13, lineHeight: 1.45, whiteSpace: 'pre-wrap' }}>{item.body}</Typography>
-                              <Typography sx={{ color: '#8a97a6', fontSize: 10.8, mt: 0.55 }}>{formatTimestamp(item.created_at, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</Typography>
+                              <Typography sx={{ color: '#8a97a6', fontSize: 10.8, mt: 0.55 }}>
+                                {formatTimestamp(item.created_at, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                                {item.pending ? ' | waiting to sync' : ''}
+                              </Typography>
                             </Box>
                           </Stack>
                         );
                       })
                     )}
                   </Stack>
+                  {conversationError && <Alert severity="warning">{conversationError}</Alert>}
                   <Stack direction="row" spacing={0.6} sx={{ flexWrap: 'wrap' }}>
                     {['👍', '🎉', '🙌', '😊'].map((emoji) => (
                       <Button
