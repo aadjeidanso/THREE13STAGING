@@ -13870,6 +13870,11 @@ function TeacherSubmissionsPane({ onTeacherToast, scope = 'teacher' }) {
   const [page, setPage] = React.useState(1);
   const [reviewSavingId, setReviewSavingId] = React.useState(null);
   const [commentDialog, setCommentDialog] = React.useState({ open: false, record: null, feedback: '' });
+  const [submissionConversations, setSubmissionConversations] = React.useState({});
+  const [conversationDrafts, setConversationDrafts] = React.useState({});
+  const [conversationLoadingId, setConversationLoadingId] = React.useState(null);
+  const [conversationSavingId, setConversationSavingId] = React.useState(null);
+  const [conversationErrors, setConversationErrors] = React.useState({});
   const [viewingSubmission, setViewingSubmission] = React.useState(null);
   const rowsPerPage = 5;
   const isAdminScope = scope === 'admin';
@@ -13939,6 +13944,64 @@ function TeacherSubmissionsPane({ onTeacherToast, scope = 'teacher' }) {
     return `${Math.floor(diffSeconds / 86400)} days ago`;
   };
   const getTeacherComment = (record) => record?.teacher_comment || record?.grade?.feedback || '';
+  const fallbackSubmissionConversation = React.useCallback((record) => {
+    const teacherComment = getTeacherComment(record);
+    return {
+      submission_id: record?.submission_id,
+      messages: teacherComment ? [{
+        id: `local-reviewer-feedback-${record?.submission_id}`,
+        kind: 'feedback',
+        body: teacherComment,
+        created_at: record?.grade?.graded_at || record?.submitted_at || Math.floor(Date.now() / 1000),
+        author: { full_name: reviewerLabel, role: isAdminScope ? 'admin' : 'teacher', profile_image_url: null },
+      }] : [],
+    };
+  }, [isAdminScope, reviewerLabel]);
+  const loadSubmissionConversation = React.useCallback(async (record) => {
+    if (!record?.submission_id) return;
+    setSubmissionConversations((current) => ({
+      ...current,
+      [record.submission_id]: current[record.submission_id] || fallbackSubmissionConversation(record),
+    }));
+    setConversationLoadingId(record.submission_id);
+    try {
+      const response = await fetch(`${apiBaseUrl.replace(/\/$/, '')}${submissionsBasePath}/${record.submission_id}/conversation`, {
+        headers: { Authorization: `Bearer ${getToken()}` },
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.detail || 'Unable to load conversation');
+      setSubmissionConversations((current) => ({ ...current, [record.submission_id]: data }));
+      setConversationErrors((current) => ({ ...current, [record.submission_id]: '' }));
+    } catch (err) {
+      setConversationErrors((current) => ({ ...current, [record.submission_id]: err.message }));
+    } finally {
+      setConversationLoadingId(null);
+    }
+  }, [fallbackSubmissionConversation, submissionsBasePath]);
+  const sendSubmissionConversationMessage = async () => {
+    const record = commentDialog.record;
+    const body = (conversationDrafts[record?.submission_id] || '').trim();
+    if (!record?.submission_id || !body) return;
+    setConversationSavingId(record.submission_id);
+    setConversationErrors((current) => ({ ...current, [record.submission_id]: '' }));
+    try {
+      const response = await fetch(`${apiBaseUrl.replace(/\/$/, '')}${submissionsBasePath}/${record.submission_id}/conversation`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${getToken()}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ body }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.detail || 'Unable to send reply');
+      setSubmissionConversations((current) => ({ ...current, [record.submission_id]: data }));
+      setConversationDrafts((current) => ({ ...current, [record.submission_id]: '' }));
+      onTeacherToast?.('Reply sent.', 'success');
+    } catch (err) {
+      setConversationErrors((current) => ({ ...current, [record.submission_id]: err.message }));
+      onTeacherToast?.(err.message, 'error');
+    } finally {
+      setConversationSavingId(null);
+    }
+  };
   const exportSubmissions = () => {
     const header = ['Student', 'Email', 'Assignment', 'Course', 'Module', 'Submitted', 'Status', 'Reviewed', 'Teacher Comment'];
     const rows = visibleRecords.map((record) => [
@@ -14008,6 +14071,7 @@ function TeacherSubmissionsPane({ onTeacherToast, scope = 'teacher' }) {
   };
   const openCommentDialog = (record) => {
     setCommentDialog({ open: true, record, feedback: getTeacherComment(record) });
+    loadSubmissionConversation(record);
   };
   const saveComment = async () => {
     if (!commentDialog.record) return;
@@ -14023,7 +14087,7 @@ function TeacherSubmissionsPane({ onTeacherToast, scope = 'teacher' }) {
       if (!response.ok) throw new Error(data.detail || 'Unable to save comment');
       onTeacherToast?.(commentDialog.feedback.trim() ? `${reviewerLabel} comment saved.` : `${reviewerLabel} comment deleted.`, 'success');
       await load();
-      setCommentDialog({ open: false, record: null, feedback: '' });
+      await loadSubmissionConversation(commentDialog.record);
     } catch (err) {
       setError(err.message);
       onTeacherToast?.(err.message, 'error');
@@ -14046,7 +14110,10 @@ function TeacherSubmissionsPane({ onTeacherToast, scope = 'teacher' }) {
       if (!response.ok) throw new Error(data.detail || 'Unable to delete comment');
       onTeacherToast?.(`${reviewerLabel} comment deleted.`, 'success');
       await load();
-      setCommentDialog({ open: false, record: null, feedback: '' });
+      setSubmissionConversations((current) => ({
+        ...current,
+        [commentDialog.record.submission_id]: { ...(current[commentDialog.record.submission_id] || {}), messages: (current[commentDialog.record.submission_id]?.messages || []).filter((item) => item.kind !== 'feedback') },
+      }));
     } catch (err) {
       setError(err.message);
       onTeacherToast?.(err.message, 'error');
@@ -14199,31 +14266,119 @@ function TeacherSubmissionsPane({ onTeacherToast, scope = 'teacher' }) {
           </Box>
         </Stack>
       </Box>
-      <Dialog open={commentDialog.open} onClose={() => setCommentDialog({ open: false, record: null, feedback: '' })} fullWidth maxWidth="sm">
-        <DialogTitle sx={{ color: 'primary.dark', fontWeight: 950 }}>Teacher Comment</DialogTitle>
+      <Dialog open={commentDialog.open} onClose={() => setCommentDialog({ open: false, record: null, feedback: '' })} fullWidth maxWidth="md">
+        <DialogTitle sx={{ color: 'primary.dark', fontWeight: 950 }}>
+          Submission Conversation
+        </DialogTitle>
         <DialogContent>
           <Typography sx={{ color: '#526273', mb: 1.5 }}>
             {commentDialog.record ? `${commentDialog.record.student.full_name} - ${commentDialog.record.assignment.title}` : 'Submission comment'}
           </Typography>
-          <TextField
-            autoFocus
-            fullWidth
-            multiline
-            minRows={4}
-            label="Comment for student"
-            value={commentDialog.feedback}
-            onChange={(event) => setCommentDialog((current) => ({ ...current, feedback: event.target.value }))}
-          />
+          {commentDialog.record && (
+            <Stack spacing={2}>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 0.85fr) minmax(0, 1.15fr)' }, gap: 1.5, alignItems: 'start' }}>
+                <Stack spacing={1.1}>
+                  <TextField
+                    autoFocus
+                    fullWidth
+                    multiline
+                    minRows={4}
+                    label="Comment for student"
+                    value={commentDialog.feedback}
+                    onChange={(event) => setCommentDialog((current) => ({ ...current, feedback: event.target.value }))}
+                  />
+                  <Stack direction="row" spacing={1} justifyContent="flex-end" sx={{ flexWrap: 'wrap' }}>
+                    {getTeacherComment(commentDialog.record) && (
+                      <Button color="error" onClick={deleteComment} disabled={reviewSavingId === commentDialog.record?.submission_id}>
+                        Delete comment
+                      </Button>
+                    )}
+                    <Button variant="contained" color="secondary" onClick={saveComment} disabled={reviewSavingId === commentDialog.record?.submission_id}>
+                      Save comment
+                    </Button>
+                  </Stack>
+                  <Alert severity="info" sx={{ fontSize: 13 }}>
+                    This top comment appears first in the student's Teacher Comment tab.
+                  </Alert>
+                </Stack>
+                <Stack spacing={1.2}>
+                  <Stack direction="row" justifyContent="space-between" alignItems="center">
+                    <Typography sx={{ color: 'primary.dark', fontWeight: 950 }}>Conversation thread</Typography>
+                    <Button size="small" onClick={() => loadSubmissionConversation(commentDialog.record)} disabled={conversationLoadingId === commentDialog.record.submission_id}>
+                      Refresh
+                    </Button>
+                  </Stack>
+                  {conversationErrors[commentDialog.record.submission_id] && (
+                    <Alert severity="warning">{conversationErrors[commentDialog.record.submission_id]}</Alert>
+                  )}
+                  <Stack spacing={1} sx={{ maxHeight: 330, overflowY: 'auto', pr: 0.5, border: '1px solid rgba(18,60,105,0.1)', borderRadius: 1.2, p: 1, bgcolor: '#f8fbff' }}>
+                    {conversationLoadingId === commentDialog.record.submission_id && !(submissionConversations[commentDialog.record.submission_id]?.messages || []).length ? (
+                      <Stack alignItems="center" sx={{ py: 3 }}><CircularProgress size={24} /></Stack>
+                    ) : ((submissionConversations[commentDialog.record.submission_id] || fallbackSubmissionConversation(commentDialog.record)).messages || []).length ? (
+                      ((submissionConversations[commentDialog.record.submission_id] || fallbackSubmissionConversation(commentDialog.record)).messages || []).map((item) => {
+                        const fromStudent = item.author?.role === 'student';
+                        return (
+                          <Stack key={`${item.kind}-${item.id}`} direction="row" spacing={1} justifyContent={fromStudent ? 'flex-start' : 'flex-end'} alignItems="flex-start">
+                            {fromStudent && <UserAvatar user={item.author} size={30} />}
+                            <Box sx={{ maxWidth: '82%', bgcolor: fromStudent ? '#fff' : item.kind === 'feedback' ? '#fff1ec' : '#eaf2ff', border: '1px solid rgba(18,60,105,0.1)', borderRadius: 1.3, p: 1 }}>
+                              <Stack direction="row" spacing={0.7} alignItems="center" sx={{ mb: 0.35 }}>
+                                <Typography sx={{ color: 'primary.dark', fontWeight: 900, fontSize: 12.5 }}>
+                                  {fromStudent ? item.author?.full_name || 'Student' : item.author?.full_name || reviewerLabel}
+                                </Typography>
+                                {item.kind === 'feedback' && <Chip label={`${reviewerLabel} comment`} size="small" sx={{ height: 18, fontSize: 10.5, bgcolor: '#ffe4da', color: '#b84a1f', fontWeight: 850 }} />}
+                              </Stack>
+                              <Typography sx={{ color: '#526273', fontSize: 13, lineHeight: 1.45, whiteSpace: 'pre-wrap' }}>{item.body}</Typography>
+                              <Typography sx={{ color: '#8a97a6', fontSize: 10.8, mt: 0.55 }}>
+                                {formatTimestamp(item.created_at, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                              </Typography>
+                            </Box>
+                          </Stack>
+                        );
+                      })
+                    ) : (
+                      <Box sx={{ p: 1.2, bgcolor: '#fff', borderRadius: 1 }}>
+                        <Typography sx={{ color: 'primary.dark', fontWeight: 900, fontSize: 14 }}>No conversation yet.</Typography>
+                        <Typography sx={{ color: '#637083', fontSize: 13 }}>Save a comment or send a reply to start the thread.</Typography>
+                      </Box>
+                    )}
+                  </Stack>
+                  <Stack direction="row" spacing={0.6} sx={{ flexWrap: 'wrap' }}>
+                    {['\u{1F44D}', '\u{1F389}', '\u{1F64C}', '\u{1F60A}'].map((emoji) => (
+                      <Button
+                        key={emoji}
+                        size="small"
+                        variant="outlined"
+                        onClick={() => setConversationDrafts((current) => ({ ...current, [commentDialog.record.submission_id]: `${current[commentDialog.record.submission_id] || ''}${emoji}` }))}
+                        sx={{ minWidth: 38, px: 0.7 }}
+                      >
+                        {emoji}
+                      </Button>
+                    ))}
+                  </Stack>
+                  <TextField
+                    fullWidth
+                    multiline
+                    minRows={2}
+                    placeholder={`Reply to ${commentDialog.record.student.full_name}...`}
+                    value={conversationDrafts[commentDialog.record.submission_id] || ''}
+                    onChange={(event) => setConversationDrafts((current) => ({ ...current, [commentDialog.record.submission_id]: event.target.value }))}
+                  />
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    endIcon={<SendOutlined />}
+                    disabled={conversationSavingId === commentDialog.record.submission_id || !(conversationDrafts[commentDialog.record.submission_id] || '').trim()}
+                    onClick={sendSubmissionConversationMessage}
+                  >
+                    {conversationSavingId === commentDialog.record.submission_id ? 'Sending...' : 'Send Reply'}
+                  </Button>
+                </Stack>
+              </Box>
+            </Stack>
+          )}
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          {getTeacherComment(commentDialog.record) && (
-            <Button color="error" onClick={deleteComment} disabled={reviewSavingId === commentDialog.record?.submission_id}>
-              Delete comment
-            </Button>
-          )}
-          <Box sx={{ flex: 1 }} />
           <Button onClick={() => setCommentDialog({ open: false, record: null, feedback: '' })}>Cancel</Button>
-          <Button variant="contained" color="secondary" onClick={saveComment} disabled={reviewSavingId === commentDialog.record?.submission_id}>Save comment</Button>
         </DialogActions>
       </Dialog>
     </Stack>
