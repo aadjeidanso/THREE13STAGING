@@ -9875,9 +9875,6 @@ function StudentModulesPane({ selectedCourseId, setActivePane }) {
               <Typography sx={{ color: 'secondary.main', fontWeight: 800, fontSize: 12 }}>{selectedModule.title}</Typography>
             </Stack>
             <Stack direction="row" spacing={1.4} alignItems="center">
-              <Box sx={{ width: 54, height: 54, borderRadius: 1.5, bgcolor: 'rgba(240,90,40,0.12)', color: 'secondary.main', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
-                <ViewModuleOutlined />
-              </Box>
               <Box>
                 <Stack direction="row" spacing={1} alignItems="center" sx={{ flexWrap: 'wrap' }}>
                   <Typography variant="h3" sx={{ color: 'primary.dark', fontSize: { xs: '1.9rem', md: '2.35rem' }, lineHeight: 1.05 }}>
