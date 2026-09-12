@@ -10564,7 +10564,7 @@ function StudentAssignmentsPane({ selectedCourseId }) {
       <StudentPageHeader
         title="Assignments"
         subtitle="View instructions, upload files, and track your submission progress."
-        icon={AssignmentOutlined}
+        icon={null}
       />
       {message && <Alert severity="success">{message}</Alert>}
       {error && <Alert severity="error">{error}</Alert>}
