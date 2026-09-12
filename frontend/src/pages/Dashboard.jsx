@@ -10613,11 +10613,21 @@ function StudentAssignmentsPane({ selectedCourseId }) {
     }));
     setConversationLoadingId(assignment.id);
     try {
-      const response = await fetch(`${apiBaseUrl.replace(/\/$/, '')}/student/submissions/${assignment.submission.id}/conversation`, {
-        headers: { Authorization: `Bearer ${getToken()}` },
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.detail || 'Unable to load teacher comments');
+      const baseUrl = apiBaseUrl.replace(/\/$/, '');
+      const endpoints = [
+        `${baseUrl}/student/submissions/${assignment.submission.id}/conversation`,
+        `${baseUrl}/student/assignments/${assignment.id}/conversation`,
+      ];
+      let data = null;
+      let lastError = 'Unable to load teacher comments';
+      for (const endpoint of endpoints) {
+        const response = await fetch(endpoint, { headers: { Authorization: `Bearer ${getToken()}` } });
+        data = await response.json();
+        if (response.ok) break;
+        lastError = data.detail || lastError;
+        data = null;
+      }
+      if (!data) throw new Error(lastError);
       setSubmissionConversations((current) => ({ ...current, [assignment.submission.id]: data }));
     } catch (err) {
       if (!getTeacherComment(assignment)) setError(err.message);
@@ -10632,13 +10642,25 @@ function StudentAssignmentsPane({ selectedCourseId }) {
     setConversationSavingId(assignment.id);
     setError('');
     try {
-      const response = await fetch(`${apiBaseUrl.replace(/\/$/, '')}/student/submissions/${assignment.submission.id}/conversation`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${getToken()}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ body }),
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.detail || 'Unable to send message');
+      const baseUrl = apiBaseUrl.replace(/\/$/, '');
+      const endpoints = [
+        `${baseUrl}/student/submissions/${assignment.submission.id}/conversation`,
+        `${baseUrl}/student/assignments/${assignment.id}/conversation`,
+      ];
+      let data = null;
+      let lastError = 'Unable to send message';
+      for (const endpoint of endpoints) {
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${getToken()}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ body }),
+        });
+        data = await response.json();
+        if (response.ok) break;
+        lastError = data.detail || lastError;
+        data = null;
+      }
+      if (!data) throw new Error(lastError);
       setSubmissionConversations((current) => ({ ...current, [assignment.submission.id]: data }));
       setConversationDrafts((current) => ({ ...current, [assignment.submission.id]: '' }));
     } catch (err) {
