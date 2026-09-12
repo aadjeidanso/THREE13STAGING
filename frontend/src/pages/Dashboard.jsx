@@ -519,6 +519,8 @@ function MaterialInlineViewer({ material, onBack, backLabel = 'Back to materials
   const youtubeUrl = material?.material_type === 'youtube' ? getYouTubeEmbedUrl(url) : '';
   const isCsv = isCsvFile(material, url);
   const previewUrl = youtubeUrl || url;
+  const materialDescription = String(material?.description || '').trim();
+  const moduleDescription = String(material?.module_description || '').trim();
   const [csvState, setCsvState] = React.useState({ loading: false, error: '', rows: [] });
 
   React.useEffect(() => {
@@ -546,10 +548,21 @@ function MaterialInlineViewer({ material, onBack, backLabel = 'Back to materials
         icon={FolderCopyOutlined}
         action={<Button variant="outlined" onClick={onBack}>{backLabel}</Button>}
       />
-      {material?.description && (
-        <Box sx={{ bgcolor: '#fff', border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, p: 1.6 }}>
-          <Typography sx={{ color: '#526273' }}>{material.description}</Typography>
-        </Box>
+      {(moduleDescription || materialDescription) && (
+        <Stack spacing={1.1} sx={{ bgcolor: '#fff', border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, p: 1.6 }}>
+          {moduleDescription && (
+            <Box>
+              <Typography sx={{ color: 'primary.dark', fontWeight: 900, fontSize: 13, mb: 0.35 }}>Module overview</Typography>
+              <Typography sx={{ color: '#526273' }}>{moduleDescription}</Typography>
+            </Box>
+          )}
+          {materialDescription && (
+            <Box>
+              <Typography sx={{ color: 'primary.dark', fontWeight: 900, fontSize: 13, mb: 0.35 }}>Material description</Typography>
+              <Typography sx={{ color: '#526273' }}>{materialDescription}</Typography>
+            </Box>
+          )}
+        </Stack>
       )}
       <Box sx={{ bgcolor: '#fff', border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, p: { xs: 1, md: 1.5 } }}>
         {isCsv ? (
@@ -9271,7 +9284,7 @@ function StudentMaterialsPane({ selectedCourseId }) {
           {renderMaterialVisual(material, { clickable: Boolean(material.viewed && url), onClick: openMaterial })}
           <Box sx={{ minWidth: 0, flex: 1 }}>
             <Typography sx={{ color: 'primary.dark', fontWeight: 900, fontSize: 15 }}>{material.title}</Typography>
-            {material.description && <Typography sx={{ color: '#637083', fontSize: 13, mt: 0.2 }} noWrap>{material.description}</Typography>}
+            {material.description && <Typography sx={{ color: '#637083', fontSize: 13, mt: 0.2 }} noWrap>{previewText(material.description, 78)}</Typography>}
             <Stack direction="row" spacing={0.8} sx={{ flexWrap: 'wrap', mt: 0.6, color: '#637083', fontSize: 12 }}>
               <Typography sx={{ fontSize: 12 }}>{materialTypeLabels[material.material_type] || material.material_type}</Typography>
               <Typography sx={{ fontSize: 12 }}>|</Typography>
@@ -9390,7 +9403,7 @@ function StudentMaterialsPane({ selectedCourseId }) {
                     </Button>
                     {isExpanded && (
                       <Stack spacing={1} sx={{ px: 1.5, pb: 1.5 }}>
-                        {group.description && <Typography sx={{ color: '#637083', fontSize: 13 }}>{group.description}</Typography>}
+                        {group.description && <Typography sx={{ color: '#637083', fontSize: 13 }}>{previewText(group.description, 120)}</Typography>}
                         {group.materials.map(renderMaterialRow)}
                       </Stack>
                     )}
