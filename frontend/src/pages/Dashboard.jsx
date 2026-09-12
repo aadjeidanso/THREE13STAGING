@@ -9424,13 +9424,13 @@ function StudentMaterialsPane({ selectedCourseId }) {
                     <Button
                       fullWidth
                       onClick={() => setExpandedGroup(isExpanded ? null : group.key)}
-                      sx={{ justifyContent: 'space-between', color: 'primary.dark', p: 1.5, textAlign: 'left' }}
+                      sx={{ color: 'primary.dark', p: 1.5, textAlign: 'left' }}
                     >
-                      <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: 0 }}>
+                      <Box sx={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto 24px', gap: 1, alignItems: 'center', width: '100%' }}>
                         <Typography sx={{ fontWeight: 950, fontSize: { xs: 16, md: 18 } }} noWrap>{group.title}</Typography>
-                        <Chip label={`${group.materials.length} material${group.materials.length === 1 ? '' : 's'}`} size="small" color="primary" variant="outlined" />
-                      </Stack>
-                      <KeyboardArrowDownOutlined sx={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 160ms ease' }} />
+                        <Chip label={`${group.materials.length} material${group.materials.length === 1 ? '' : 's'}`} size="small" color="primary" variant="outlined" sx={{ justifySelf: 'end' }} />
+                        <KeyboardArrowDownOutlined sx={{ justifySelf: 'end', transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 160ms ease' }} />
+                      </Box>
                     </Button>
                     {isExpanded && (
                       <Stack spacing={1} sx={{ px: 1.5, pb: 1.5 }}>
