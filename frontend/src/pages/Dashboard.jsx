@@ -10591,8 +10591,26 @@ function StudentAssignmentsPane({ selectedCourseId }) {
     cardFileInputsRef.current[assignment.id]?.click();
   };
 
+  const fallbackSubmissionConversation = React.useCallback((assignment) => {
+    const teacherComment = getTeacherComment(assignment);
+    return {
+      submission_id: assignment?.submission?.id,
+      messages: teacherComment ? [{
+        id: `local-teacher-feedback-${assignment?.id}`,
+        kind: 'feedback',
+        body: teacherComment,
+        created_at: assignment?.grade?.graded_at || assignment?.submission?.submitted_at || Math.floor(Date.now() / 1000),
+        author: { full_name: 'Teacher', role: 'teacher', profile_image_url: null },
+      }] : [],
+    };
+  }, []);
+
   const loadSubmissionConversation = React.useCallback(async (assignment) => {
     if (!assignment?.submission?.id) return;
+    setSubmissionConversations((current) => ({
+      ...current,
+      [assignment.submission.id]: current[assignment.submission.id] || fallbackSubmissionConversation(assignment),
+    }));
     setConversationLoadingId(assignment.id);
     try {
       const response = await fetch(`${apiBaseUrl.replace(/\/$/, '')}/student/assignments/${assignment.id}/conversation`, {
@@ -10602,11 +10620,11 @@ function StudentAssignmentsPane({ selectedCourseId }) {
       if (!response.ok) throw new Error(data.detail || 'Unable to load teacher comments');
       setSubmissionConversations((current) => ({ ...current, [assignment.submission.id]: data }));
     } catch (err) {
-      setError(err.message);
+      if (!getTeacherComment(assignment)) setError(err.message);
     } finally {
       setConversationLoadingId(null);
     }
-  }, []);
+  }, [fallbackSubmissionConversation]);
 
   const sendSubmissionConversationMessage = async (assignment) => {
     const body = (conversationDrafts[assignment.submission?.id] || '').trim();
@@ -10695,7 +10713,7 @@ function StudentAssignmentsPane({ selectedCourseId }) {
     });
     const openSubmission = () => openAssignmentSubmission(selectedAssignment);
     const conversationKey = selectedAssignment.submission?.id;
-    const conversation = conversationKey ? submissionConversations[conversationKey] : null;
+    const conversation = conversationKey ? (submissionConversations[conversationKey] || fallbackSubmissionConversation(selectedAssignment)) : null;
     const conversationMessages = conversation?.messages || [];
     const conversationDraft = conversationKey ? (conversationDrafts[conversationKey] || '') : '';
     const isConversationLoading = conversationLoadingId === selectedAssignment.id;
@@ -10786,7 +10804,7 @@ function StudentAssignmentsPane({ selectedCourseId }) {
             <Stack spacing={1.3}>
               {!selectedAssignment.submission ? (
                 <Alert severity="info">Submit this assignment first, then teacher comments and replies will appear here.</Alert>
-              ) : isConversationLoading ? (
+              ) : isConversationLoading && conversationMessages.length === 0 ? (
                 <Stack alignItems="center" sx={{ py: 2 }}><CircularProgress size={24} /></Stack>
               ) : (
                 <>
