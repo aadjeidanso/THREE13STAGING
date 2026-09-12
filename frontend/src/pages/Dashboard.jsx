@@ -31,7 +31,6 @@ import {
   LightbulbOutlined,
   LockOutlined,
   MenuOutlined,
-  MenuBookOutlined,
   MoreHorizOutlined,
   MoreVertOutlined,
   NotificationsOutlined,
@@ -205,7 +204,7 @@ const adminNavItems = [
   { key: 'students', label: 'Students', icon: GroupOutlined },
   { key: 'cohorts', label: 'Cohorts', icon: CalendarTodayOutlined },
   { key: 'teachers', label: 'Teachers', icon: SchoolOutlined },
-  { key: 'courses', label: 'Courses', icon: MenuBookOutlined },
+  { key: 'courses', label: 'Courses', icon: StackedBooksIcon },
   { key: 'materials', label: 'Course Materials', icon: FolderCopyOutlined },
   { key: 'assignments', label: 'Assignments', icon: AssignmentOutlined },
   { key: 'submissions', label: 'Submissions', icon: AssignmentOutlined },
@@ -217,7 +216,7 @@ const adminNavItems = [
 
 const studentNavItems = [
   { key: 'dashboard', label: 'Dashboard', icon: DashboardOutlined },
-  { key: 'my-courses', label: 'My Courses', icon: MenuBookOutlined },
+  { key: 'my-courses', label: 'My Courses', icon: StackedBooksIcon },
   { key: 'announcements', label: 'Announcements', icon: CampaignOutlined },
   { key: 'community', label: 'Community', icon: ForumOutlined },
   { key: 'support', label: 'Support', icon: SupportAgentOutlined },
@@ -239,7 +238,7 @@ const studentPaneKeys = [
 const teacherNavItems = [
   { key: 'dashboard', label: 'Dashboard', icon: DashboardOutlined },
   { key: 'students', label: 'Students', icon: GroupOutlined },
-  { key: 'my-courses', label: 'My Courses', icon: MenuBookOutlined },
+  { key: 'my-courses', label: 'My Courses', icon: StackedBooksIcon },
   { key: 'materials', label: 'Course Materials', icon: FolderCopyOutlined },
   { key: 'assignments', label: 'Assignments', icon: AssignmentOutlined },
   { key: 'submissions', label: 'Submissions', icon: AssignmentOutlined },
@@ -730,16 +729,9 @@ function StackedBooksIcon({ sx, fontSize, ...props }) {
       sx={{ width: iconSize, height: iconSize, display: 'block', ...sx }}
       {...props}
     >
-      <defs>
-        <linearGradient id="stacked-books-main" x1="12" y1="8" x2="54" y2="56" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#0b4b9b" />
-          <stop offset="1" stopColor="#082540" />
-        </linearGradient>
-      </defs>
-      <path d="M10 38.5c0-2 1.1-3.8 2.9-4.7l31.7-16.7c1.7-.9 3.7-.8 5.3.2l5.3 3.2c1.8 1.1 1.8 3.7-.1 4.7L23.5 42.1c-1.6.9-3.6.9-5.2 0l-5.7-3.1c-1-.5-1.8-1.5-2.2-2.6-.3.7-.4 1.4-.4 2.1Z" fill="url(#stacked-books-main)" opacity="0.42" />
-      <path d="M10 27.1c0-2 1.1-3.8 2.9-4.7L44.6 5.7c1.7-.9 3.7-.8 5.3.2l5.3 3.2c1.8 1.1 1.8 3.7-.1 4.7L23.5 30.7c-1.6.9-3.6.9-5.2 0l-5.7-3.1c-1-.5-1.8-1.5-2.2-2.6-.3.7-.4 1.4-.4 2.1Z" fill="url(#stacked-books-main)" />
-      <path d="M12.7 37.4 20 41.3c.6.3 1.4.3 2.1-.1l33.3-17.8v4.7c0 1-.6 2-1.5 2.5L23.4 47c-1.6.9-3.6.9-5.2 0l-5.7-3.1c-1.6-.9-2.6-2.6-2.6-4.4v-2.2c.8.7 1.7 1.3 2.8 1.8Z" fill="url(#stacked-books-main)" opacity="0.88" />
-      <path d="M12.7 49.1 20 53c.6.3 1.4.3 2.1-.1l33.3-17.8v4.7c0 1-.6 2-1.5 2.5L23.4 58.7c-1.6.9-3.6.9-5.2 0l-5.7-3.1C10.9 54.7 10 53 10 51.2V49c.8.7 1.7 1.3 2.7 1.9Z" fill="url(#stacked-books-main)" opacity="0.68" />
+      <path d="M16 24.7 41.7 11c1.2-.6 2.6-.6 3.7.1l6.5 3.8c1.4.8 1.4 2.9-.1 3.6L26 32.4c-1.2.6-2.6.6-3.8-.1l-6.3-3.7c-1.5-.9-1.5-3.1.1-3.9Z" fill="currentColor" />
+      <path d="M13.6 32.8c1.1.9 2.5 1.8 4.1 2.7l4.5 2.6c1.2.7 2.6.7 3.8.1l26.7-14.3v6.4L26.1 44.7c-1.2.6-2.7.6-3.9-.1l-6.3-3.7c-1.4-.8-2.3-2.3-2.3-3.9v-4.2Z" fill="currentColor" opacity="0.86" />
+      <path d="M13.6 45.1c1.1.9 2.5 1.8 4.1 2.7l4.5 2.6c1.2.7 2.6.7 3.8.1l26.7-14.3v6.4L26.1 57c-1.2.6-2.7.6-3.9-.1l-6.3-3.7c-1.4-.8-2.3-2.3-2.3-3.9v-4.2Z" fill="currentColor" opacity="0.72" />
     </Box>
   );
 }
@@ -2304,7 +2296,7 @@ function AdminStudentsPane({ onAdminDataChanged, onOpenActivityLink, onAdminToas
     ].reduce((total, minutes) => total + minutes, 0);
     const timeLabel = `${Math.floor(totalMinutes / 60) ? `${Math.floor(totalMinutes / 60)}h ` : ''}${totalMinutes % 60}m`;
     const summaryCards = [
-      { label: 'Materials', value: data.materials.length, detail: `${completedMaterials} completed`, icon: MenuBookOutlined, color: '#1b6ef3', bg: '#eaf2ff', progress: data.materials.length ? (completedMaterials / data.materials.length) * 100 : 0 },
+      { label: 'Materials', value: data.materials.length, detail: `${completedMaterials} completed`, icon: StackedBooksIcon, color: '#1b6ef3', bg: '#eaf2ff', progress: data.materials.length ? (completedMaterials / data.materials.length) * 100 : 0 },
       { label: 'Assignments', value: data.assignments.length, detail: `${submittedCount} submitted`, icon: AssignmentOutlined, color: '#16805f', bg: '#e8f7ef', progress: data.assignments.length ? (submittedCount / data.assignments.length) * 100 : 0 },
       { label: 'Submitted', value: submittedCount, detail: '', icon: SendOutlined, color: '#7c3aed', bg: '#f4ecff', progress: data.assignments.length ? (submittedCount / data.assignments.length) * 100 : 0 },
       { label: 'Time Spent', value: timeLabel, detail: 'Total in this course', icon: AccessTimeOutlined, color: '#f05a28', bg: '#fff0e7', progress: 0 },
@@ -2987,7 +2979,7 @@ function AdminTeachersPane({ onAdminDataChanged, onAdminToast }) {
   const teacherStats = [
     { label: 'Total Teachers', value: teachers.length, detail: 'Instructor accounts', icon: GroupOutlined, color: '#1b6ef3', bg: '#eaf2ff' },
     { label: 'Active Teachers', value: teachers.filter((teacher) => teacher.is_active).length, detail: 'Can access courses', icon: CheckCircleOutlined, color: '#16805f', bg: '#e8f7ef' },
-    { label: 'Courses Assigned', value: teachers.reduce((total, teacher) => total + teacher.assigned_courses.length, 0), detail: 'Teaching assignments', icon: MenuBookOutlined, color: '#f05a28', bg: '#fff0e7' },
+    { label: 'Courses Assigned', value: teachers.reduce((total, teacher) => total + teacher.assigned_courses.length, 0), detail: 'Teaching assignments', icon: StackedBooksIcon, color: '#f05a28', bg: '#fff0e7' },
     { label: 'Pending Invites', value: teachers.filter((teacher) => !teacher.email_verified || !teacher.is_active).length, detail: 'Need attention', icon: CalendarTodayOutlined, color: '#7c3aed', bg: '#f4ecff' },
   ];
 
@@ -3305,10 +3297,10 @@ function AdminTeachersPane({ onAdminDataChanged, onAdminToast }) {
               </Stack>
               <Stack spacing={0.9}>
                 {[
-                  ['Assigned Course', assignedCourseSummary(selectedTeacher), MenuBookOutlined],
+                  ['Assigned Course', assignedCourseSummary(selectedTeacher), StackedBooksIcon],
                   ['Joined', selectedTeacher.created_at ? formatTimestamp(selectedTeacher.created_at, { month: 'short', day: 'numeric', year: 'numeric' }) : 'Not set', CalendarTodayOutlined],
                   ['Status', statusMeta.label, ShieldOutlined],
-                  ['Total Courses', `${selectedTeacher.assigned_courses.length} Course${selectedTeacher.assigned_courses.length === 1 ? '' : 's'}`, MenuBookOutlined],
+                  ['Total Courses', `${selectedTeacher.assigned_courses.length} Course${selectedTeacher.assigned_courses.length === 1 ? '' : 's'}`, StackedBooksIcon],
                 ].map(([label, value, Icon]) => (
                   <Stack key={label} direction="row" justifyContent="space-between" spacing={1} sx={{ py: 0.7, borderBottom: '1px solid rgba(18,60,105,0.08)' }}>
                     <Stack direction="row" spacing={0.85} alignItems="center">
@@ -3329,7 +3321,7 @@ function AdminTeachersPane({ onAdminDataChanged, onAdminToast }) {
                   <Stack spacing={1}>
                     {selectedTeacher.assigned_courses.slice(0, 4).map((course, index) => (
                       <Stack key={course.id} direction="row" spacing={1} alignItems="center" sx={{ p: 0.85, borderRadius: 1, bgcolor: '#f8fafc', border: '1px solid rgba(18,60,105,0.08)' }}>
-                        <Box sx={{ width: 34, height: 34, borderRadius: 1, bgcolor: ['#eaf2ff', '#fff0e7', '#f4ecff', '#e8f7ef'][index % 4], color: ['#1b6ef3', '#f05a28', '#7c3aed', '#16805f'][index % 4], display: 'grid', placeItems: 'center', flexShrink: 0 }}><MenuBookOutlined fontSize="small" /></Box>
+                        <Box sx={{ width: 34, height: 34, borderRadius: 1, bgcolor: ['#eaf2ff', '#fff0e7', '#f4ecff', '#e8f7ef'][index % 4], color: ['#1b6ef3', '#f05a28', '#7c3aed', '#16805f'][index % 4], display: 'grid', placeItems: 'center', flexShrink: 0 }}><StackedBooksIcon fontSize="small" /></Box>
                         <Box sx={{ minWidth: 0, flex: 1 }}>
                           <Typography noWrap sx={{ color: 'primary.dark', fontWeight: 850, fontSize: 13 }}>{course.title}</Typography>
                           <Typography sx={{ color: '#526273', fontSize: 12, textTransform: 'capitalize' }}>{course.status}</Typography>
@@ -3525,7 +3517,7 @@ function AdminCoursesPane({ onAdminDataChanged, onOpenMaterials, onAdminToast })
   const courseStats = [
     { label: 'Total Courses', value: courses.length, detail: 'Catalog items', icon: GroupOutlined, color: '#1b6ef3', bg: '#eaf2ff' },
     { label: 'Active Courses', value: courses.filter((course) => course.status === 'active').length, detail: 'Available to students', icon: SchoolOutlined, color: '#16805f', bg: '#e8f7ef' },
-    { label: 'Inactive Courses', value: courses.filter((course) => course.status === 'inactive').length, detail: 'Hidden or draft', icon: MenuBookOutlined, color: '#f05a28', bg: '#fff0e7' },
+    { label: 'Inactive Courses', value: courses.filter((course) => course.status === 'inactive').length, detail: 'Hidden or draft', icon: StackedBooksIcon, color: '#f05a28', bg: '#fff0e7' },
     { label: 'Archived Courses', value: courses.filter((course) => course.status === 'archived').length, detail: 'Closed courses', icon: FolderCopyOutlined, color: '#7c3aed', bg: '#f4ecff' },
     { label: 'Total Enrollments', value: totalEnrollments, detail: 'Approved access rows', icon: GroupOutlined, color: '#1b6ef3', bg: '#eaf2ff' },
   ];
@@ -5714,7 +5706,7 @@ function AdminAnnouncementsPane({ onAdminDataChanged, initialCourseId = '', onAd
   const statCards = [
     { label: 'Total Announcements', value: totals.total, detail: 'Published notices', icon: CampaignOutlined, color: '#1b6ef3', bg: '#eaf2ff' },
     { label: 'Platform-wide', value: totals.platform, detail: 'For all users', icon: ViewModuleOutlined, color: '#16805f', bg: '#e8f7ef' },
-    { label: 'Course-specific', value: totals.course, detail: 'Linked to courses', icon: MenuBookOutlined, color: '#f59e0b', bg: '#fff5df' },
+    { label: 'Course-specific', value: totals.course, detail: 'Linked to courses', icon: StackedBooksIcon, color: '#f59e0b', bg: '#fff5df' },
     { label: 'Urgent Notices', value: totals.urgent, detail: 'Needs attention', icon: NotificationsOutlined, color: '#7c3aed', bg: '#f4ecff' },
   ];
   const announcementTabs = [
@@ -6776,7 +6768,7 @@ function AdminReportsPane({ setActivePane }) {
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', xl: 'repeat(4, 1fr)' }, gap: 1.5 }}>
             {[
               ['Learners', activeStudents + alumniTotal, `${activeStudents} active | ${alumniTotal} alumni`, GroupOutlined, '#8b5cf6', '#f0e8ff'],
-              ['Courses', totals.courses || 0, `${totalEnrollments} current learners`, MenuBookOutlined, '#1b6ef3', '#e8f1ff'],
+              ['Courses', totals.courses || 0, `${totalEnrollments} current learners`, StackedBooksIcon, '#1b6ef3', '#e8f1ff'],
               ['Assignments', totals.assignments || 0, `${assignmentSubmissionTotal} submissions`, AssignmentOutlined, '#16805f', '#e1f6ec'],
               ['Support Tickets', totals.support_tickets || 0, `${openTickets + inProgressTickets} active`, SupportAgentOutlined, '#f05a28', '#fff0e8'],
             ].map(([label, value, helper, Icon, color, bg]) => (
@@ -6905,7 +6897,7 @@ function AdminReportsPane({ setActivePane }) {
                 <Stack divider={<Divider />}>
                   {[
                     ['Open Students', GroupOutlined, 'students'],
-                    ['Open Courses', MenuBookOutlined, 'courses'],
+                    ['Open Courses', StackedBooksIcon, 'courses'],
                     ['Open Assignments', AssignmentOutlined, 'assignments'],
                     ['Open Support', SupportAgentOutlined, 'support'],
                   ].map(([label, Icon, pane]) => (
@@ -8389,7 +8381,7 @@ function AdminPortal({ user, onSignOut, onUserUpdated }) {
                       { label: 'Send Announcement', pane: 'announcements', icon: CampaignOutlined },
                     ]
                   : [
-                      { label: 'Create Course', pane: 'courses', icon: MenuBookOutlined },
+                      { label: 'Create Course', pane: 'courses', icon: StackedBooksIcon },
                       { label: 'Send Announcement', pane: 'announcements', icon: CampaignOutlined },
                     ]).map((action) => {
                 const Icon = action.icon;
@@ -8828,7 +8820,7 @@ function StudentDashboardHome({ setActivePane, user, onOpenCourse }) {
   );
 }
 
-function StudentPageHeader({ title, subtitle, icon: Icon = MenuBookOutlined, action }) {
+function StudentPageHeader({ title, subtitle, icon: Icon = StackedBooksIcon, action }) {
   return (
     <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }} spacing={1.5}>
       <Stack direction="row" spacing={1.4} alignItems="center">
@@ -8996,7 +8988,7 @@ function StudentMyCoursesPane({ setActivePane, user, onOpenCourse }) {
         <StudentPageHeader
           title={content?.course?.title || 'Course Workspace'}
           subtitle={content?.course?.teacher?.full_name ? `Instructor: ${content.course.teacher.full_name}` : 'Your approved course content.'}
-          icon={MenuBookOutlined}
+          icon={StackedBooksIcon}
           action={<Button variant="outlined" onClick={() => { setSelectedCourseId(null); setContent(null); }}>Back to courses</Button>}
         />
         {error && <Alert severity="error">{error}</Alert>}
@@ -9038,7 +9030,7 @@ function StudentMyCoursesPane({ setActivePane, user, onOpenCourse }) {
 
   return (
     <Stack spacing={3}>
-      <StudentPageHeader title="My Courses" subtitle="Open approved courses, recordings, documents, and assignments." icon={MenuBookOutlined} />
+      <StudentPageHeader title="My Courses" subtitle="Open approved courses, recordings, documents, and assignments." icon={StackedBooksIcon} />
       {error && <Alert severity="error">{error}</Alert>}
       {loading ? <Stack alignItems="center" sx={{ py: 5 }}><CircularProgress size={28} /></Stack> : courses.length === 0 ? (
         <Box sx={{ bgcolor: '#fff', border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, p: 2.4 }}>
@@ -9475,7 +9467,7 @@ function StudentModuleLanding({ courseContent, stats, loading, error, message, m
             </Box>
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))', xl: 'repeat(4, minmax(0, 1fr))' }, gap: 1.2 }}>
               {[
-                ['Modules', modules.length, MenuBookOutlined, '#1b6ef3', '#eaf2ff'],
+                ['Modules', modules.length, StackedBooksIcon, '#1b6ef3', '#eaf2ff'],
                 ['Materials', stats.totalMaterials, InsertDriveFileOutlined, '#16805f', '#e8f7ef'],
                 ['Assignments', stats.totalAssignments, AssignmentOutlined, '#f05a28', '#fff0e7'],
                 ['Overall Progress', `${stats.overallPercent}%`, TrendingUpOutlined, '#8a4fe8', '#f4ecff'],
@@ -9556,7 +9548,7 @@ function StudentModuleLanding({ courseContent, stats, loading, error, message, m
                           <Typography noWrap sx={{ color: '#526273', fontSize: 13 }}>{module.description || (isInProgress ? 'Continue your learning from where you left off.' : isCompleted ? 'Introduction and first course activity.' : 'Continue through the learning activities.')}</Typography>
                         </Box>
                         <Stack direction="row" spacing={0.7} alignItems="center" sx={{ borderLeft: { lg: '1px solid rgba(18,60,105,0.10)' }, pl: { lg: 1.2 } }}>
-                          <MenuBookOutlined sx={{ color: '#1b6ef3' }} />
+                          <StackedBooksIcon sx={{ color: '#1b6ef3' }} />
                           <Box>
                             <Typography sx={{ color: 'primary.dark', fontWeight: 950, fontSize: 18 }}>{module.materials.length}</Typography>
                             <Typography sx={{ color: '#526273', fontSize: 12 }}>{module.materials.length === 1 ? 'Material' : 'Materials'}</Typography>
@@ -13022,7 +13014,7 @@ function TeacherCourseWorkspace({ focus = 'courses', setActivePane, onTeacherToa
                   </TextField>
                   <Stack direction="row" spacing={0.8}>
                     <IconButton onClick={() => setCourseView('grid')} sx={{ border: '1px solid rgba(18,60,105,0.12)', bgcolor: courseView === 'grid' ? '#eef3f8' : '#fff', borderRadius: 1 }}><ViewModuleOutlined /></IconButton>
-                    <IconButton onClick={() => setCourseView('list')} sx={{ border: '1px solid rgba(18,60,105,0.12)', bgcolor: courseView === 'list' ? '#eef3f8' : '#fff', borderRadius: 1 }}><MenuBookOutlined /></IconButton>
+                    <IconButton onClick={() => setCourseView('list')} sx={{ border: '1px solid rgba(18,60,105,0.12)', bgcolor: courseView === 'list' ? '#eef3f8' : '#fff', borderRadius: 1 }}><StackedBooksIcon /></IconButton>
                   </Stack>
                 </Stack>
               </Box>
@@ -14656,7 +14648,7 @@ function TeacherProfilePane({ user, setActivePane, onTeacherToast, onUserUpdated
             <Typography sx={{ color: 'primary.dark', fontWeight: 900, mb: 1.5 }}>Instructor Workspace</Typography>
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(4, 1fr)' }, gap: 1.2 }}>
               {[
-                ['Courses', courseCount, 'View all courses', MenuBookOutlined, 'my-courses'],
+                ['Courses', courseCount, 'View all courses', StackedBooksIcon, 'my-courses'],
                 ['Assignments', assignmentCount, 'Create & manage', AssignmentOutlined, 'assignments'],
                 ['Materials', materialCount, 'Upload & organize', InsertDriveFileOutlined, 'materials'],
                 ['Announcements', announcementCount, 'Send updates', CampaignOutlined, 'announcements'],
@@ -14675,7 +14667,7 @@ function TeacherProfilePane({ user, setActivePane, onTeacherToast, onUserUpdated
         <Stack spacing={2}>
           <Box sx={{ ...cardSx, p: 2 }}>
             <Typography sx={{ color: 'primary.dark', fontWeight: 900, mb: 1.2 }}>Teaching Summary</Typography>
-            {[['Courses', courseCount, MenuBookOutlined], ['Total Students', studentCount, GroupOutlined], ['Assignments', assignmentCount, AssignmentOutlined], ['Submissions', totalSubmissions, InsertDriveFileOutlined], ['Materials', materialCount, ArticleOutlined]].map(([label, value, Icon]) => (
+            {[['Courses', courseCount, StackedBooksIcon], ['Total Students', studentCount, GroupOutlined], ['Assignments', assignmentCount, AssignmentOutlined], ['Submissions', totalSubmissions, InsertDriveFileOutlined], ['Materials', materialCount, ArticleOutlined]].map(([label, value, Icon]) => (
               <Stack key={label} direction="row" justifyContent="space-between" alignItems="center" sx={{ py: 1.05, borderBottom: '1px solid rgba(18,60,105,0.08)' }}><Stack direction="row" spacing={1.1} alignItems="center"><Box sx={{ width: 32, height: 32, borderRadius: 1, bgcolor: '#eef3f8', color: '#2678f3', display: 'grid', placeItems: 'center' }}><Icon fontSize="small" /></Box><Typography sx={{ color: '#526273', fontSize: 13 }}>{label}</Typography></Stack><Typography sx={{ color: 'primary.dark', fontWeight: 950 }}>{loading ? '-' : value}</Typography></Stack>
             ))}
           </Box>
@@ -15440,7 +15432,7 @@ function StudentPortal({ user, onSignOut, onUserUpdated, initialPane = 'dashboar
               setCourseNavOpen((current) => !current);
               if (!courseSectionActive) setActivePane('my-courses');
             }}
-            startIcon={<MenuBookOutlined />}
+            startIcon={<StackedBooksIcon />}
             endIcon={courseNavOpen ? <KeyboardArrowUpOutlined /> : <KeyboardArrowDownOutlined />}
             sx={{ ...navButtonSx(courseSectionActive), '& .MuiButton-endIcon': { ml: 'auto' } }}
           >
@@ -15564,7 +15556,7 @@ function StudentPortal({ user, onSignOut, onUserUpdated, initialPane = 'dashboar
                   setCourseNavOpen((current) => !current);
                   if (!courseSectionActive) setActivePane('my-courses');
                 }}
-                startIcon={<MenuBookOutlined />}
+                startIcon={<StackedBooksIcon />}
                 endIcon={courseNavOpen ? <KeyboardArrowUpOutlined /> : <KeyboardArrowDownOutlined />}
                 sx={{ ...navButtonSx(courseSectionActive), '& .MuiButton-endIcon': { ml: 'auto' } }}
               >
