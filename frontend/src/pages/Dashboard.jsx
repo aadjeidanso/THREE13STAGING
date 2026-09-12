@@ -10503,7 +10503,6 @@ function StudentAssignmentsPane({ selectedCourseId }) {
     late: courseAssignments.filter((assignment) => getAssignmentStatus(assignment).group === 'late').length,
     closed: courseAssignments.filter((assignment) => getAssignmentStatus(assignment).group === 'closed').length,
   };
-  const progress = totals.total ? Math.round(((totals.submitted + totals.reviewed) / totals.total) * 100) : 0;
   const tabs = [
     ['all', 'All Assignments', totals.total],
     ['pending', 'Pending', totals.pending],
@@ -10790,32 +10789,6 @@ function StudentAssignmentsPane({ selectedCourseId }) {
             Filters
           </Button>
         </Box>
-      </Box>
-
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))', lg: 'repeat(6, minmax(0, 1fr))' }, gap: 0.8 }}>
-          {[
-            ['Total assignments', totals.total, AssignmentOutlined, '#7c3aed'],
-            ['Submitted', totals.submitted, CheckCircleOutlined, '#15965f'],
-            ['Pending', totals.pending, AccessTimeOutlined, '#f05a28'],
-            ['Late', totals.late, ErrorOutlineOutlined, '#d93025'],
-            ['Closed', totals.closed, LockOutlined, '#526273'],
-            ['Overall progress', `${progress}%`, CheckCircleOutlined, '#1b6ef3'],
-          ].map(([label, value, Icon, color]) => (
-            <Stack key={label} direction="row" spacing={1} alignItems="center" sx={{ bgcolor: '#fff', border: '1px solid rgba(18,60,105,0.1)', borderRadius: 1.2, p: 1, minHeight: 74, boxShadow: '0 8px 22px rgba(18,60,105,0.04)' }}>
-              <Box sx={{ width: 38, height: 38, borderRadius: 1, bgcolor: `${color}16`, color, display: 'grid', placeItems: 'center', flexShrink: 0 }}>
-                <Icon fontSize="small" />
-              </Box>
-              <Box sx={{ minWidth: 0, flex: 1 }}>
-                <Typography sx={{ color: 'primary.dark', fontWeight: 950, lineHeight: 1 }}>{value}</Typography>
-                <Typography noWrap sx={{ color: '#526273', fontSize: 11.5 }}>{label}</Typography>
-                {label === 'Overall progress' && (
-                  <Box sx={{ mt: 0.8, height: 5, borderRadius: 999, bgcolor: '#e6edf6', overflow: 'hidden' }}>
-                    <Box sx={{ width: `${progress}%`, height: '100%', bgcolor: color }} />
-                  </Box>
-                )}
-              </Box>
-            </Stack>
-          ))}
       </Box>
 
       {loading ? <Stack alignItems="center" sx={{ py: 5 }}><CircularProgress size={28} /></Stack> : courseAssignments.length === 0 ? (
