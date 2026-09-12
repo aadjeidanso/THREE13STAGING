@@ -520,7 +520,6 @@ function MaterialInlineViewer({ material, onBack, backLabel = 'Back to materials
   const isCsv = isCsvFile(material, url);
   const previewUrl = youtubeUrl || url;
   const materialDescription = String(material?.description || '').trim();
-  const moduleDescription = String(material?.module_description || '').trim();
   const [csvState, setCsvState] = React.useState({ loading: false, error: '', rows: [] });
 
   React.useEffect(() => {
@@ -548,21 +547,11 @@ function MaterialInlineViewer({ material, onBack, backLabel = 'Back to materials
         icon={FolderCopyOutlined}
         action={<Button variant="outlined" onClick={onBack}>{backLabel}</Button>}
       />
-      {(moduleDescription || materialDescription) && (
-        <Stack spacing={1.1} sx={{ bgcolor: '#fff', border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, p: 1.6 }}>
-          {moduleDescription && (
-            <Box>
-              <Typography sx={{ color: 'primary.dark', fontWeight: 900, fontSize: 13, mb: 0.35 }}>Module overview</Typography>
-              <Typography sx={{ color: '#526273' }}>{moduleDescription}</Typography>
-            </Box>
-          )}
-          {materialDescription && (
-            <Box>
-              <Typography sx={{ color: 'primary.dark', fontWeight: 900, fontSize: 13, mb: 0.35 }}>Material description</Typography>
-              <Typography sx={{ color: '#526273' }}>{materialDescription}</Typography>
-            </Box>
-          )}
-        </Stack>
+      {materialDescription && (
+        <Box sx={{ bgcolor: '#fff', border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, p: 1.6 }}>
+          <Typography sx={{ color: 'primary.dark', fontWeight: 900, fontSize: 13, mb: 0.35 }}>Material description</Typography>
+          <Typography sx={{ color: '#526273' }}>{materialDescription}</Typography>
+        </Box>
       )}
       <Box sx={{ bgcolor: '#fff', border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, p: { xs: 1, md: 1.5 } }}>
         {isCsv ? (
@@ -9052,6 +9041,7 @@ function StudentMaterialsPane({ selectedCourseId }) {
   const [error, setError] = React.useState('');
   const [viewingMaterial, setViewingMaterial] = React.useState(null);
   const [materialMenu, setMaterialMenu] = React.useState({ anchorEl: null, material: null });
+  const [expandedDescriptions, setExpandedDescriptions] = React.useState({});
 
   React.useEffect(() => {
     let mounted = true;
@@ -9263,6 +9253,32 @@ function StudentMaterialsPane({ selectedCourseId }) {
     setSearch('');
   };
 
+  const renderModuleDescription = (group) => {
+    const description = String(group.description || '').replace(/\s+/g, ' ').trim();
+    if (!description) return null;
+    const isDescriptionExpanded = Boolean(expandedDescriptions[group.key]);
+    const shouldTruncate = description.length > 120;
+    const visibleDescription = isDescriptionExpanded || !shouldTruncate ? description : description.slice(0, 120).trim();
+    return (
+      <Typography sx={{ color: '#637083', fontSize: 13 }}>
+        {visibleDescription}
+        {shouldTruncate && (
+          <>
+            {' '}
+            <Button
+              variant="text"
+              size="small"
+              onClick={() => setExpandedDescriptions((current) => ({ ...current, [group.key]: !isDescriptionExpanded }))}
+              sx={{ minWidth: 0, p: 0, color: '#0f63c7', fontSize: 13, fontWeight: 850, lineHeight: 'inherit', verticalAlign: 'baseline' }}
+            >
+              {isDescriptionExpanded ? 'less' : '...'}
+            </Button>
+          </>
+        )}
+      </Typography>
+    );
+  };
+
   const renderMiniMaterial = (material) => {
     return (
       <Stack key={`${material.course.id}-${material.id}`} direction="row" spacing={1.1} alignItems="center">
@@ -9403,7 +9419,7 @@ function StudentMaterialsPane({ selectedCourseId }) {
                     </Button>
                     {isExpanded && (
                       <Stack spacing={1} sx={{ px: 1.5, pb: 1.5 }}>
-                        {group.description && <Typography sx={{ color: '#637083', fontSize: 13 }}>{previewText(group.description, 120)}</Typography>}
+                        {renderModuleDescription(group)}
                         {group.materials.map(renderMaterialRow)}
                       </Stack>
                     )}
