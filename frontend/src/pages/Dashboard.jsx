@@ -6181,7 +6181,7 @@ function CommunityHub({ adminView = false }) {
         <StudentPageHeader
           title="Community"
           subtitle="Share resources, referrals, questions, and career updates with the Three13 network."
-          icon={ForumOutlined}
+          icon={null}
         />
       )}
 
