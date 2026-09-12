@@ -6484,7 +6484,7 @@ function CommunityHubModern({ adminView = false }) {
       <StudentPageHeader
         title="Community"
         subtitle={adminView ? 'Connect students, alumni, teachers, and admins through resources, opportunities, and real conversations.' : 'Connect, share, learn, and grow together.'}
-        icon={ForumOutlined}
+        icon={null}
       />
       {message && <Alert severity="success">{message}</Alert>}
       {error && <Alert severity="error">{error}</Alert>}
