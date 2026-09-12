@@ -9034,7 +9034,7 @@ function StudentMaterialsPane({ selectedCourseId }) {
   const [typeFilter, setTypeFilter] = React.useState('all');
   const [sortOrder, setSortOrder] = React.useState('newest');
   const [search, setSearch] = React.useState('');
-  const [expandedGroup, setExpandedGroup] = React.useState('');
+  const [expandedGroup, setExpandedGroup] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState('');
   const [viewingMaterial, setViewingMaterial] = React.useState(null);
@@ -9130,6 +9130,9 @@ function StudentMaterialsPane({ selectedCourseId }) {
     if (first.course.id !== second.course.id) return first.course.title.localeCompare(second.course.title);
     return first.order - second.order;
   });
+  React.useEffect(() => {
+    setExpandedGroup(groupedMaterials[0]?.key || null);
+  }, [courseFilter, typeFilter, searchTerm, sortOrder, materials.length]);
   const stats = {
     total: visibleMaterials.length,
     videos: visibleMaterials.filter((material) => material.material_type === 'youtube').length,
@@ -9371,12 +9374,12 @@ function StudentMaterialsPane({ selectedCourseId }) {
             <>
             <Stack spacing={1.2}>
               {groupedMaterials.map((group, index) => {
-                const isExpanded = expandedGroup ? expandedGroup === group.key : index === 0;
+                const isExpanded = expandedGroup === group.key;
                 return (
                   <Box key={group.key} sx={{ bgcolor: '#fff', border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, overflow: 'hidden', boxShadow: '0 10px 26px rgba(18,60,105,0.06)' }}>
                     <Button
                       fullWidth
-                      onClick={() => setExpandedGroup(isExpanded ? '' : group.key)}
+                      onClick={() => setExpandedGroup(isExpanded ? null : group.key)}
                       sx={{ justifyContent: 'space-between', color: 'primary.dark', p: 1.5, textAlign: 'left' }}
                     >
                       <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: 0 }}>
