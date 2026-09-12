@@ -10305,7 +10305,7 @@ function StudentModulesPane({ selectedCourseId, setActivePane }) {
       <StudentPageHeader
         title="Modules"
         subtitle={selectedCourse ? `${selectedCourse.title} modules, materials, and assignments.` : 'Browse modules across your enrolled courses.'}
-        icon={ViewModuleOutlined}
+        icon={null}
       />
       {loading ? (
         <Stack alignItems="center" sx={{ py: 5 }}><CircularProgress size={28} /></Stack>
