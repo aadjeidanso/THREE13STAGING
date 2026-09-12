@@ -260,6 +260,16 @@ class Submission(Base):
     )
 
 
+class SubmissionMessage(Base):
+    __tablename__ = "submission_messages"
+
+    id = Column(Integer, primary_key=True, index=True)
+    submission_id = Column(Integer, ForeignKey("submissions.id"), nullable=False, index=True)
+    author_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    body = Column(Text, nullable=False)
+    created_at = Column(Integer, nullable=False, default=now_ts)
+
+
 class Grade(Base):
     __tablename__ = "grades"
 

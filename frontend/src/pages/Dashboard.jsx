@@ -18,7 +18,6 @@ import {
   EditOutlined,
   EmailOutlined,
   EmojiEventsOutlined,
-  ErrorOutlineOutlined,
   ExpandMoreOutlined,
   FilterAltOutlined,
   FilterAltOffOutlined,
@@ -10403,13 +10402,17 @@ function StudentAssignmentsPane({ selectedCourseId }) {
   const [showAllAssignments, setShowAllAssignments] = React.useState(false);
   const [selectedAssignmentId, setSelectedAssignmentId] = React.useState(null);
   const [assignmentDetailsOpen, setAssignmentDetailsOpen] = React.useState(true);
+  const [assignmentDetailTab, setAssignmentDetailTab] = React.useState('details');
   const [selectedFiles, setSelectedFiles] = React.useState({});
+  const [submissionConversations, setSubmissionConversations] = React.useState({});
+  const [conversationDrafts, setConversationDrafts] = React.useState({});
+  const [conversationLoadingId, setConversationLoadingId] = React.useState(null);
+  const [conversationSavingId, setConversationSavingId] = React.useState(null);
   const [viewingFile, setViewingFile] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
   const [savingId, setSavingId] = React.useState(null);
   const [message, setMessage] = React.useState('');
   const [error, setError] = React.useState('');
-  const [commentPopover, setCommentPopover] = React.useState({ anchorEl: null, assignment: null });
   const cardFileInputsRef = React.useRef({});
 
   const load = React.useCallback(async () => {
@@ -10524,17 +10527,6 @@ function StudentAssignmentsPane({ selectedCourseId }) {
     }
   }, [visibleAssignments, selectedAssignmentId, assignmentDetailsOpen]);
 
-  if (viewingFile) {
-    return (
-      <MaterialInlineViewer
-        material={viewingFile}
-        onBack={() => setViewingFile(null)}
-        backLabel="Back to assignments"
-        subtitle={viewingFile.course?.title || 'Assignment file'}
-      />
-    );
-  }
-
   const submitAssignment = async (assignmentId) => {
     const assignment = assignments.find((item) => item.id === assignmentId);
     if (assignment && !assignment.is_open) {
@@ -10591,12 +10583,69 @@ function StudentAssignmentsPane({ selectedCourseId }) {
   const openAssignmentAction = (assignment) => {
     setSelectedAssignmentId(assignment.id);
     setAssignmentDetailsOpen(true);
+    setAssignmentDetailTab('details');
     if (assignment.submission?.file_url) {
       openAssignmentSubmission(assignment);
       return;
     }
     cardFileInputsRef.current[assignment.id]?.click();
   };
+
+  const loadSubmissionConversation = React.useCallback(async (assignment) => {
+    if (!assignment?.submission?.id) return;
+    setConversationLoadingId(assignment.id);
+    try {
+      const response = await fetch(`${apiBaseUrl.replace(/\/$/, '')}/student/assignments/${assignment.id}/conversation`, {
+        headers: { Authorization: `Bearer ${getToken()}` },
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.detail || 'Unable to load teacher comments');
+      setSubmissionConversations((current) => ({ ...current, [assignment.submission.id]: data }));
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setConversationLoadingId(null);
+    }
+  }, []);
+
+  const sendSubmissionConversationMessage = async (assignment) => {
+    const body = (conversationDrafts[assignment.submission?.id] || '').trim();
+    if (!assignment?.submission?.id || !body) return;
+    setConversationSavingId(assignment.id);
+    setError('');
+    try {
+      const response = await fetch(`${apiBaseUrl.replace(/\/$/, '')}/student/assignments/${assignment.id}/conversation`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${getToken()}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ body }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.detail || 'Unable to send message');
+      setSubmissionConversations((current) => ({ ...current, [assignment.submission.id]: data }));
+      setConversationDrafts((current) => ({ ...current, [assignment.submission.id]: '' }));
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setConversationSavingId(null);
+    }
+  };
+
+  React.useEffect(() => {
+    if (assignmentDetailsOpen && assignmentDetailTab === 'comments' && selectedAssignment?.submission?.id) {
+      loadSubmissionConversation(selectedAssignment);
+    }
+  }, [assignmentDetailsOpen, assignmentDetailTab, selectedAssignment?.id, selectedAssignment?.submission?.id, loadSubmissionConversation]);
+
+  if (viewingFile) {
+    return (
+      <MaterialInlineViewer
+        material={viewingFile}
+        onBack={() => setViewingFile(null)}
+        backLabel="Back to assignments"
+        subtitle={viewingFile.course?.title || 'Assignment file'}
+      />
+    );
+  }
 
   const renderFileAction = ({ label, fileName, fileUrl, fileSize, icon: Icon = InsertDriveFileOutlined, onOpen }) => {
     if (!fileUrl) return null;
@@ -10645,6 +10694,12 @@ function StudentAssignmentsPane({ selectedCourseId }) {
       module_title: 'Assignment file',
     });
     const openSubmission = () => openAssignmentSubmission(selectedAssignment);
+    const conversationKey = selectedAssignment.submission?.id;
+    const conversation = conversationKey ? submissionConversations[conversationKey] : null;
+    const conversationMessages = conversation?.messages || [];
+    const conversationDraft = conversationKey ? (conversationDrafts[conversationKey] || '') : '';
+    const isConversationLoading = conversationLoadingId === selectedAssignment.id;
+    const isConversationSaving = conversationSavingId === selectedAssignment.id;
 
     return (
       <Box sx={{ bgcolor: '#fff', border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, boxShadow: '0 18px 48px rgba(18,60,105,0.08)', overflow: 'hidden', position: { lg: 'sticky' }, top: { lg: 16 } }}>
@@ -10667,90 +10722,187 @@ function StudentAssignmentsPane({ selectedCourseId }) {
             </Box>
           </Stack>
 
-          <Box sx={{ borderBottom: '2px solid #1b6ef3', color: '#1b6ef3', fontWeight: 900, width: 'fit-content', px: 1.2, pb: 1 }}>
-            Details
-          </Box>
-
-          {[
-            [CalendarTodayOutlined, 'Due Date', `${dueDate}${dueTime ? ` | ${dueTime}` : ''}`],
-            [AccessTimeOutlined, 'Status', submittedAt ? `${status.label} | Submitted ${submittedAt}` : `${status.label} | ${getDueCopy(selectedAssignment)}`],
-            [ArticleOutlined, 'Instructions', selectedAssignment.instructions || 'No instructions added yet.'],
-          ].map(([Icon, label, value]) => (
-            <Stack key={label} direction="row" spacing={1.2} alignItems="flex-start">
-              <Box sx={{ width: 40, height: 40, borderRadius: 1, bgcolor: '#eaf2ff', color: '#1b6ef3', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
-                <Icon fontSize="small" />
-              </Box>
-              <Box sx={{ minWidth: 0 }}>
-                <Typography sx={{ color: 'primary.dark', fontWeight: 900, fontSize: 14 }}>{label}</Typography>
-                <Typography sx={{ color: '#526273', fontSize: 13.5, whiteSpace: label === 'Instructions' ? 'pre-wrap' : 'normal' }}>{value}</Typography>
-              </Box>
-            </Stack>
-          ))}
-
-          <Stack direction="row" spacing={1.2} alignItems="flex-start">
-            <Box sx={{ width: 40, height: 40, borderRadius: 1, bgcolor: '#eaf2ff', color: '#1b6ef3', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
-              <CheckCircleOutlined fontSize="small" />
-            </Box>
-            <Box>
-              <Typography sx={{ color: 'primary.dark', fontWeight: 900, fontSize: 14 }}>Requirements</Typography>
-              <Typography component="div" sx={{ color: '#526273', fontSize: 13.5 }}>
-                <Box component="span" sx={{ display: 'block' }}>- Individual assignment</Box>
-                <Box component="span" sx={{ display: 'block' }}>- Max file size: 25 MB</Box>
-                <Box component="span" sx={{ display: 'block' }}>- Accepted formats: PDF, DOCX, PPTX, images, ZIP, and common code files</Box>
-              </Typography>
-            </Box>
+          <Stack direction="row" spacing={1.2} sx={{ borderBottom: '1px solid rgba(18,60,105,0.1)' }}>
+            {[
+              ['details', 'Details'],
+              ['comments', 'Teacher Comment'],
+            ].map(([value, label]) => {
+              const active = assignmentDetailTab === value;
+              return (
+                <Button
+                  key={value}
+                  onClick={() => {
+                    setAssignmentDetailTab(value);
+                    if (value === 'comments') loadSubmissionConversation(selectedAssignment);
+                  }}
+                  sx={{
+                    color: active ? '#1b6ef3' : '#526273',
+                    borderBottom: active ? '2px solid #1b6ef3' : '2px solid transparent',
+                    borderRadius: 0,
+                    px: 1.2,
+                    pb: 1,
+                    fontWeight: 900,
+                  }}
+                >
+                  {label}
+                </Button>
+              );
+            })}
           </Stack>
 
-          {selectedAssignment.attachment_url && (
-            <Stack spacing={0.7}>
-              <Typography sx={{ color: 'primary.dark', fontWeight: 900, fontSize: 14 }}>Course Materials</Typography>
-              {renderFileAction({
-                label: 'Open assignment file',
-                fileName: selectedAssignment.attachment_name || getFileNameFromUrl(selectedAssignment.attachment_url, 'Assignment file'),
-                fileUrl: selectedAssignment.attachment_url,
-                fileSize: '',
-                icon: InsertDriveFileOutlined,
-                onOpen: openAttachment,
-              })}
-            </Stack>
-          )}
+          {assignmentDetailTab === 'details' ? (
+            <>
+              {[
+                [CalendarTodayOutlined, 'Due Date', `${dueDate}${dueTime ? ` | ${dueTime}` : ''}`],
+                [AccessTimeOutlined, 'Status', submittedAt ? `${status.label} | Submitted ${submittedAt}` : `${status.label} | ${getDueCopy(selectedAssignment)}`],
+                [ArticleOutlined, 'Instructions', selectedAssignment.instructions || 'No instructions added yet.'],
+              ].map(([Icon, label, value]) => (
+                <Stack key={label} direction="row" spacing={1.2} alignItems="flex-start">
+                  <Box sx={{ width: 40, height: 40, borderRadius: 1, bgcolor: '#eaf2ff', color: '#1b6ef3', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                    <Icon fontSize="small" />
+                  </Box>
+                  <Box sx={{ minWidth: 0 }}>
+                    <Typography sx={{ color: 'primary.dark', fontWeight: 900, fontSize: 14 }}>{label}</Typography>
+                    <Typography sx={{ color: '#526273', fontSize: 13.5, whiteSpace: label === 'Instructions' ? 'pre-wrap' : 'normal' }}>{value}</Typography>
+                  </Box>
+                </Stack>
+              ))}
 
-          {selectedAssignment.submission?.file_url && (
-            <Stack spacing={0.7}>
-              <Typography sx={{ color: 'primary.dark', fontWeight: 900, fontSize: 14 }}>Your Submission</Typography>
-              {renderFileAction({
-                label: 'Open submitted file',
-                fileName: getFileNameFromUrl(selectedAssignment.submission.file_url, `${selectedAssignment.title} submission`),
-                fileUrl: selectedAssignment.submission.file_url,
-                fileSize: '',
-                icon: InsertDriveFileOutlined,
-                onOpen: openSubmission,
-              })}
-            </Stack>
-          )}
-
-          {submissionsClosed ? (
-            <Alert severity="info">Submission denied until this assignment is opened.</Alert>
-          ) : (
-            <Stack spacing={1}>
-              <Button variant="outlined" component="label" startIcon={<UploadFileOutlined />} disabled={savingId === selectedAssignment.id}>
-                {selectedFile ? `${selectedFile.name}${formatFileSize(selectedFile.size) ? ` (${formatFileSize(selectedFile.size)})` : ''}` : selectedAssignment.submission ? 'Choose file to resubmit' : 'Choose file to submit'}
-                <input
-                  type="file"
-                  hidden
-                  onChange={(event) => setSelectedFiles((current) => ({ ...current, [selectedAssignment.id]: event.target.files?.[0] || null }))}
-                  accept={lmsFileAccept}
-                />
-              </Button>
-              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
-                {selectedAssignment.submission?.file_url && (
-                  <Button variant="outlined" startIcon={<VisibilityOutlined />} onClick={openSubmission} sx={{ flex: 1 }}>View Submission</Button>
-                )}
-                <Button variant="contained" color="primary" onClick={() => submitAssignment(selectedAssignment.id)} disabled={savingId === selectedAssignment.id || !selectedFile} sx={{ flex: 1 }}>
-                  {savingId === selectedAssignment.id ? 'Uploading...' : selectedAssignment.submission ? 'Resubmit Assignment' : 'Submit Assignment'}
-                </Button>
+              <Stack direction="row" spacing={1.2} alignItems="flex-start">
+                <Box sx={{ width: 40, height: 40, borderRadius: 1, bgcolor: '#eaf2ff', color: '#1b6ef3', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                  <CheckCircleOutlined fontSize="small" />
+                </Box>
+                <Box>
+                  <Typography sx={{ color: 'primary.dark', fontWeight: 900, fontSize: 14 }}>Requirements</Typography>
+                  <Typography component="div" sx={{ color: '#526273', fontSize: 13.5 }}>
+                    <Box component="span" sx={{ display: 'block' }}>- Individual assignment</Box>
+                    <Box component="span" sx={{ display: 'block' }}>- Max file size: 25 MB</Box>
+                    <Box component="span" sx={{ display: 'block' }}>- Accepted formats: PDF, DOCX, PPTX, images, ZIP, and common code files</Box>
+                  </Typography>
+                </Box>
               </Stack>
+            </>
+          ) : (
+            <Stack spacing={1.3}>
+              {!selectedAssignment.submission ? (
+                <Alert severity="info">Submit this assignment first, then teacher comments and replies will appear here.</Alert>
+              ) : isConversationLoading ? (
+                <Stack alignItems="center" sx={{ py: 2 }}><CircularProgress size={24} /></Stack>
+              ) : (
+                <>
+                  <Stack spacing={1} sx={{ maxHeight: 310, overflowY: 'auto', pr: 0.4 }}>
+                    {conversationMessages.length === 0 ? (
+                      <Box sx={{ bgcolor: '#f8fbff', border: '1px dashed rgba(18,60,105,0.2)', borderRadius: 1.2, p: 1.4 }}>
+                        <Typography sx={{ color: 'primary.dark', fontWeight: 900, fontSize: 14 }}>No teacher comment yet.</Typography>
+                        <Typography sx={{ color: '#637083', fontSize: 13 }}>When your teacher comments, the conversation will start here.</Typography>
+                      </Box>
+                    ) : (
+                      conversationMessages.map((item) => {
+                        const fromStudent = item.author?.role === 'student';
+                        return (
+                          <Stack key={`${item.kind}-${item.id}`} direction="row" spacing={1} justifyContent={fromStudent ? 'flex-end' : 'flex-start'} alignItems="flex-start">
+                            {!fromStudent && <UserAvatar user={item.author} size={30} />}
+                            <Box sx={{ maxWidth: '82%', bgcolor: fromStudent ? '#eaf2ff' : item.kind === 'feedback' ? '#fff1ec' : '#f8fafc', border: '1px solid rgba(18,60,105,0.1)', borderRadius: 1.3, p: 1 }}>
+                              <Stack direction="row" spacing={0.7} alignItems="center" sx={{ mb: 0.35 }}>
+                                <Typography sx={{ color: 'primary.dark', fontWeight: 900, fontSize: 12.5 }}>{fromStudent ? 'You' : item.author?.full_name || 'Teacher'}</Typography>
+                                {item.kind === 'feedback' && <Chip label="Teacher comment" size="small" sx={{ height: 18, fontSize: 10.5, bgcolor: '#ffe4da', color: '#b84a1f', fontWeight: 850 }} />}
+                              </Stack>
+                              <Typography sx={{ color: '#526273', fontSize: 13, lineHeight: 1.45, whiteSpace: 'pre-wrap' }}>{item.body}</Typography>
+                              <Typography sx={{ color: '#8a97a6', fontSize: 10.8, mt: 0.55 }}>{formatTimestamp(item.created_at, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</Typography>
+                            </Box>
+                          </Stack>
+                        );
+                      })
+                    )}
+                  </Stack>
+                  <Stack direction="row" spacing={0.6} sx={{ flexWrap: 'wrap' }}>
+                    {['👍', '🎉', '🙌', '😊'].map((emoji) => (
+                      <Button
+                        key={emoji}
+                        size="small"
+                        variant="outlined"
+                        onClick={() => setConversationDrafts((current) => ({ ...current, [conversationKey]: `${current[conversationKey] || ''}${emoji}` }))}
+                        sx={{ minWidth: 38, px: 0.7 }}
+                      >
+                        {emoji}
+                      </Button>
+                    ))}
+                  </Stack>
+                  <TextField
+                    multiline
+                    minRows={2}
+                    placeholder="Reply to your teacher..."
+                    value={conversationDraft}
+                    onChange={(event) => setConversationDrafts((current) => ({ ...current, [conversationKey]: event.target.value }))}
+                  />
+                  <Button
+                    variant="contained"
+                    color="secondary"
+                    endIcon={<SendOutlined />}
+                    disabled={isConversationSaving || !conversationDraft.trim()}
+                    onClick={() => sendSubmissionConversationMessage(selectedAssignment)}
+                  >
+                    {isConversationSaving ? 'Sending...' : 'Send Reply'}
+                  </Button>
+                </>
+              )}
             </Stack>
+          )}
+
+          {assignmentDetailTab === 'details' && (
+            <>
+              {selectedAssignment.attachment_url && (
+                <Stack spacing={0.7}>
+                  <Typography sx={{ color: 'primary.dark', fontWeight: 900, fontSize: 14 }}>Course Materials</Typography>
+                  {renderFileAction({
+                    label: 'Open assignment file',
+                    fileName: selectedAssignment.attachment_name || getFileNameFromUrl(selectedAssignment.attachment_url, 'Assignment file'),
+                    fileUrl: selectedAssignment.attachment_url,
+                    fileSize: '',
+                    icon: InsertDriveFileOutlined,
+                    onOpen: openAttachment,
+                  })}
+                </Stack>
+              )}
+
+              {selectedAssignment.submission?.file_url && (
+                <Stack spacing={0.7}>
+                  <Typography sx={{ color: 'primary.dark', fontWeight: 900, fontSize: 14 }}>Your Submission</Typography>
+                  {renderFileAction({
+                    label: 'Open submitted file',
+                    fileName: getFileNameFromUrl(selectedAssignment.submission.file_url, `${selectedAssignment.title} submission`),
+                    fileUrl: selectedAssignment.submission.file_url,
+                    fileSize: '',
+                    icon: InsertDriveFileOutlined,
+                    onOpen: openSubmission,
+                  })}
+                </Stack>
+              )}
+
+              {submissionsClosed ? (
+                <Alert severity="info">Submission denied until this assignment is opened.</Alert>
+              ) : (
+                <Stack spacing={1}>
+                  <Button variant="outlined" component="label" startIcon={<UploadFileOutlined />} disabled={savingId === selectedAssignment.id}>
+                    {selectedFile ? `${selectedFile.name}${formatFileSize(selectedFile.size) ? ` (${formatFileSize(selectedFile.size)})` : ''}` : selectedAssignment.submission ? 'Choose file to resubmit' : 'Choose file to submit'}
+                    <input
+                      type="file"
+                      hidden
+                      onChange={(event) => setSelectedFiles((current) => ({ ...current, [selectedAssignment.id]: event.target.files?.[0] || null }))}
+                      accept={lmsFileAccept}
+                    />
+                  </Button>
+                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+                    {selectedAssignment.submission?.file_url && (
+                      <Button variant="outlined" startIcon={<VisibilityOutlined />} onClick={openSubmission} sx={{ flex: 1 }}>View Submission</Button>
+                    )}
+                    <Button variant="contained" color="primary" onClick={() => submitAssignment(selectedAssignment.id)} disabled={savingId === selectedAssignment.id || !selectedFile} sx={{ flex: 1 }}>
+                      {savingId === selectedAssignment.id ? 'Uploading...' : selectedAssignment.submission ? 'Resubmit Assignment' : 'Submit Assignment'}
+                    </Button>
+                  </Stack>
+                </Stack>
+              )}
+            </>
           )}
         </Stack>
       </Box>
@@ -10978,16 +11130,22 @@ function StudentAssignmentsPane({ selectedCourseId }) {
                   </Stack>
                   <IconButton
                     size="small"
-                    disabled={!teacherComment}
-                    aria-label={teacherComment ? `View teacher comment for ${assignment.title}` : `No teacher comment for ${assignment.title}`}
-                    onClick={(event) => { event.stopPropagation(); setCommentPopover({ anchorEl: event.currentTarget, assignment }); }}
+                    disabled={!assignment.submission}
+                    aria-label={`Open teacher comment thread for ${assignment.title}`}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setSelectedAssignmentId(assignment.id);
+                      setAssignmentDetailsOpen(true);
+                      setAssignmentDetailTab('comments');
+                      loadSubmissionConversation(assignment);
+                    }}
                     sx={{
                       justifySelf: { xs: 'flex-start', md: 'center' },
                       border: '1px solid rgba(18,60,105,0.14)',
                       borderRadius: 1,
-                      color: teacherComment ? 'primary.dark' : '#9aa7b5',
-                      bgcolor: teacherComment ? '#fff' : '#f4f7fb',
-                      '&:hover': { bgcolor: teacherComment ? '#f1f7ff' : '#f4f7fb' },
+                      color: assignment.submission ? 'primary.dark' : '#9aa7b5',
+                      bgcolor: assignment.submission ? '#fff' : '#f4f7fb',
+                      '&:hover': { bgcolor: assignment.submission ? '#f1f7ff' : '#f4f7fb' },
                     }}
                   >
                     <Badge badgeContent={teacherComment ? 1 : 0} color="secondary" overlap="circular">
@@ -11015,40 +11173,6 @@ function StudentAssignmentsPane({ selectedCourseId }) {
         </Stack>
         {!loading && assignmentDetailsOpen && renderAssignmentDetails()}
       </Box>
-      <Popover
-        open={Boolean(commentPopover.anchorEl)}
-        anchorEl={commentPopover.anchorEl}
-        onClose={() => setCommentPopover({ anchorEl: null, assignment: null })}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-        PaperProps={{
-          sx: {
-            mt: 1,
-            width: 320,
-            borderRadius: 1.5,
-            border: '1px solid rgba(18,60,105,0.12)',
-            boxShadow: '0 18px 44px rgba(18,60,105,0.16)',
-            overflow: 'hidden',
-          },
-        }}
-      >
-        <Box sx={{ p: 1.5, bgcolor: '#f8fbff', borderBottom: '1px solid rgba(18,60,105,0.08)' }}>
-          <Stack direction="row" spacing={1} alignItems="center">
-            <Box sx={{ width: 34, height: 34, borderRadius: 1, bgcolor: '#eaf2ff', color: '#2678f3', display: 'grid', placeItems: 'center' }}>
-              <ForumOutlined fontSize="small" />
-            </Box>
-            <Box sx={{ minWidth: 0 }}>
-              <Typography sx={{ color: 'primary.dark', fontWeight: 950, lineHeight: 1.2 }}>Teacher comment</Typography>
-              <Typography noWrap sx={{ color: '#637083', fontSize: 12.5 }}>{commentPopover.assignment?.title || 'Assignment'}</Typography>
-            </Box>
-          </Stack>
-        </Box>
-        <Box sx={{ p: 1.7 }}>
-          <Typography sx={{ color: '#526273', fontSize: 14, lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>
-            {getTeacherComment(commentPopover.assignment) || 'No comment available.'}
-          </Typography>
-        </Box>
-      </Popover>
     </Stack>
   );
 }

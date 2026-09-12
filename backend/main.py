@@ -23,7 +23,7 @@ from sqlalchemy import func, inspect, text
 from sqlalchemy.orm import Session, aliased
 from config import APP_BASE_URL, APP_SECRET, CORS_ALLOWED_ORIGINS, EMAIL_FROM, FRONTEND_URL, GOOGLE_CLIENT_ID, GOOGLE_REDIRECT_URI, PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET, PAYPAL_ENVIRONMENT, PROGRAM_CURRENCY, PROGRAM_FEE_CENTS, RESEND_API_KEY, STRIPE_PUBLISHABLE_KEY, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_STORAGE_BUCKET, SUPABASE_URL
 from database import Base, engine, get_db
-from models import Announcement, AnnouncementRead, Assignment, AuditLog, Certificate, Cohort, CommunityComment, CommunityPost, Course, CourseMaterial, Enrollment, EnrollmentRequest, Grade, MaterialProgress, Module, NotificationRead, PasswordResetToken, Payment, PlatformSetting, PreRegistration, Submission, SupportTicket, User, now_ts
+from models import Announcement, AnnouncementRead, Assignment, AuditLog, Certificate, Cohort, CommunityComment, CommunityPost, Course, CourseMaterial, Enrollment, EnrollmentRequest, Grade, MaterialProgress, Module, NotificationRead, PasswordResetToken, Payment, PlatformSetting, PreRegistration, Submission, SubmissionMessage, SupportTicket, User, now_ts
 import models  # noqa: F401 - ensures all SQLAlchemy models are registered.
 
 SESSION_TTL_SECONDS = 60 * 60 * 8
@@ -270,6 +270,10 @@ class GradeSubmissionRequest(BaseModel):
 
 class SubmissionCommentRequest(BaseModel):
     feedback: str | None = None
+
+
+class SubmissionMessageCreateRequest(BaseModel):
+    body: str
 
 
 class StudentEnrollmentRequestCreate(BaseModel):
@@ -2996,6 +3000,69 @@ def assignment_with_student_status(
     }
 
 
+def serialize_submission_message(message: SubmissionMessage, author: User) -> dict:
+    return {
+        "id": message.id,
+        "kind": "message",
+        "body": message.body,
+        "created_at": message.created_at,
+        "author": {
+            "id": author.id,
+            "full_name": author.full_name,
+            "email": author.email,
+            "role": author.role,
+            "profile_image_url": author.profile_image_url,
+        },
+    }
+
+
+def submission_conversation_payload(db: Session, submission: Submission, assignment: Assignment, course: Course, grade: Grade | None = None) -> dict:
+    messages = []
+    teacher_comment = submission.teacher_feedback or (grade.feedback if grade else None)
+    if teacher_comment:
+        author = db.get(User, grade.graded_by) if grade else None
+        if not author and course.teacher_id:
+            author = db.get(User, course.teacher_id)
+        messages.append({
+            "id": f"teacher-feedback-{submission.id}",
+            "kind": "feedback",
+            "body": teacher_comment,
+            "created_at": grade.graded_at if grade else submission.submitted_at,
+            "author": {
+                "id": author.id if author else None,
+                "full_name": author.full_name if author else "Teacher",
+                "email": author.email if author else "",
+                "role": author.role if author else "teacher",
+                "profile_image_url": author.profile_image_url if author else None,
+            },
+        })
+    message_rows = (
+        db.query(SubmissionMessage, User)
+        .join(User, SubmissionMessage.author_id == User.id)
+        .filter(SubmissionMessage.submission_id == submission.id)
+        .order_by(SubmissionMessage.created_at.asc(), SubmissionMessage.id.asc())
+        .all()
+    )
+    messages.extend(serialize_submission_message(message, author) for message, author in message_rows)
+    return {
+        "submission_id": submission.id,
+        "assignment": {"id": assignment.id, "title": assignment.title},
+        "course": {"id": course.id, "title": course.title},
+        "messages": messages,
+    }
+
+
+def add_submission_message(db: Session, submission: Submission, author: User, body: str) -> SubmissionMessage:
+    cleaned = body.strip()
+    if not cleaned:
+        raise HTTPException(status_code=400, detail="Message is required")
+    if len(cleaned) > 2000:
+        raise HTTPException(status_code=400, detail="Message must be 2000 characters or fewer")
+    message = SubmissionMessage(submission_id=submission.id, author_id=author.id, body=cleaned)
+    db.add(message)
+    return message
+
+
 @app.get("/student/enrollments", response_model=StudentEnrollmentStatusResponse)
 def student_list_enrollments(
     student: User = Depends(require_student),
@@ -3417,6 +3484,61 @@ async def student_upload_assignment_submission(
     )
     db.commit()
     return {"file_url": file_url, "file_path": file_path, "file_name": original_name, "content_type": file.content_type, "size": len(content)}
+
+
+@app.get("/student/assignments/{assignment_id}/conversation")
+def student_get_assignment_conversation(
+    assignment_id: int,
+    student: User = Depends(require_student),
+    db: Session = Depends(get_db),
+):
+    row = (
+        db.query(Submission, Assignment, Course, Grade)
+        .join(Assignment, Submission.assignment_id == Assignment.id)
+        .join(Course, Assignment.course_id == Course.id)
+        .outerjoin(Grade, Grade.submission_id == Submission.id)
+        .filter(Assignment.id == assignment_id, Submission.student_id == student.id)
+        .first()
+    )
+    if not row:
+        raise HTTPException(status_code=404, detail="Submit the assignment before opening teacher comments")
+    submission, assignment, course, grade = row
+    require_student_course_access(db, student, assignment.course_id)
+    return submission_conversation_payload(db, submission, assignment, course, grade)
+
+
+@app.post("/student/assignments/{assignment_id}/conversation")
+def student_add_assignment_conversation_message(
+    assignment_id: int,
+    data: SubmissionMessageCreateRequest,
+    student: User = Depends(require_student),
+    db: Session = Depends(get_db),
+):
+    row = (
+        db.query(Submission, Assignment, Course, Grade)
+        .join(Assignment, Submission.assignment_id == Assignment.id)
+        .join(Course, Assignment.course_id == Course.id)
+        .outerjoin(Grade, Grade.submission_id == Submission.id)
+        .filter(Assignment.id == assignment_id, Submission.student_id == student.id)
+        .first()
+    )
+    if not row:
+        raise HTTPException(status_code=404, detail="Submit the assignment before sending a message")
+    submission, assignment, course, grade = row
+    require_student_course_access(db, student, assignment.course_id)
+    message = add_submission_message(db, submission, student, data.body)
+    create_audit_log(
+        db,
+        student,
+        "submission.message_created",
+        "submission",
+        submission.id,
+        f"{student.full_name} replied on {assignment.title}",
+        {"course_id": course.id, "assignment_id": assignment.id},
+    )
+    db.commit()
+    db.refresh(message)
+    return submission_conversation_payload(db, submission, assignment, course, grade)
 
 
 @app.get("/student/grades")
@@ -4925,6 +5047,51 @@ def teacher_update_submission_comment(
     return {"message": "Teacher comment updated" if feedback else "Teacher comment deleted", "submission_id": submission.id, "teacher_comment": feedback}
 
 
+@app.get("/teacher/submissions/{submission_id}/conversation")
+def teacher_get_submission_conversation(
+    submission_id: int,
+    teacher: User = Depends(require_teacher),
+    db: Session = Depends(get_db),
+):
+    row = (
+        db.query(Submission, Assignment, Course, Grade)
+        .join(Assignment, Submission.assignment_id == Assignment.id)
+        .join(Course, Assignment.course_id == Course.id)
+        .outerjoin(Grade, Grade.submission_id == Submission.id)
+        .filter(Submission.id == submission_id, Course.teacher_id == teacher.id)
+        .first()
+    )
+    if not row:
+        raise HTTPException(status_code=404, detail="Submission not found")
+    submission, assignment, course, grade = row
+    return submission_conversation_payload(db, submission, assignment, course, grade)
+
+
+@app.post("/teacher/submissions/{submission_id}/conversation")
+def teacher_add_submission_conversation_message(
+    submission_id: int,
+    data: SubmissionMessageCreateRequest,
+    teacher: User = Depends(require_teacher),
+    db: Session = Depends(get_db),
+):
+    row = (
+        db.query(Submission, Assignment, Course, Grade)
+        .join(Assignment, Submission.assignment_id == Assignment.id)
+        .join(Course, Assignment.course_id == Course.id)
+        .outerjoin(Grade, Grade.submission_id == Submission.id)
+        .filter(Submission.id == submission_id, Course.teacher_id == teacher.id)
+        .first()
+    )
+    if not row:
+        raise HTTPException(status_code=404, detail="Submission not found")
+    submission, assignment, course, grade = row
+    message = add_submission_message(db, submission, teacher, data.body)
+    create_audit_log(db, teacher, "teacher.submission_message_created", "submission", submission.id, f"Teacher replied on {assignment.title}", {"course_id": course.id})
+    db.commit()
+    db.refresh(message)
+    return submission_conversation_payload(db, submission, assignment, course, grade)
+
+
 @app.get("/admin/submissions")
 def admin_list_submissions(
     course_id: int | None = None,
@@ -5055,6 +5222,51 @@ def admin_update_submission_comment(
     create_audit_log(db, admin, action, "submission", submission.id, message, {"course_id": course.id})
     db.commit()
     return {"message": "Comment updated" if feedback else "Comment deleted", "submission_id": submission.id, "teacher_comment": feedback}
+
+
+@app.get("/admin/submissions/{submission_id}/conversation")
+def admin_get_submission_conversation(
+    submission_id: int,
+    _: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    row = (
+        db.query(Submission, Assignment, Course, Grade)
+        .join(Assignment, Submission.assignment_id == Assignment.id)
+        .join(Course, Assignment.course_id == Course.id)
+        .outerjoin(Grade, Grade.submission_id == Submission.id)
+        .filter(Submission.id == submission_id)
+        .first()
+    )
+    if not row:
+        raise HTTPException(status_code=404, detail="Submission not found")
+    submission, assignment, course, grade = row
+    return submission_conversation_payload(db, submission, assignment, course, grade)
+
+
+@app.post("/admin/submissions/{submission_id}/conversation")
+def admin_add_submission_conversation_message(
+    submission_id: int,
+    data: SubmissionMessageCreateRequest,
+    admin: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    row = (
+        db.query(Submission, Assignment, Course, Grade)
+        .join(Assignment, Submission.assignment_id == Assignment.id)
+        .join(Course, Assignment.course_id == Course.id)
+        .outerjoin(Grade, Grade.submission_id == Submission.id)
+        .filter(Submission.id == submission_id)
+        .first()
+    )
+    if not row:
+        raise HTTPException(status_code=404, detail="Submission not found")
+    submission, assignment, course, grade = row
+    message = add_submission_message(db, submission, admin, data.body)
+    create_audit_log(db, admin, "admin.submission_message_created", "submission", submission.id, f"Administrator replied on {assignment.title}", {"course_id": course.id})
+    db.commit()
+    db.refresh(message)
+    return submission_conversation_payload(db, submission, assignment, course, grade)
 
 
 @app.get("/teacher/announcements", response_model=list[AnnouncementResponse])
