@@ -4323,7 +4323,7 @@ def teacher_create_material(
         raise HTTPException(status_code=400, detail="Material title is required")
     if not data.file_url and not data.external_url:
         raise HTTPException(status_code=400, detail="Add a file URL or external link")
-    validate_course_module(db, course.id, data.module_id)
+    require_course_module(db, course.id, data.module_id)
     material = CourseMaterial(
         course_id=course.id,
         module_id=data.module_id,
@@ -4613,7 +4613,7 @@ def teacher_update_material(
     course = teacher_course_or_404(db, teacher, material.course_id)
     before = material_to_response(material)
     if "module_id" in data.__fields_set__:
-        validate_course_module(db, material.course_id, data.module_id)
+        require_course_module(db, material.course_id, data.module_id)
         material.module_id = data.module_id
     if data.title is not None:
         title = data.title.strip()
@@ -6854,6 +6854,12 @@ def validate_course_module(db: Session, course_id: int, module_id: int | None) -
     return module
 
 
+def require_course_module(db: Session, course_id: int, module_id: int | None) -> Module:
+    if module_id is None:
+        raise HTTPException(status_code=400, detail="Select a module before adding material")
+    return validate_course_module(db, course_id, module_id)
+
+
 def teacher_course_or_404(db: Session, teacher: User, course_id: int) -> Course:
     course = db.query(Course).filter(Course.id == course_id, Course.teacher_id == teacher.id).first()
     if not course:
@@ -7388,7 +7394,7 @@ def admin_create_material(
         raise HTTPException(status_code=400, detail="Material title is required")
     if not data.file_url and not data.external_url:
         raise HTTPException(status_code=400, detail="Add a file URL or external link")
-    validate_course_module(db, course.id, data.module_id)
+    require_course_module(db, course.id, data.module_id)
 
     material = CourseMaterial(
         course_id=course.id,
@@ -7473,7 +7479,7 @@ def admin_update_material(
     before = material_to_response(material)
 
     if "module_id" in data.__fields_set__:
-        validate_course_module(db, material.course_id, data.module_id)
+        require_course_module(db, material.course_id, data.module_id)
         material.module_id = data.module_id
     if data.title is not None:
         title = data.title.strip()
