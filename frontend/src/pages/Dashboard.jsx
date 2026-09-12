@@ -10893,11 +10893,6 @@ function StudentAssignmentsPane({ selectedCourseId }) {
                         </Stack>
                         {submissionsClosed && <Chip label="Submission closed" size="small" sx={{ height: 22, bgcolor: '#eef3f8', color: '#526273' }} />}
                       </Stack>
-                      {assignment.instructions && (
-                        <Typography sx={{ color: '#637083', fontSize: 13, mt: 0.7, lineHeight: 1.35 }}>
-                          {previewText(assignment.instructions, 90)}
-                        </Typography>
-                      )}
                       {assignment.attachment_url && (
                         <Stack direction="row" spacing={0.7} sx={{ flexWrap: 'wrap', mt: 0.8 }}>
                           <Chip
