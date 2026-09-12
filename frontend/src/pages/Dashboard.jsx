@@ -10802,7 +10802,10 @@ function StudentAssignmentsPane({ selectedCourseId }) {
                   key={value}
                   onClick={() => {
                     setAssignmentDetailTab(value);
-                    if (value === 'comments') loadSubmissionConversation(selectedAssignment);
+                    if (value === 'comments') {
+                      setError('');
+                      loadSubmissionConversation(selectedAssignment);
+                    }
                   }}
                   sx={{
                     color: active ? '#1b6ef3' : '#526273',
@@ -10981,6 +10984,7 @@ function StudentAssignmentsPane({ selectedCourseId }) {
       </Box>
     );
   };
+  const assignmentPageError = assignmentDetailTab === 'comments' && ['Not Found', 'not found', 'Submission conversation not found'].includes(error) ? '' : error;
 
   return (
     <Stack spacing={2.2}>
@@ -10998,7 +11002,7 @@ function StudentAssignmentsPane({ selectedCourseId }) {
         icon={null}
       />
       {message && <Alert severity="success">{message}</Alert>}
-      {error && <Alert severity="error">{error}</Alert>}
+      {assignmentPageError && <Alert severity="error">{assignmentPageError}</Alert>}
 
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', xl: 'minmax(0, 1fr) 420px' }, gap: 1.2, alignItems: 'start' }}>
         <Stack spacing={1.2} sx={{ minWidth: 0 }}>
@@ -11210,6 +11214,7 @@ function StudentAssignmentsPane({ selectedCourseId }) {
                       setSelectedAssignmentId(assignment.id);
                       setAssignmentDetailsOpen(true);
                       setAssignmentDetailTab('comments');
+                      setError('');
                       loadSubmissionConversation(assignment);
                     }}
                     sx={{
