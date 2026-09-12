@@ -10410,6 +10410,7 @@ function StudentAssignmentsPane({ selectedCourseId }) {
   const [message, setMessage] = React.useState('');
   const [error, setError] = React.useState('');
   const [commentPopover, setCommentPopover] = React.useState({ anchorEl: null, assignment: null });
+  const cardFileInputsRef = React.useRef({});
 
   const load = React.useCallback(async () => {
     setLoading(true);
@@ -10576,6 +10577,27 @@ function StudentAssignmentsPane({ selectedCourseId }) {
     }
   };
 
+  const openAssignmentSubmission = (assignment) => {
+    if (!assignment?.submission?.file_url) return;
+    setViewingFile({
+      title: `${assignment.title} submission`,
+      file_url: assignment.submission.file_url,
+      material_type: 'downloadable',
+      course: assignment.course,
+      module_title: 'Submitted file',
+    });
+  };
+
+  const openAssignmentAction = (assignment) => {
+    setSelectedAssignmentId(assignment.id);
+    setAssignmentDetailsOpen(true);
+    if (assignment.submission?.file_url) {
+      openAssignmentSubmission(assignment);
+      return;
+    }
+    cardFileInputsRef.current[assignment.id]?.click();
+  };
+
   const renderFileAction = ({ label, fileName, fileUrl, fileSize, icon: Icon = InsertDriveFileOutlined, onOpen }) => {
     if (!fileUrl) return null;
     return (
@@ -10622,13 +10644,7 @@ function StudentAssignmentsPane({ selectedCourseId }) {
       course: selectedAssignment.course,
       module_title: 'Assignment file',
     });
-    const openSubmission = () => setViewingFile({
-      title: `${selectedAssignment.title} submission`,
-      file_url: selectedAssignment.submission?.file_url,
-      material_type: 'downloadable',
-      course: selectedAssignment.course,
-      module_title: 'Submitted file',
-    });
+    const openSubmission = () => openAssignmentSubmission(selectedAssignment);
 
     return (
       <Box sx={{ bgcolor: '#fff', border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, boxShadow: '0 18px 48px rgba(18,60,105,0.08)', overflow: 'hidden', position: { lg: 'sticky' }, top: { lg: 16 } }}>
@@ -10936,12 +10952,29 @@ function StudentAssignmentsPane({ selectedCourseId }) {
                       color={assignment.submission ? 'primary' : 'secondary'}
                       size="small"
                       endIcon={<ChevronRightOutlined />}
-                      onClick={(event) => { event.stopPropagation(); setSelectedAssignmentId(assignment.id); setAssignmentDetailsOpen(true); }}
+                      onClick={(event) => { event.stopPropagation(); openAssignmentAction(assignment); }}
                       disabled={submissionsClosed && !assignment.submission}
                       sx={{ minHeight: 40, fontWeight: 850, width: '100%' }}
                     >
                       {assignment.submission ? 'View Submission' : submissionsClosed ? 'Closed' : 'Submit Assignment'}
                     </Button>
+                    {!submissionsClosed && !assignment.submission && (
+                      <input
+                        type="file"
+                        hidden
+                        ref={(node) => {
+                          if (node) cardFileInputsRef.current[assignment.id] = node;
+                          else delete cardFileInputsRef.current[assignment.id];
+                        }}
+                        onClick={(event) => { event.stopPropagation(); }}
+                        onChange={(event) => {
+                          setSelectedFiles((current) => ({ ...current, [assignment.id]: event.target.files?.[0] || null }));
+                          setSelectedAssignmentId(assignment.id);
+                          setAssignmentDetailsOpen(true);
+                        }}
+                        accept={lmsFileAccept}
+                      />
+                    )}
                   </Stack>
                   <IconButton
                     size="small"
