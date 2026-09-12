@@ -18,7 +18,9 @@ import {
   EditOutlined,
   EmailOutlined,
   EmojiEventsOutlined,
+  ErrorOutlineOutlined,
   ExpandMoreOutlined,
+  FilterAltOutlined,
   FilterAltOffOutlined,
   FolderCopyOutlined,
   ForumOutlined,
@@ -49,6 +51,7 @@ import {
   ThumbDownOutlined,
   ThumbUpOutlined,
   TrendingUpOutlined,
+  UploadFileOutlined,
   VerifiedOutlined,
   VisibilityOffOutlined,
   VisibilityOutlined,
@@ -407,6 +410,19 @@ function previewText(text = '', maxLength = 96) {
   const normalized = String(text || '').replace(/\s+/g, ' ').trim();
   if (normalized.length <= maxLength) return normalized;
   return `${normalized.slice(0, maxLength).trim()}...`;
+}
+
+function formatFileSize(bytes) {
+  const value = Number(bytes || 0);
+  if (!value) return '';
+  if (value >= 1024 * 1024) return `${(value / (1024 * 1024)).toFixed(value >= 10 * 1024 * 1024 ? 0 : 1)} MB`;
+  return `${Math.max(1, Math.ceil(value / 1024))} KB`;
+}
+
+function getFileNameFromUrl(url = '', fallback = 'File') {
+  const cleaned = String(url || '').split('?')[0].split('#')[0];
+  const name = cleaned.split('/').filter(Boolean).pop();
+  return name ? decodeURIComponent(name) : fallback;
 }
 
 function ExpandableDescriptionText({ text, maxLength = 120, sx = {} }) {
@@ -10385,6 +10401,8 @@ function StudentAssignmentsPane({ selectedCourseId }) {
   const [dueSort, setDueSort] = React.useState('asc');
   const [search, setSearch] = React.useState('');
   const [showAllAssignments, setShowAllAssignments] = React.useState(false);
+  const [selectedAssignmentId, setSelectedAssignmentId] = React.useState(null);
+  const [assignmentDetailsOpen, setAssignmentDetailsOpen] = React.useState(true);
   const [selectedFiles, setSelectedFiles] = React.useState({});
   const [viewingFile, setViewingFile] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
@@ -10494,6 +10512,17 @@ function StudentAssignmentsPane({ selectedCourseId }) {
     ['late', 'Late', totals.late],
     ['closed', 'Closed', totals.closed],
   ];
+  const selectedAssignment = assignmentDetailsOpen ? (visibleAssignments.find((assignment) => assignment.id === selectedAssignmentId) || visibleAssignments[0] || null) : null;
+
+  React.useEffect(() => {
+    if (!visibleAssignments.length) {
+      setSelectedAssignmentId(null);
+      return;
+    }
+    if (assignmentDetailsOpen && !visibleAssignments.some((assignment) => assignment.id === selectedAssignmentId)) {
+      setSelectedAssignmentId(visibleAssignments[0].id);
+    }
+  }, [visibleAssignments, selectedAssignmentId, assignmentDetailsOpen]);
 
   if (viewingFile) {
     return (
@@ -10548,6 +10577,171 @@ function StudentAssignmentsPane({ selectedCourseId }) {
     }
   };
 
+  const renderFileAction = ({ label, fileName, fileUrl, fileSize, icon: Icon = InsertDriveFileOutlined, onOpen }) => {
+    if (!fileUrl) return null;
+    return (
+      <Stack direction="row" spacing={1} alignItems="center" sx={{ border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1, p: 1, bgcolor: '#fff' }}>
+        <Box sx={{ width: 34, height: 34, borderRadius: 1, bgcolor: '#fff1ec', color: '#f05a28', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+          <Icon fontSize="small" />
+        </Box>
+        <Box sx={{ minWidth: 0, flex: 1 }}>
+          <Typography noWrap sx={{ color: 'primary.dark', fontWeight: 850, fontSize: 13 }}>{fileName}</Typography>
+          {fileSize && <Typography sx={{ color: '#526273', fontSize: 12 }}>{fileSize}</Typography>}
+        </Box>
+        <IconButton size="small" aria-label={label} onClick={onOpen} sx={{ color: '#1b6ef3' }}>
+          <DownloadOutlined fontSize="small" />
+        </IconButton>
+      </Stack>
+    );
+  };
+
+  const renderAssignmentDetails = () => {
+    if (!selectedAssignment) {
+      return (
+        <Box sx={{ bgcolor: '#fff', border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, p: 2 }}>
+          <Typography sx={{ color: 'primary.dark', fontWeight: 900 }}>Assignment Details</Typography>
+          <Typography sx={{ color: '#637083', fontSize: 14, mt: 0.6 }}>Select an assignment to view its details.</Typography>
+        </Box>
+      );
+    }
+    const status = getAssignmentStatus(selectedAssignment);
+    const selectedFile = selectedFiles[selectedAssignment.id];
+    const submissionsClosed = !selectedAssignment.is_open;
+    const dueDate = selectedAssignment.due_at
+      ? formatTimestamp(selectedAssignment.due_at, { month: 'short', day: 'numeric', year: 'numeric' })
+      : 'No due date';
+    const dueTime = selectedAssignment.due_at
+      ? formatTimestamp(selectedAssignment.due_at, { hour: 'numeric', minute: '2-digit' })
+      : '';
+    const submittedAt = selectedAssignment.submission?.submitted_at
+      ? formatTimestamp(selectedAssignment.submission.submitted_at, { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })
+      : '';
+    const openAttachment = () => setViewingFile({
+      title: selectedAssignment.attachment_name || selectedAssignment.title,
+      file_url: selectedAssignment.attachment_url,
+      material_type: 'downloadable',
+      course: selectedAssignment.course,
+      module_title: 'Assignment file',
+    });
+    const openSubmission = () => setViewingFile({
+      title: `${selectedAssignment.title} submission`,
+      file_url: selectedAssignment.submission?.file_url,
+      material_type: 'downloadable',
+      course: selectedAssignment.course,
+      module_title: 'Submitted file',
+    });
+
+    return (
+      <Box sx={{ bgcolor: '#fff', border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, boxShadow: '0 18px 48px rgba(18,60,105,0.08)', overflow: 'hidden', position: { lg: 'sticky' }, top: { lg: 16 } }}>
+        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ px: 1.8, py: 1.5, borderBottom: '1px solid rgba(18,60,105,0.1)' }}>
+          <Typography sx={{ color: 'primary.dark', fontWeight: 950, fontSize: 20 }}>Assignment Details</Typography>
+          <IconButton size="small" onClick={() => setAssignmentDetailsOpen(false)} aria-label="Close assignment details"><CloseOutlined /></IconButton>
+        </Stack>
+        <Stack spacing={1.7} sx={{ p: 1.8 }}>
+          <Stack direction="row" spacing={1.4} alignItems="center">
+            <Box sx={{ width: 66, height: 66, borderRadius: 1.5, bgcolor: '#fff1ec', color: '#f05a28', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+              <AssignmentOutlined sx={{ fontSize: 34 }} />
+            </Box>
+            <Box sx={{ minWidth: 0 }}>
+              <Typography noWrap sx={{ color: 'primary.dark', fontWeight: 950, fontSize: 17 }}>{selectedAssignment.title}</Typography>
+              <Typography sx={{ color: '#526273', fontSize: 13 }}>
+                {selectedAssignment.course.title}{selectedAssignment.module?.title ? ` | ${selectedAssignment.module.title}` : ''}
+              </Typography>
+              <Chip label={status.label} size="small" sx={{ ...getAssignmentStatusSx(status), fontWeight: 850, mt: 0.8 }} />
+              {submittedAt && <Typography sx={{ color: '#526273', fontSize: 12.5, mt: 0.6 }}>Submitted {submittedAt}</Typography>}
+            </Box>
+          </Stack>
+
+          <Box sx={{ borderBottom: '2px solid #1b6ef3', color: '#1b6ef3', fontWeight: 900, width: 'fit-content', px: 1.2, pb: 1 }}>
+            Details
+          </Box>
+
+          {[
+            [CalendarTodayOutlined, 'Due Date', `${dueDate}${dueTime ? ` | ${dueTime}` : ''}`],
+            [AccessTimeOutlined, 'Status', submittedAt ? `${status.label} | Submitted ${submittedAt}` : `${status.label} | ${getDueCopy(selectedAssignment)}`],
+            [ArticleOutlined, 'Instructions', selectedAssignment.instructions || 'No instructions added yet.'],
+          ].map(([Icon, label, value]) => (
+            <Stack key={label} direction="row" spacing={1.2} alignItems="flex-start">
+              <Box sx={{ width: 40, height: 40, borderRadius: 1, bgcolor: '#eaf2ff', color: '#1b6ef3', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                <Icon fontSize="small" />
+              </Box>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography sx={{ color: 'primary.dark', fontWeight: 900, fontSize: 14 }}>{label}</Typography>
+                <Typography sx={{ color: '#526273', fontSize: 13.5, whiteSpace: label === 'Instructions' ? 'pre-wrap' : 'normal' }}>{value}</Typography>
+              </Box>
+            </Stack>
+          ))}
+
+          <Stack direction="row" spacing={1.2} alignItems="flex-start">
+            <Box sx={{ width: 40, height: 40, borderRadius: 1, bgcolor: '#eaf2ff', color: '#1b6ef3', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+              <CheckCircleOutlined fontSize="small" />
+            </Box>
+            <Box>
+              <Typography sx={{ color: 'primary.dark', fontWeight: 900, fontSize: 14 }}>Requirements</Typography>
+              <Typography component="div" sx={{ color: '#526273', fontSize: 13.5 }}>
+                <Box component="span" sx={{ display: 'block' }}>- Individual assignment</Box>
+                <Box component="span" sx={{ display: 'block' }}>- Max file size: 25 MB</Box>
+                <Box component="span" sx={{ display: 'block' }}>- Accepted formats: PDF, DOCX, PPTX, images, ZIP, and common code files</Box>
+              </Typography>
+            </Box>
+          </Stack>
+
+          {selectedAssignment.attachment_url && (
+            <Stack spacing={0.7}>
+              <Typography sx={{ color: 'primary.dark', fontWeight: 900, fontSize: 14 }}>Course Materials</Typography>
+              {renderFileAction({
+                label: 'Open assignment file',
+                fileName: selectedAssignment.attachment_name || getFileNameFromUrl(selectedAssignment.attachment_url, 'Assignment file'),
+                fileUrl: selectedAssignment.attachment_url,
+                fileSize: '',
+                icon: InsertDriveFileOutlined,
+                onOpen: openAttachment,
+              })}
+            </Stack>
+          )}
+
+          {selectedAssignment.submission?.file_url && (
+            <Stack spacing={0.7}>
+              <Typography sx={{ color: 'primary.dark', fontWeight: 900, fontSize: 14 }}>Your Submission</Typography>
+              {renderFileAction({
+                label: 'Open submitted file',
+                fileName: getFileNameFromUrl(selectedAssignment.submission.file_url, `${selectedAssignment.title} submission`),
+                fileUrl: selectedAssignment.submission.file_url,
+                fileSize: '',
+                icon: InsertDriveFileOutlined,
+                onOpen: openSubmission,
+              })}
+            </Stack>
+          )}
+
+          {submissionsClosed ? (
+            <Alert severity="info">Submission denied until this assignment is opened.</Alert>
+          ) : (
+            <Stack spacing={1}>
+              <Button variant="outlined" component="label" startIcon={<UploadFileOutlined />} disabled={savingId === selectedAssignment.id}>
+                {selectedFile ? `${selectedFile.name}${formatFileSize(selectedFile.size) ? ` (${formatFileSize(selectedFile.size)})` : ''}` : selectedAssignment.submission ? 'Choose file to resubmit' : 'Choose file to submit'}
+                <input
+                  type="file"
+                  hidden
+                  onChange={(event) => setSelectedFiles((current) => ({ ...current, [selectedAssignment.id]: event.target.files?.[0] || null }))}
+                  accept={lmsFileAccept}
+                />
+              </Button>
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+                {selectedAssignment.submission?.file_url && (
+                  <Button variant="outlined" startIcon={<VisibilityOutlined />} onClick={openSubmission} sx={{ flex: 1 }}>View Submission</Button>
+                )}
+                <Button variant="contained" color="primary" onClick={() => submitAssignment(selectedAssignment.id)} disabled={savingId === selectedAssignment.id || !selectedFile} sx={{ flex: 1 }}>
+                  {savingId === selectedAssignment.id ? 'Uploading...' : selectedAssignment.submission ? 'Resubmit Assignment' : 'Submit Assignment'}
+                </Button>
+              </Stack>
+            </Stack>
+          )}
+        </Stack>
+      </Box>
+    );
+  };
+
   return (
     <Stack spacing={2.2}>
       <Stack direction="row" spacing={0.8} sx={{ color: '#637083', flexWrap: 'wrap', fontSize: 12 }}>
@@ -10560,12 +10754,14 @@ function StudentAssignmentsPane({ selectedCourseId }) {
 
       <StudentPageHeader
         title="Assignments"
-        subtitle="View instructions, upload files, and track your submission progress."
+        subtitle="View and manage your coursework and submissions."
         icon={null}
       />
       {message && <Alert severity="success">{message}</Alert>}
       {error && <Alert severity="error">{error}</Alert>}
 
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', xl: 'minmax(0, 1fr) 420px' }, gap: 1.2, alignItems: 'start' }}>
+        <Stack spacing={1.2} sx={{ minWidth: 0 }}>
       <Box sx={{ bgcolor: '#fff', border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, p: 1.2, boxShadow: '0 10px 26px rgba(18,60,105,0.05)' }}>
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1.4fr 240px 190px auto' }, gap: 1.2, alignItems: 'center' }}>
           <TextField
@@ -10587,7 +10783,7 @@ function StudentAssignmentsPane({ selectedCourseId }) {
           </TextField>
           <Button
             variant="outlined"
-            startIcon={<FilterAltOffOutlined />}
+            startIcon={<FilterAltOutlined />}
             onClick={() => { setSearch(''); setCourseFilter(selectedCourseId ? String(selectedCourseId) : 'all'); setFilter('all'); setDueSort('asc'); setShowAllAssignments(false); }}
             sx={{ justifySelf: { xs: 'stretch', lg: 'end' } }}
           >
@@ -10596,22 +10792,23 @@ function StudentAssignmentsPane({ selectedCourseId }) {
         </Box>
       </Box>
 
-      <Box sx={{ bgcolor: '#fff', border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, p: { xs: 1.4, md: 1.7 }, boxShadow: '0 10px 26px rgba(18,60,105,0.05)' }}>
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', xl: 'repeat(4, 1fr)' }, gap: 1.4 }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))', lg: 'repeat(6, minmax(0, 1fr))' }, gap: 0.8 }}>
           {[
-            ['Total assignments', totals.total, AssignmentOutlined, '#6f42c1'],
+            ['Total assignments', totals.total, AssignmentOutlined, '#7c3aed'],
             ['Submitted', totals.submitted, CheckCircleOutlined, '#15965f'],
             ['Pending', totals.pending, AccessTimeOutlined, '#f05a28'],
-            ['Progress', `${progress}%`, CheckCircleOutlined, '#1b6ef3'],
+            ['Late', totals.late, ErrorOutlineOutlined, '#d93025'],
+            ['Closed', totals.closed, LockOutlined, '#526273'],
+            ['Overall progress', `${progress}%`, CheckCircleOutlined, '#1b6ef3'],
           ].map(([label, value, Icon, color]) => (
-            <Stack key={label} direction="row" spacing={1.2} alignItems="center" sx={{ borderRight: { xl: label === 'Progress' ? 'none' : '1px solid rgba(18,60,105,0.08)' }, pr: { xl: 1.2 } }}>
-              <Box sx={{ width: 44, height: 44, borderRadius: 1.4, bgcolor: `${color}16`, color, display: 'grid', placeItems: 'center', flexShrink: 0 }}>
-                <Icon />
+            <Stack key={label} direction="row" spacing={1} alignItems="center" sx={{ bgcolor: '#fff', border: '1px solid rgba(18,60,105,0.1)', borderRadius: 1.2, p: 1, minHeight: 74, boxShadow: '0 8px 22px rgba(18,60,105,0.04)' }}>
+              <Box sx={{ width: 38, height: 38, borderRadius: 1, bgcolor: `${color}16`, color, display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                <Icon fontSize="small" />
               </Box>
               <Box sx={{ minWidth: 0, flex: 1 }}>
                 <Typography sx={{ color: 'primary.dark', fontWeight: 950, lineHeight: 1 }}>{value}</Typography>
-                <Typography sx={{ color: '#526273', fontSize: 12.5 }}>{label}</Typography>
-                {label === 'Progress' && (
+                <Typography noWrap sx={{ color: '#526273', fontSize: 11.5 }}>{label}</Typography>
+                {label === 'Overall progress' && (
                   <Box sx={{ mt: 0.8, height: 5, borderRadius: 999, bgcolor: '#e6edf6', overflow: 'hidden' }}>
                     <Box sx={{ width: `${progress}%`, height: '100%', bgcolor: color }} />
                   </Box>
@@ -10619,7 +10816,6 @@ function StudentAssignmentsPane({ selectedCourseId }) {
               </Box>
             </Stack>
           ))}
-        </Box>
       </Box>
 
       {loading ? <Stack alignItems="center" sx={{ py: 5 }}><CircularProgress size={28} /></Stack> : courseAssignments.length === 0 ? (
@@ -10661,14 +10857,25 @@ function StudentAssignmentsPane({ selectedCourseId }) {
           ) : (
             <Stack spacing={1.1}>
             {displayedAssignments.map((assignment, assignmentIndex) => {
-            const selectedFile = selectedFiles[assignment.id];
             const status = getAssignmentStatus(assignment);
             const submissionsClosed = !assignment.is_open;
             const iconTone = assignmentIconPalette[assignmentIndex % assignmentIconPalette.length];
             const teacherComment = getTeacherComment(assignment);
             return (
-              <Box key={assignment.id} sx={{ bgcolor: '#fff', border: '1px solid rgba(18,60,105,0.1)', borderRadius: 1.5, p: { xs: 1.2, md: 1.35 } }}>
-                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1.2fr) 220px 280px 36px' }, gap: 1.4, alignItems: 'center' }}>
+              <Box
+                key={assignment.id}
+                onClick={() => { setSelectedAssignmentId(assignment.id); setAssignmentDetailsOpen(true); }}
+                sx={{
+                  bgcolor: selectedAssignment?.id === assignment.id ? '#fbfdff' : '#fff',
+                  border: `1px solid ${selectedAssignment?.id === assignment.id ? 'rgba(27,110,243,0.36)' : 'rgba(18,60,105,0.1)'}`,
+                  borderLeft: `3px solid ${status.group === 'late' ? '#d93025' : status.group === 'submitted' || status.group === 'reviewed' ? '#1b6ef3' : status.group === 'pending' ? '#f59e0b' : '#94a3b8'}`,
+                  borderRadius: 1.5,
+                  p: { xs: 1.2, md: 1.35 },
+                  cursor: 'pointer',
+                  boxShadow: selectedAssignment?.id === assignment.id ? '0 12px 30px rgba(27,110,243,0.08)' : 'none',
+                }}
+              >
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1.2fr) 190px 220px 36px' }, gap: 1.4, alignItems: 'center' }}>
                   <Stack direction="row" spacing={1.2} alignItems="center" sx={{ minWidth: 0 }}>
                     <Box sx={{ width: 48, height: 48, borderRadius: 1.4, bgcolor: `${iconTone}16`, color: iconTone, display: 'grid', placeItems: 'center', flexShrink: 0 }}>
                       <AssignmentOutlined />
@@ -10701,71 +10908,22 @@ function StudentAssignmentsPane({ selectedCourseId }) {
                         : getDueCopy(assignment)}
                     </Typography>
                   </Box>
-                  <Stack spacing={0.8} sx={{ '& .MuiButton-root': { fontWeight: 650 } }}>
-                    <Box sx={{ display: 'grid', gridTemplateColumns: 'minmax(0, max-content)', justifyItems: 'start', gap: 0.65 }}>
-                      {assignment.attachment_url && (
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          onClick={() => setViewingFile({
-                            title: assignment.attachment_name || assignment.title,
-                            file_url: assignment.attachment_url,
-                            material_type: 'downloadable',
-                            course: assignment.course,
-                            module_title: 'Assignment file',
-                          })}
-                        >
-                          Open instructions
-                        </Button>
-                      )}
-                      {assignment.submission?.file_url && (
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          startIcon={<VisibilityOutlined />}
-                          onClick={() => setViewingFile({
-                            title: `${assignment.title} submission`,
-                            file_url: assignment.submission.file_url,
-                            material_type: 'downloadable',
-                            course: assignment.course,
-                            module_title: 'Submitted file',
-                          })}
-                        >
-                          Open submission
-                        </Button>
-                      )}
-                    </Box>
-                    {submissionsClosed ? (
-                      <Alert severity="info" sx={{ py: 0.2, '& .MuiAlert-message': { py: 0.45, fontSize: 13 } }}>
-                        Submission denied until this assignment is opened.
-                      </Alert>
-                    ) : (
-                    <Box sx={{ display: 'grid', gridTemplateColumns: 'max-content max-content', justifyContent: 'start', gap: 0.8 }}>
-                      {selectedFile && (
-                        <Button variant="outlined" size="small" disabled={savingId === assignment.id} onClick={() => setSelectedFiles((current) => ({ ...current, [assignment.id]: null }))}>
-                          Clear
-                        </Button>
-                      )}
-                      <Button variant="outlined" component="label" size="small" disabled={savingId === assignment.id}>
-                        {selectedFile ? selectedFile.name : 'Choose file'}
-                        <input
-                          type="file"
-                          hidden
-                          onChange={(event) => setSelectedFiles((current) => ({ ...current, [assignment.id]: event.target.files?.[0] || null }))}
-                          accept={lmsFileAccept}
-                        />
-                      </Button>
-                      <Button variant="contained" color="secondary" size="small" disabled={savingId === assignment.id || !selectedFile} onClick={() => submitAssignment(assignment.id)}>
-                        {savingId === assignment.id ? 'Uploading...' : assignment.submission ? 'Resubmit' : 'Submit'}
-                      </Button>
-                    </Box>
-                    )}
-                  </Stack>
+                  <Button
+                    variant={assignment.submission ? 'outlined' : 'contained'}
+                    color={assignment.submission ? 'primary' : 'secondary'}
+                    size="small"
+                    endIcon={<ChevronRightOutlined />}
+                    onClick={(event) => { event.stopPropagation(); setSelectedAssignmentId(assignment.id); setAssignmentDetailsOpen(true); }}
+                    disabled={submissionsClosed && !assignment.submission}
+                    sx={{ minHeight: 40, fontWeight: 850 }}
+                  >
+                    {assignment.submission ? 'View Submission' : submissionsClosed ? 'Closed' : 'Submit Assignment'}
+                  </Button>
                   <IconButton
                     size="small"
                     disabled={!teacherComment}
                     aria-label={teacherComment ? `View teacher comment for ${assignment.title}` : `No teacher comment for ${assignment.title}`}
-                    onClick={(event) => setCommentPopover({ anchorEl: event.currentTarget, assignment })}
+                    onClick={(event) => { event.stopPropagation(); setCommentPopover({ anchorEl: event.currentTarget, assignment }); }}
                     sx={{
                       justifySelf: 'center',
                       border: '1px solid rgba(18,60,105,0.14)',
@@ -10797,6 +10955,9 @@ function StudentAssignmentsPane({ selectedCourseId }) {
           )}
         </Box>
       )}
+        </Stack>
+        {!loading && assignmentDetailsOpen && renderAssignmentDetails()}
+      </Box>
       <Popover
         open={Boolean(commentPopover.anchorEl)}
         anchorEl={commentPopover.anchorEl}
