@@ -8824,9 +8824,11 @@ function StudentPageHeader({ title, subtitle, icon: Icon = StackedBooksIcon, act
   return (
     <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }} spacing={1.5}>
       <Stack direction="row" spacing={1.4} alignItems="center">
-        <Box sx={{ width: 48, height: 48, borderRadius: 1.5, bgcolor: 'rgba(240,90,40,0.12)', color: 'secondary.main', display: 'grid', placeItems: 'center' }}>
-          <Icon />
-        </Box>
+        {Icon && (
+          <Box sx={{ width: 48, height: 48, borderRadius: 1.5, bgcolor: 'rgba(240,90,40,0.12)', color: 'secondary.main', display: 'grid', placeItems: 'center' }}>
+            <Icon />
+          </Box>
+        )}
         <Box>
           <Typography variant="h3" sx={{ color: 'primary.dark', fontSize: { xs: '1.85rem', md: '2.35rem' }, lineHeight: 1.1 }}>
             {title}
@@ -11468,7 +11470,7 @@ function StudentCertificatesPane() {
       <StudentPageHeader
         title="View Certificate"
         subtitle="View and download your certificate for the full Three13 IT Training Program."
-        icon={VerifiedOutlined}
+        icon={null}
       />
       <Box sx={{ borderTop: '1px solid rgba(18,60,105,0.14)' }} />
       {loading ? (
