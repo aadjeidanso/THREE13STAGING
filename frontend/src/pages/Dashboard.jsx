@@ -10973,7 +10973,7 @@ function StudentAnnouncementsPane({ user, selectedAnnouncementId, onAnnouncement
 
   return (
     <Stack spacing={3}>
-      <StudentPageHeader title="Announcements" subtitle="Course updates, platform notices, and deadline reminders." icon={CampaignOutlined} />
+      <StudentPageHeader title="Announcements" subtitle="Course updates, platform notices, and deadline reminders." icon={null} />
       {error && <Alert severity="error">{error}</Alert>}
       {loading ? <Stack alignItems="center" sx={{ py: 5 }}><CircularProgress size={28} /></Stack> : announcements.length === 0 ? (
         <Box sx={{ bgcolor: '#fff', border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, p: 2 }}>No announcements yet.</Box>
