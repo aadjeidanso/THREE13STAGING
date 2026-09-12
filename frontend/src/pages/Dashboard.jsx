@@ -10613,7 +10613,7 @@ function StudentAssignmentsPane({ selectedCourseId }) {
     }));
     setConversationLoadingId(assignment.id);
     try {
-      const response = await fetch(`${apiBaseUrl.replace(/\/$/, '')}/student/assignments/${assignment.id}/conversation`, {
+      const response = await fetch(`${apiBaseUrl.replace(/\/$/, '')}/student/submissions/${assignment.submission.id}/conversation`, {
         headers: { Authorization: `Bearer ${getToken()}` },
       });
       const data = await response.json();
@@ -10632,7 +10632,7 @@ function StudentAssignmentsPane({ selectedCourseId }) {
     setConversationSavingId(assignment.id);
     setError('');
     try {
-      const response = await fetch(`${apiBaseUrl.replace(/\/$/, '')}/student/assignments/${assignment.id}/conversation`, {
+      const response = await fetch(`${apiBaseUrl.replace(/\/$/, '')}/student/submissions/${assignment.submission.id}/conversation`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${getToken()}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ body }),
@@ -10642,7 +10642,9 @@ function StudentAssignmentsPane({ selectedCourseId }) {
       setSubmissionConversations((current) => ({ ...current, [assignment.submission.id]: data }));
       setConversationDrafts((current) => ({ ...current, [assignment.submission.id]: '' }));
     } catch (err) {
-      setError(err.message);
+      setError(err.message === 'Submission conversation not found' || err.message === 'Not Found' || err.message === 'not found'
+        ? 'We could not save that reply yet. Please refresh and try again once the latest backend update is live.'
+        : err.message);
     } finally {
       setConversationSavingId(null);
     }

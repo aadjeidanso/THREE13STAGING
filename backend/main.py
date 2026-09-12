@@ -3541,6 +3541,61 @@ def student_add_assignment_conversation_message(
     return submission_conversation_payload(db, submission, assignment, course, grade)
 
 
+@app.get("/student/submissions/{submission_id}/conversation")
+def student_get_submission_conversation(
+    submission_id: int,
+    student: User = Depends(require_student),
+    db: Session = Depends(get_db),
+):
+    row = (
+        db.query(Submission, Assignment, Course, Grade)
+        .join(Assignment, Submission.assignment_id == Assignment.id)
+        .join(Course, Assignment.course_id == Course.id)
+        .outerjoin(Grade, Grade.submission_id == Submission.id)
+        .filter(Submission.id == submission_id, Submission.student_id == student.id)
+        .first()
+    )
+    if not row:
+        raise HTTPException(status_code=404, detail="Submission conversation not found")
+    submission, assignment, course, grade = row
+    require_student_course_access(db, student, assignment.course_id)
+    return submission_conversation_payload(db, submission, assignment, course, grade)
+
+
+@app.post("/student/submissions/{submission_id}/conversation")
+def student_add_submission_conversation_message(
+    submission_id: int,
+    data: SubmissionMessageCreateRequest,
+    student: User = Depends(require_student),
+    db: Session = Depends(get_db),
+):
+    row = (
+        db.query(Submission, Assignment, Course, Grade)
+        .join(Assignment, Submission.assignment_id == Assignment.id)
+        .join(Course, Assignment.course_id == Course.id)
+        .outerjoin(Grade, Grade.submission_id == Submission.id)
+        .filter(Submission.id == submission_id, Submission.student_id == student.id)
+        .first()
+    )
+    if not row:
+        raise HTTPException(status_code=404, detail="Submission conversation not found")
+    submission, assignment, course, grade = row
+    require_student_course_access(db, student, assignment.course_id)
+    message = add_submission_message(db, submission, student, data.body)
+    create_audit_log(
+        db,
+        student,
+        "submission.message_created",
+        "submission",
+        submission.id,
+        f"{student.full_name} replied on {assignment.title}",
+        {"course_id": course.id, "assignment_id": assignment.id},
+    )
+    db.commit()
+    db.refresh(message)
+    return submission_conversation_payload(db, submission, assignment, course, grade)
+
+
 @app.get("/student/grades")
 def student_list_grades(
     student: User = Depends(require_student),
