@@ -10868,64 +10868,107 @@ function StudentAssignmentsPane({ selectedCourseId }) {
                 sx={{
                   bgcolor: selectedAssignment?.id === assignment.id ? '#fbfdff' : '#fff',
                   border: `1px solid ${selectedAssignment?.id === assignment.id ? 'rgba(27,110,243,0.36)' : 'rgba(18,60,105,0.1)'}`,
-                  borderLeft: `3px solid ${status.group === 'late' ? '#d93025' : status.group === 'submitted' || status.group === 'reviewed' ? '#1b6ef3' : status.group === 'pending' ? '#f59e0b' : '#94a3b8'}`,
+                  borderLeft: `3px solid ${status.color === 'error' ? '#d93025' : status.group === 'submitted' || status.group === 'reviewed' ? '#1b6ef3' : status.group === 'pending' ? '#f59e0b' : '#94a3b8'}`,
                   borderRadius: 1.5,
                   p: { xs: 1.2, md: 1.35 },
                   cursor: 'pointer',
                   boxShadow: selectedAssignment?.id === assignment.id ? '0 12px 30px rgba(27,110,243,0.08)' : 'none',
                 }}
               >
-                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1.2fr) 190px 220px 36px' }, gap: 1.4, alignItems: 'center' }}>
-                  <Stack direction="row" spacing={1.2} alignItems="center" sx={{ minWidth: 0 }}>
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 1fr) 230px 36px' },
+                    gap: { xs: 1.2, md: 1.5 },
+                    alignItems: 'center',
+                  }}
+                >
+                  <Stack direction="row" spacing={1.2} alignItems="flex-start" sx={{ minWidth: 0 }}>
                     <Box sx={{ width: 48, height: 48, borderRadius: 1.4, bgcolor: `${iconTone}16`, color: iconTone, display: 'grid', placeItems: 'center', flexShrink: 0 }}>
                       <AssignmentOutlined />
                     </Box>
                     <Box sx={{ minWidth: 0 }}>
-                      <Typography sx={{ color: 'primary.dark', fontWeight: 950 }}>{assignment.title}</Typography>
-                      <Typography sx={{ color: '#526273', fontSize: 13 }}>
-                        {assignment.course.title} {assignment.module?.title ? `| ${assignment.module.title}` : ''} | Due {formatTimestamp(assignment.due_at, { month: 'short', day: 'numeric', year: 'numeric' })}
-                      </Typography>
-                      {assignment.instructions && <Typography noWrap sx={{ color: '#637083', fontSize: 13, mt: 0.2 }}>{assignment.instructions}</Typography>}
-                      <Stack direction="row" spacing={0.7} sx={{ flexWrap: 'wrap', mt: 0.7 }}>
-                        <Chip label="Individual" size="small" sx={{ height: 22 }} />
-                        <Chip label="Max 25 MB" size="small" sx={{ height: 22 }} />
-                        {submissionsClosed && <Chip label="Submission closed" size="small" sx={{ height: 22, bgcolor: '#eef3f8', color: '#526273' }} />}
-                        {assignment.attachment_url && (
-                          <Chip label={assignment.attachment_name || 'Homework file'} size="small" variant="outlined" sx={{ height: 22 }} />
+                      <Typography sx={{ color: 'primary.dark', fontWeight: 950, lineHeight: 1.25 }}>{assignment.title}</Typography>
+                      <Stack direction="row" spacing={0.7} alignItems="center" sx={{ flexWrap: 'wrap', mt: 0.25, color: '#526273' }}>
+                        <Typography sx={{ fontSize: 13 }}>{assignment.course.title}</Typography>
+                        {assignment.module?.title && (
+                          <>
+                            <Typography sx={{ fontSize: 13, color: '#8a97a6' }}>-</Typography>
+                            <Typography sx={{ fontSize: 13 }}>{assignment.module.title}</Typography>
+                          </>
                         )}
                       </Stack>
+                      <Stack
+                        direction="row"
+                        spacing={1.25}
+                        alignItems="center"
+                        sx={{ flexWrap: 'wrap', mt: 0.85, color: '#526273' }}
+                      >
+                        <Stack direction="row" spacing={0.45} alignItems="center">
+                          <CalendarTodayOutlined sx={{ fontSize: 15 }} />
+                          <Typography sx={{ fontSize: 12.5 }}>
+                            Due {formatTimestamp(assignment.due_at, { month: 'short', day: 'numeric', year: 'numeric' })}
+                          </Typography>
+                        </Stack>
+                        <Stack direction="row" spacing={0.45} alignItems="center">
+                          <PersonOutlineOutlined sx={{ fontSize: 15 }} />
+                          <Typography sx={{ fontSize: 12.5 }}>Individual</Typography>
+                        </Stack>
+                        <Stack direction="row" spacing={0.45} alignItems="center">
+                          <InsertDriveFileOutlined sx={{ fontSize: 15 }} />
+                          <Typography sx={{ fontSize: 12.5 }}>Max 25 MB</Typography>
+                        </Stack>
+                        {submissionsClosed && <Chip label="Submission closed" size="small" sx={{ height: 22, bgcolor: '#eef3f8', color: '#526273' }} />}
+                      </Stack>
+                      {assignment.instructions && (
+                        <Typography sx={{ color: '#637083', fontSize: 13, mt: 0.7, lineHeight: 1.35 }}>
+                          {previewText(assignment.instructions, 90)}
+                        </Typography>
+                      )}
+                      {assignment.attachment_url && (
+                        <Stack direction="row" spacing={0.7} sx={{ flexWrap: 'wrap', mt: 0.8 }}>
+                          <Chip
+                            icon={<InsertDriveFileOutlined sx={{ fontSize: '16px !important' }} />}
+                            label={assignment.attachment_name || 'Homework file'}
+                            size="small"
+                            sx={{ height: 26, bgcolor: '#f4f8fd', color: '#31537a', borderRadius: 1, '& .MuiChip-label': { maxWidth: 230, overflow: 'hidden', textOverflow: 'ellipsis' } }}
+                          />
+                        </Stack>
+                      )}
                     </Box>
                   </Stack>
-                  <Box>
-                    <Chip
-                      label={status.label}
+                  <Stack spacing={1} alignItems={{ xs: 'stretch', md: 'flex-start' }} sx={{ minWidth: 0 }}>
+                    <Box>
+                      <Chip
+                        label={status.label}
+                        size="small"
+                        sx={{ ...getAssignmentStatusSx(status), fontWeight: 650, mb: 0.6, '& .MuiChip-label': { px: 1.1 } }}
+                      />
+                      <Typography sx={{ color: status.color === 'error' ? '#b42318' : '#526273', fontSize: 12.5, fontWeight: 400 }}>
+                        {assignment.submission?.submitted_at
+                          ? `Submitted ${formatTimestamp(assignment.submission.submitted_at, { month: 'short', day: 'numeric', year: 'numeric' })}`
+                          : getDueCopy(assignment)}
+                      </Typography>
+                    </Box>
+                    <Button
+                      variant={assignment.submission ? 'outlined' : 'contained'}
+                      color={assignment.submission ? 'primary' : 'secondary'}
                       size="small"
-                      sx={{ ...getAssignmentStatusSx(status), fontWeight: 650, mb: 0.6, '& .MuiChip-label': { px: 1.1 } }}
-                    />
-                    <Typography sx={{ color: status.group === 'late' ? '#b42318' : '#526273', fontSize: 12.5, fontWeight: 400 }}>
-                      {assignment.submission?.submitted_at
-                        ? `Submitted ${formatTimestamp(assignment.submission.submitted_at, { month: 'short', day: 'numeric', year: 'numeric' })}`
-                        : getDueCopy(assignment)}
-                    </Typography>
-                  </Box>
-                  <Button
-                    variant={assignment.submission ? 'outlined' : 'contained'}
-                    color={assignment.submission ? 'primary' : 'secondary'}
-                    size="small"
-                    endIcon={<ChevronRightOutlined />}
-                    onClick={(event) => { event.stopPropagation(); setSelectedAssignmentId(assignment.id); setAssignmentDetailsOpen(true); }}
-                    disabled={submissionsClosed && !assignment.submission}
-                    sx={{ minHeight: 40, fontWeight: 850 }}
-                  >
-                    {assignment.submission ? 'View Submission' : submissionsClosed ? 'Closed' : 'Submit Assignment'}
-                  </Button>
+                      endIcon={<ChevronRightOutlined />}
+                      onClick={(event) => { event.stopPropagation(); setSelectedAssignmentId(assignment.id); setAssignmentDetailsOpen(true); }}
+                      disabled={submissionsClosed && !assignment.submission}
+                      sx={{ minHeight: 40, fontWeight: 850, width: '100%' }}
+                    >
+                      {assignment.submission ? 'View Submission' : submissionsClosed ? 'Closed' : 'Submit Assignment'}
+                    </Button>
+                  </Stack>
                   <IconButton
                     size="small"
                     disabled={!teacherComment}
                     aria-label={teacherComment ? `View teacher comment for ${assignment.title}` : `No teacher comment for ${assignment.title}`}
                     onClick={(event) => { event.stopPropagation(); setCommentPopover({ anchorEl: event.currentTarget, assignment }); }}
                     sx={{
-                      justifySelf: 'center',
+                      justifySelf: { xs: 'flex-start', md: 'center' },
                       border: '1px solid rgba(18,60,105,0.14)',
                       borderRadius: 1,
                       color: teacherComment ? 'primary.dark' : '#9aa7b5',
