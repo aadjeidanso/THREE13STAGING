@@ -410,6 +410,32 @@ function previewText(text = '', maxLength = 96) {
   return `${normalized.slice(0, maxLength).trim()}...`;
 }
 
+function ExpandableDescriptionText({ text, maxLength = 120, sx = {} }) {
+  const [expanded, setExpanded] = React.useState(false);
+  const description = String(text || '').replace(/\s+/g, ' ').trim();
+  if (!description) return null;
+  const shouldTruncate = description.length > maxLength;
+  const visibleDescription = expanded || !shouldTruncate ? description : description.slice(0, maxLength).trim();
+  return (
+    <Typography component="div" sx={{ color: '#637083', fontSize: 13, ...sx }}>
+      {visibleDescription}
+      {shouldTruncate && (
+        <>
+          {' '}
+          <Button
+            variant="text"
+            size="small"
+            onClick={() => setExpanded((current) => !current)}
+            sx={{ minWidth: 0, p: 0, color: '#0f63c7', fontSize: 'inherit', fontWeight: 850, lineHeight: 'inherit', verticalAlign: 'baseline' }}
+          >
+            {expanded ? 'less' : '...'}
+          </Button>
+        </>
+      )}
+    </Typography>
+  );
+}
+
 function getYouTubeVideoId(url) {
   if (!url) return '';
   try {
@@ -550,7 +576,7 @@ function MaterialInlineViewer({ material, onBack, backLabel = 'Back to materials
       {materialDescription && (
         <Box sx={{ bgcolor: '#fff', border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, p: 1.6 }}>
           <Typography sx={{ color: 'primary.dark', fontWeight: 900, fontSize: 13, mb: 0.35 }}>Material description</Typography>
-          <Typography sx={{ color: '#526273' }}>{materialDescription}</Typography>
+          <ExpandableDescriptionText text={materialDescription} maxLength={180} sx={{ color: '#526273', fontSize: 14 }} />
         </Box>
       )}
       <Box sx={{ bgcolor: '#fff', border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, p: { xs: 1, md: 1.5 } }}>
@@ -9041,7 +9067,6 @@ function StudentMaterialsPane({ selectedCourseId }) {
   const [error, setError] = React.useState('');
   const [viewingMaterial, setViewingMaterial] = React.useState(null);
   const [materialMenu, setMaterialMenu] = React.useState({ anchorEl: null, material: null });
-  const [expandedDescriptions, setExpandedDescriptions] = React.useState({});
 
   React.useEffect(() => {
     let mounted = true;
@@ -9254,29 +9279,7 @@ function StudentMaterialsPane({ selectedCourseId }) {
   };
 
   const renderModuleDescription = (group) => {
-    const description = String(group.description || '').replace(/\s+/g, ' ').trim();
-    if (!description) return null;
-    const isDescriptionExpanded = Boolean(expandedDescriptions[group.key]);
-    const shouldTruncate = description.length > 120;
-    const visibleDescription = isDescriptionExpanded || !shouldTruncate ? description : description.slice(0, 120).trim();
-    return (
-      <Typography sx={{ color: '#637083', fontSize: 13 }}>
-        {visibleDescription}
-        {shouldTruncate && (
-          <>
-            {' '}
-            <Button
-              variant="text"
-              size="small"
-              onClick={() => setExpandedDescriptions((current) => ({ ...current, [group.key]: !isDescriptionExpanded }))}
-              sx={{ minWidth: 0, p: 0, color: '#0f63c7', fontSize: 13, fontWeight: 850, lineHeight: 'inherit', verticalAlign: 'baseline' }}
-            >
-              {isDescriptionExpanded ? 'less' : '...'}
-            </Button>
-          </>
-        )}
-      </Typography>
-    );
+    return <ExpandableDescriptionText text={group.description} maxLength={120} />;
   };
 
   const renderMiniMaterial = (material) => {
@@ -9300,7 +9303,7 @@ function StudentMaterialsPane({ selectedCourseId }) {
           {renderMaterialVisual(material, { clickable: Boolean(material.viewed && url), onClick: openMaterial })}
           <Box sx={{ minWidth: 0, flex: 1 }}>
             <Typography sx={{ color: 'primary.dark', fontWeight: 900, fontSize: 15 }}>{material.title}</Typography>
-            {material.description && <Typography sx={{ color: '#637083', fontSize: 13, mt: 0.2 }} noWrap>{previewText(material.description, 78)}</Typography>}
+            {material.description && <ExpandableDescriptionText text={material.description} maxLength={78} sx={{ mt: 0.2 }} />}
             <Stack direction="row" spacing={0.8} sx={{ flexWrap: 'wrap', mt: 0.6, color: '#637083', fontSize: 12 }}>
               <Typography sx={{ fontSize: 12 }}>{materialTypeLabels[material.material_type] || material.material_type}</Typography>
               <Typography sx={{ fontSize: 12 }}>|</Typography>
