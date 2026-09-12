@@ -10799,7 +10799,18 @@ function StudentAssignmentsPane({ selectedCourseId }) {
       ) : (
         <Box sx={{ bgcolor: '#fff', border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, p: 1.2, boxShadow: '0 10px 26px rgba(18,60,105,0.05)' }}>
           <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" alignItems={{ md: 'center' }} spacing={1.2} sx={{ borderBottom: '1px solid rgba(18,60,105,0.1)', mb: 1.2 }}>
-            <Stack direction="row" spacing={0.8} sx={{ flexWrap: 'wrap' }}>
+            <Stack
+              direction="row"
+              spacing={0.6}
+              sx={{
+                flexWrap: 'nowrap',
+                overflowX: 'auto',
+                width: '100%',
+                pb: 0.2,
+                '&::-webkit-scrollbar': { height: 4 },
+                '&::-webkit-scrollbar-thumb': { bgcolor: 'rgba(18,60,105,0.18)', borderRadius: 999 },
+              }}
+            >
               {tabs.map(([value, label, count]) => {
                 const active = filter === value;
                 return (
@@ -10810,9 +10821,11 @@ function StudentAssignmentsPane({ selectedCourseId }) {
                       color: active ? 'secondary.main' : '#526273',
                       borderBottom: active ? '2px solid #f05a28' : '2px solid transparent',
                       borderRadius: 0,
-                      px: 1.4,
+                      px: { xs: 1, md: 1.1 },
                       py: 1,
                       fontWeight: 850,
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0,
                     }}
                   >
                     {label}
