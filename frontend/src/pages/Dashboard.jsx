@@ -9343,7 +9343,7 @@ function StudentMaterialsPane({ selectedCourseId }) {
       <StudentPageHeader
         title="Course Materials"
         subtitle="Everything you need to succeed in your courses."
-        icon={FolderCopyOutlined}
+        icon={null}
         action={(
           <TextField
             size="small"
