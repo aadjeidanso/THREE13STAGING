@@ -786,6 +786,20 @@ function useAdminPaneToast(message, setMessage, error, setError, onAdminToast) {
   }, [error, onAdminToast, setError]);
 }
 
+function useStudentPaneToast(message, setMessage, error, setError, onStudentToast) {
+  React.useEffect(() => {
+    if (!onStudentToast || !message) return;
+    onStudentToast(readableError(message, 'Done.'), 'success');
+    setMessage?.('');
+  }, [message, onStudentToast, setMessage]);
+
+  React.useEffect(() => {
+    if (!onStudentToast || !error) return;
+    onStudentToast(readableError(error, 'Something went wrong'), 'error');
+    setError?.('');
+  }, [error, onStudentToast, setError]);
+}
+
 function AdminEnrollmentRequests({ onAdminDataChanged, onAdminToast, initialStatus = 'pending', showStatusFilters = true, compactTitle = false }) {
   const [requests, setRequests] = React.useState([]);
   const [statusFilter, setStatusFilter] = React.useState(initialStatus);
@@ -8714,10 +8728,11 @@ function StudentEnrollmentStatus() {
   );
 }
 
-function StudentDashboardHome({ setActivePane, user, onOpenCourse }) {
+function StudentDashboardHome({ setActivePane, user, onOpenCourse, onStudentToast }) {
   const [summary, setSummary] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState('');
+  useStudentPaneToast('', null, error, setError, onStudentToast);
 
   React.useEffect(() => {
     let isMounted = true;
@@ -8904,7 +8919,7 @@ function StudentCourseCard({ course, onOpen, label = 'Open course', status, disa
   );
 }
 
-function StudentMyCoursesPane({ setActivePane, user, onOpenCourse }) {
+function StudentMyCoursesPane({ setActivePane, user, onOpenCourse, onStudentToast }) {
   const [courses, setCourses] = React.useState([]);
   const [selectedCourseId, setSelectedCourseId] = React.useState(null);
   const [content, setContent] = React.useState(null);
@@ -8912,6 +8927,7 @@ function StudentMyCoursesPane({ setActivePane, user, onOpenCourse }) {
   const [contentLoading, setContentLoading] = React.useState(false);
   const [error, setError] = React.useState('');
   const [viewingMaterial, setViewingMaterial] = React.useState(null);
+  useStudentPaneToast('', null, error, setError, onStudentToast);
 
   const loadCourses = React.useCallback(async () => {
     setLoading(true);
@@ -9068,7 +9084,7 @@ function StudentMyCoursesPane({ setActivePane, user, onOpenCourse }) {
   );
 }
 
-function StudentMaterialsPane({ selectedCourseId }) {
+function StudentMaterialsPane({ selectedCourseId, onStudentToast }) {
   const [materials, setMaterials] = React.useState([]);
   const [courseFilter, setCourseFilter] = React.useState(selectedCourseId ? String(selectedCourseId) : 'all');
   const [typeFilter, setTypeFilter] = React.useState('all');
@@ -9079,6 +9095,7 @@ function StudentMaterialsPane({ selectedCourseId }) {
   const [error, setError] = React.useState('');
   const [viewingMaterial, setViewingMaterial] = React.useState(null);
   const [materialMenu, setMaterialMenu] = React.useState({ anchorEl: null, material: null });
+  useStudentPaneToast('', null, error, setError, onStudentToast);
 
   React.useEffect(() => {
     let mounted = true;
@@ -9620,7 +9637,7 @@ function StudentModuleLanding({ courseContent, stats, loading, error, message, m
   );
 }
 
-function StudentModulesPane({ selectedCourseId, setActivePane }) {
+function StudentModulesPane({ selectedCourseId, setActivePane, onStudentToast }) {
   const [courseContents, setCourseContents] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState('');
@@ -9633,6 +9650,7 @@ function StudentModulesPane({ selectedCourseId, setActivePane }) {
   const [moduleAssignmentSort, setModuleAssignmentSort] = React.useState('due_date');
   const [moduleAssignmentDueOrder, setModuleAssignmentDueOrder] = React.useState('asc');
   const [moduleMaterialMenu, setModuleMaterialMenu] = React.useState({ anchorEl: null, material: null });
+  useStudentPaneToast(message, setMessage, error, setError, onStudentToast);
 
   React.useEffect(() => {
     let mounted = true;
@@ -10393,7 +10411,7 @@ function StudentModulesPane({ selectedCourseId, setActivePane }) {
   );
 }
 
-function StudentAssignmentsPane({ selectedCourseId }) {
+function StudentAssignmentsPane({ selectedCourseId, onStudentToast }) {
   const [assignments, setAssignments] = React.useState([]);
   const [filter, setFilter] = React.useState('all');
   const [courseFilter, setCourseFilter] = React.useState(selectedCourseId ? String(selectedCourseId) : 'all');
@@ -10415,6 +10433,7 @@ function StudentAssignmentsPane({ selectedCourseId }) {
   const [message, setMessage] = React.useState('');
   const [error, setError] = React.useState('');
   const cardFileInputsRef = React.useRef({});
+  useStudentPaneToast(message, setMessage, error, setError, onStudentToast);
 
   const load = React.useCallback(async () => {
     setLoading(true);
@@ -11255,7 +11274,7 @@ function StudentAssignmentsPane({ selectedCourseId }) {
   );
 }
 
-function StudentAnnouncementsPane({ user, selectedAnnouncementId, onAnnouncementRead }) {
+function StudentAnnouncementsPane({ user, selectedAnnouncementId, onAnnouncementRead, onStudentToast }) {
   const [announcements, setAnnouncements] = React.useState([]);
   const [selectedAnnouncement, setSelectedAnnouncement] = React.useState(null);
   const [search, setSearch] = React.useState('');
@@ -11272,6 +11291,7 @@ function StudentAnnouncementsPane({ user, selectedAnnouncementId, onAnnouncement
   });
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState('');
+  useStudentPaneToast('', null, error, setError, onStudentToast);
   React.useEffect(() => {
     let mounted = true;
     fetch(`${apiBaseUrl.replace(/\/$/, '')}/student/announcements`, { headers: { Authorization: `Bearer ${getToken()}` } })
@@ -11633,7 +11653,7 @@ function StudentCommunityPane() {
   return <CommunityHubModern />;
 }
 
-function AlumniProfilePane({ user, onUserUpdated }) {
+function AlumniProfilePane({ user, onUserUpdated, onStudentToast }) {
   const [profileForm, setProfileForm] = React.useState({ full_name: user.full_name || '', phone: user.phone || '' });
   const [passwordForm, setPasswordForm] = React.useState({ current_password: '', new_password: '', confirm_password: '' });
   const [profileDialogOpen, setProfileDialogOpen] = React.useState(false);
@@ -11643,6 +11663,7 @@ function AlumniProfilePane({ user, onUserUpdated }) {
   const [message, setMessage] = React.useState('');
   const [error, setError] = React.useState('');
   const memberSince = user?.created_at ? formatTimestamp(user.created_at, { month: 'short', day: 'numeric', year: 'numeric' }) : 'Alumni';
+  useStudentPaneToast(message, setMessage, error, setError, onStudentToast);
 
   React.useEffect(() => {
     setProfileForm({ full_name: user.full_name || '', phone: user.phone || '' });
@@ -11818,11 +11839,12 @@ function AlumniProfilePane({ user, onUserUpdated }) {
   );
 }
 
-function StudentCertificatesPane() {
+function StudentCertificatesPane({ onStudentToast }) {
   const [certificates, setCertificates] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState('');
   const [viewingCertificate, setViewingCertificate] = React.useState(null);
+  useStudentPaneToast('', null, error, setError, onStudentToast);
 
   React.useEffect(() => {
     let mounted = true;
@@ -11931,7 +11953,7 @@ function StudentCertificatesPane() {
   );
 }
 
-function StudentSupportPane({ user, supportRole = 'student' }) {
+function StudentSupportPane({ user, supportRole = 'student', onStudentToast }) {
   const isTeacherSupport = supportRole === 'teacher';
   const defaultCategory = isTeacherSupport ? 'teacher_issue' : 'student_question';
   const supportEndpoint = isTeacherSupport ? 'teacher' : 'student';
@@ -11955,6 +11977,7 @@ function StudentSupportPane({ user, supportRole = 'student' }) {
   const [selectedTicket, setSelectedTicket] = React.useState(null);
   const [expandedFaq, setExpandedFaq] = React.useState('');
   const ticketsRef = React.useRef(null);
+  useStudentPaneToast(message, setMessage, error, setError, onStudentToast);
 
   const loadTickets = React.useCallback(async () => {
     setLoadingTickets(true);
@@ -12207,7 +12230,7 @@ function StudentSupportPane({ user, supportRole = 'student' }) {
   );
 }
 
-function StudentProfilePane({ user, onUserUpdated }) {
+function StudentProfilePane({ user, onUserUpdated, onStudentToast }) {
   const [summary, setSummary] = React.useState(null);
   const [assignments, setAssignments] = React.useState([]);
   const [certificates, setCertificates] = React.useState([]);
@@ -12226,6 +12249,8 @@ function StudentProfilePane({ user, onUserUpdated }) {
   const [accountActionMessage, setAccountActionMessage] = React.useState('');
   const [accountActionError, setAccountActionError] = React.useState('');
   const [error, setError] = React.useState('');
+  useStudentPaneToast(accountActionMessage, setAccountActionMessage, accountActionError, setAccountActionError, onStudentToast);
+  useStudentPaneToast('', null, error, setError, onStudentToast);
 
   React.useEffect(() => {
     let mounted = true;
@@ -15767,6 +15792,7 @@ function StudentPortal({ user, onSignOut, onUserUpdated, initialPane = 'dashboar
   const [notificationAnnouncements, setNotificationAnnouncements] = React.useState([]);
   const [readStudentNotificationIds, setReadStudentNotificationIds] = React.useState([]);
   const [notificationsLoading, setNotificationsLoading] = React.useState(false);
+  const [studentToast, setStudentToast] = React.useState(null);
   const activeItem = [...studentNavItems, ...studentCourseNavItems].find((item) => item.key === activePane) || studentNavItems[0];
   const courseSectionActive = ['my-courses', ...studentCourseNavItems.map((item) => item.key)].includes(activePane);
   const studentNotificationStorageKey = `three13_student_read_notifications_${storageUserKey}`;
@@ -15943,6 +15969,17 @@ function StudentPortal({ user, onSignOut, onUserUpdated, initialPane = 'dashboar
       // Optimistic UI is enough here; notifications reload on the next session.
     }
   };
+
+  const showStudentToast = React.useCallback((text, severity = 'success') => {
+    if (!text) return;
+    setStudentToast({ id: Date.now(), text, severity });
+  }, []);
+
+  React.useEffect(() => {
+    if (!studentToast) return undefined;
+    const timeoutId = window.setTimeout(() => setStudentToast(null), 3500);
+    return () => window.clearTimeout(timeoutId);
+  }, [studentToast]);
 
   const navButtonSx = (active, nested = false) => ({
     justifyContent: 'flex-start',
@@ -16212,7 +16249,7 @@ function StudentPortal({ user, onSignOut, onUserUpdated, initialPane = 'dashboar
 
       <Box sx={{ minWidth: 0 }}>
         <Box sx={{ bgcolor: '#fff', borderBottom: '1px solid rgba(18,60,105,0.12)', px: { xs: 2, md: 4 }, py: 2, position: 'sticky', top: 0, zIndex: 1200, boxShadow: '0 8px 24px rgba(18,60,105,0.04)' }}>
-          <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }} spacing={1.5}>
+          <Stack direction={{ xs: 'column', lg: 'row' }} justifyContent="space-between" alignItems={{ xs: 'stretch', lg: 'center' }} spacing={1.5}>
             <Stack direction="row" spacing={1.2} alignItems="center">
               <UserAvatar user={user} size={42} />
               <Box>
@@ -16220,6 +16257,31 @@ function StudentPortal({ user, onSignOut, onUserUpdated, initialPane = 'dashboar
                 <Typography sx={{ color: '#637083', fontSize: 13 }}>{user.email}</Typography>
               </Box>
             </Stack>
+            <Box sx={{ width: { xs: '100%', md: 360, lg: 420 }, minHeight: 46, display: 'flex', alignItems: 'center' }}>
+              {studentToast ? (
+                <Alert
+                  key={studentToast.id}
+                  severity={studentToast.severity}
+                  onClose={() => setStudentToast(null)}
+                  sx={{
+                    width: '100%',
+                    py: 0.25,
+                    borderRadius: 999,
+                    alignItems: 'center',
+                    boxShadow: '0 10px 28px rgba(18,60,105,0.10)',
+                    '& .MuiAlert-message': {
+                      py: 0.7,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      fontWeight: 750,
+                    },
+                  }}
+                >
+                  {studentToast.text}
+                </Alert>
+              ) : null}
+            </Box>
             <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: 'max-content' }}>
               <IconButton
                 onClick={() => setMobileMenuOpen(true)}
@@ -16339,19 +16401,19 @@ function StudentPortal({ user, onSignOut, onUserUpdated, initialPane = 'dashboar
           </Popover>
           )}
           {isAlumni ? (
-            activePane === 'profile' ? <AlumniProfilePane user={user} onUserUpdated={onUserUpdated} /> : <StudentCommunityPane />
+            activePane === 'profile' ? <AlumniProfilePane user={user} onUserUpdated={onUserUpdated} onStudentToast={showStudentToast} /> : <StudentCommunityPane />
           ) : (
           <>
-          {activePane === 'dashboard' && <StudentDashboardHome setActivePane={setActivePane} user={user} onOpenCourse={openStudentCourse} />}
-          {activePane === 'my-courses' && <StudentMyCoursesPane setActivePane={setActivePane} user={user} onOpenCourse={openStudentCourse} />}
-          {activePane === 'modules' && <StudentModulesPane selectedCourseId={selectedSidebarCourseId} setActivePane={setActivePane} />}
-          {activePane === 'materials' && <StudentMaterialsPane selectedCourseId={selectedSidebarCourseId} />}
-          {activePane === 'assignments' && <StudentAssignmentsPane selectedCourseId={selectedSidebarCourseId} />}
-          {activePane === 'certificates' && <StudentCertificatesPane />}
-          {activePane === 'announcements' && <StudentAnnouncementsPane user={user} selectedAnnouncementId={selectedAnnouncementId} onAnnouncementRead={markNotificationRead} />}
+          {activePane === 'dashboard' && <StudentDashboardHome setActivePane={setActivePane} user={user} onOpenCourse={openStudentCourse} onStudentToast={showStudentToast} />}
+          {activePane === 'my-courses' && <StudentMyCoursesPane setActivePane={setActivePane} user={user} onOpenCourse={openStudentCourse} onStudentToast={showStudentToast} />}
+          {activePane === 'modules' && <StudentModulesPane selectedCourseId={selectedSidebarCourseId} setActivePane={setActivePane} onStudentToast={showStudentToast} />}
+          {activePane === 'materials' && <StudentMaterialsPane selectedCourseId={selectedSidebarCourseId} onStudentToast={showStudentToast} />}
+          {activePane === 'assignments' && <StudentAssignmentsPane selectedCourseId={selectedSidebarCourseId} onStudentToast={showStudentToast} />}
+          {activePane === 'certificates' && <StudentCertificatesPane onStudentToast={showStudentToast} />}
+          {activePane === 'announcements' && <StudentAnnouncementsPane user={user} selectedAnnouncementId={selectedAnnouncementId} onAnnouncementRead={markNotificationRead} onStudentToast={showStudentToast} />}
           {activePane === 'community' && !isPendingStudent && <StudentCommunityPane />}
-          {activePane === 'support' && <StudentSupportPane user={user} />}
-          {activePane === 'profile' && <StudentProfilePane user={user} onUserUpdated={onUserUpdated} />}
+          {activePane === 'support' && <StudentSupportPane user={user} onStudentToast={showStudentToast} />}
+          {activePane === 'profile' && <StudentProfilePane user={user} onUserUpdated={onUserUpdated} onStudentToast={showStudentToast} />}
           {!['dashboard', 'my-courses', 'modules', 'materials', 'assignments', 'certificates', 'announcements', 'community', 'support', 'profile'].includes(activePane) && <StudentPlaceholderPane item={activeItem} />}
           </>
           )}
