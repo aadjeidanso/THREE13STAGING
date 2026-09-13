@@ -9647,6 +9647,7 @@ function StudentModulesPane({ selectedCourseId, setActivePane, onStudentToast })
   const [savingId, setSavingId] = React.useState(null);
   const [message, setMessage] = React.useState('');
   const [showAllModuleAssignments, setShowAllModuleAssignments] = React.useState(false);
+  const [activeModuleTab, setActiveModuleTab] = React.useState('overview');
   const [moduleAssignmentSort, setModuleAssignmentSort] = React.useState('due_date');
   const [moduleAssignmentDueOrder, setModuleAssignmentDueOrder] = React.useState('asc');
   const [moduleMaterialMenu, setModuleMaterialMenu] = React.useState({ anchorEl: null, material: null });
@@ -9683,6 +9684,7 @@ function StudentModulesPane({ selectedCourseId, setActivePane, onStudentToast })
           setSelectedFiles({});
           setMessage('');
           setShowAllModuleAssignments(false);
+          setActiveModuleTab('overview');
           setModuleAssignmentSort('due_date');
           setModuleAssignmentDueOrder('asc');
           setModuleMaterialMenu({ anchorEl: null, material: null });
@@ -9733,6 +9735,7 @@ function StudentModulesPane({ selectedCourseId, setActivePane, onStudentToast })
   const openModule = React.useCallback((module, course) => {
     setSelectedModule({ ...module, course });
     setShowAllModuleAssignments(false);
+    setActiveModuleTab('overview');
     setViewingMaterial(null);
     setModuleAssignmentSort('due_date');
     setModuleAssignmentDueOrder('asc');
@@ -9893,6 +9896,372 @@ function StudentModulesPane({ selectedCourseId, setActivePane, onStudentToast })
       if (hasSubmission || assignment.student_status === 'submitted') return { label: 'Submitted', color: 'success', state: 'submitted' };
       return { label: 'Not submitted', color: 'warning', state: 'not_submitted' };
     };
+    const currentModuleNumber = selectedModuleIndex >= 0 ? selectedModuleIndex + 1 : 1;
+    const previousModule = selectedModuleIndex > 0 ? moduleOverview[selectedModuleIndex - 1] : null;
+    const nextModule = selectedModuleIndex >= 0 && selectedModuleIndex < moduleOverview.length - 1 ? moduleOverview[selectedModuleIndex + 1] : null;
+    const continueMaterial = selectedModule.materials.find((material) => !material.viewed && !material.viewed_at) || selectedModule.materials[0];
+    const dueSoonAssignments = [...selectedModule.assignments].sort((first, second) => (first.due_at || Number.MAX_SAFE_INTEGER) - (second.due_at || Number.MAX_SAFE_INTEGER));
+    const resourceMaterials = selectedModule.materials.slice(0, 3);
+    const moduleLearningObjectives = (selectedModule.description || selectedModule.course.description || 'Review the module materials, complete the listed assignments, and apply the concepts in your coursework.')
+      .split(/[.;]\s+/)
+      .map((item) => item.trim())
+      .filter(Boolean)
+      .slice(0, 3);
+    const moduleStatCards = [
+      { label: 'Module progress', value: `${progress}%`, helper: '', icon: CheckCircleOutlined, color: '#f05a28', bg: '#fff0e9', progress: true },
+      { label: 'Material', value: selectedModule.materials.length, helper: selectedModule.materials.length === 1 ? '' : 'Materials', icon: StackedBooksIcon, color: '#123c69', bg: '#eaf2ff' },
+      { label: 'Assignments', value: selectedModule.assignments.length, helper: '', icon: AssignmentOutlined, color: '#15965f', bg: '#e8f7ef' },
+      { label: 'Estimated time', value: estimatedTime, helper: '', icon: AccessTimeOutlined, color: '#f05a28', bg: '#fff0e9' },
+    ];
+    const openModuleMaterial = (material) => setViewingMaterial({ ...material, course: selectedModule.course, module_title: selectedModule.title });
+    const openAssignmentFile = (assignment) => setViewingMaterial({
+      title: assignment.attachment_name || assignment.title,
+      file_url: assignment.attachment_url,
+      material_type: 'downloadable',
+      course: selectedModule.course,
+      module_title: 'Assignment file',
+    });
+    const openSubmissionFile = (assignment) => setViewingMaterial({
+      title: `${assignment.title} submission`,
+      file_url: assignment.submission.file_url,
+      material_type: 'downloadable',
+      course: selectedModule.course,
+      module_title: 'Submitted file',
+    });
+    const renderModuleMaterialCard = (material, compact = false) => {
+      const Icon = moduleMaterialIcon(material.material_type);
+      const tone = moduleMaterialTone(material.material_type);
+      const url = getMaterialUrl(material);
+      const thumbnailUrl = material.material_type === 'youtube' ? getYouTubeThumbnailUrl(url) : '';
+      return (
+        <Box key={material.id} sx={{ bgcolor: '#fff', border: '1px solid rgba(18,60,105,0.1)', borderRadius: 1.2, p: compact ? 1 : 1.15 }}>
+          <Stack direction="row" spacing={1.1} alignItems="center">
+            <Box
+              component={url ? 'button' : 'div'}
+              type={url ? 'button' : undefined}
+              onClick={url ? () => openModuleMaterial(material) : undefined}
+              sx={{
+                width: compact ? 44 : 56,
+                height: compact ? 44 : 56,
+                border: 0,
+                borderRadius: 1.1,
+                bgcolor: tone.bg,
+                color: tone.color,
+                display: 'grid',
+                placeItems: 'center',
+                overflow: 'hidden',
+                flexShrink: 0,
+                cursor: url ? 'pointer' : 'default',
+                backgroundImage: thumbnailUrl ? `linear-gradient(180deg, rgba(8,37,64,0.05), rgba(8,37,64,0.42)), url(${thumbnailUrl})` : 'none',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+              }}
+            >
+              {thumbnailUrl ? (
+                <Box sx={{ width: 24, height: 24, borderRadius: '50%', bgcolor: 'rgba(255,255,255,0.92)', color: '#0f63c7', display: 'grid', placeItems: 'center' }}>
+                  <OndemandVideoOutlined sx={{ fontSize: 17 }} />
+                </Box>
+              ) : material.material_type === 'pdf' ? (
+                <PdfFileTile size={30} />
+              ) : (
+                <Icon />
+              )}
+            </Box>
+            <Box sx={{ minWidth: 0, flex: 1 }}>
+              <Typography noWrap sx={{ color: 'primary.dark', fontWeight: 950, fontSize: compact ? 13 : 14 }}>{material.title}</Typography>
+              <Typography noWrap sx={{ color: '#526273', fontSize: 12 }}>{materialTypeLabels[material.material_type] || material.material_type}{material.estimated_minutes ? ` · ${material.estimated_minutes} min` : ''}</Typography>
+              {material.viewed && <Chip label="Completed" size="small" color="success" sx={{ mt: 0.6, height: 22, fontWeight: 850 }} />}
+            </Box>
+            {url && (
+              <IconButton size="small" onClick={() => openModuleMaterial(material)} aria-label={`Open ${material.title}`} sx={{ color: '#123c69' }}>
+                <ChevronRightOutlined fontSize="small" />
+              </IconButton>
+            )}
+            <IconButton size="small" aria-label={`More actions for ${material.title}`} onClick={(event) => setModuleMaterialMenu({ anchorEl: event.currentTarget, material })}>
+              <MoreHorizOutlined fontSize="small" />
+            </IconButton>
+          </Stack>
+        </Box>
+      );
+    };
+    const renderModuleAssignmentCard = (assignment, compact = false) => {
+      const selectedFile = selectedFiles[assignment.id];
+      const statusMeta = moduleAssignmentStatus(assignment);
+      const submissionsClosed = statusMeta.state === 'closed';
+      const dueLabel = formatTimestamp(assignment.due_at, { month: 'short', day: 'numeric', year: 'numeric' });
+      return (
+        <Box key={assignment.id} sx={{ bgcolor: '#fff', border: '1px solid rgba(18,60,105,0.1)', borderRadius: 1.2, p: compact ? 1 : 1.2 }}>
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: compact ? 'minmax(0, 1fr) auto' : 'minmax(0, 1fr) 150px' }, gap: 1, alignItems: 'center' }}>
+            <Stack direction="row" spacing={1.1} alignItems="center" sx={{ minWidth: 0 }}>
+              <Box sx={{ width: compact ? 38 : 44, height: compact ? 38 : 44, borderRadius: 1.1, bgcolor: statusMeta.state === 'submitted' ? '#e8f7ef' : '#eef5ff', color: statusMeta.state === 'submitted' ? '#15965f' : '#1b6ef3', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                <AssignmentOutlined fontSize="small" />
+              </Box>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography noWrap sx={{ color: 'primary.dark', fontWeight: 950, fontSize: compact ? 13 : 14 }}>{assignment.title}</Typography>
+                <Typography noWrap sx={{ color: '#526273', fontSize: 12 }}>Due {dueLabel}</Typography>
+                {!compact && (
+                  <Stack direction="row" spacing={1.1} sx={{ color: '#526273', flexWrap: 'wrap', mt: 0.5 }}>
+                    <Typography sx={{ fontSize: 12 }}>Individual</Typography>
+                    <Typography sx={{ fontSize: 12 }}>Max 25 MB</Typography>
+                  </Stack>
+                )}
+              </Box>
+            </Stack>
+            <Stack direction="row" spacing={0.8} alignItems="center" justifyContent={{ xs: 'flex-start', sm: 'flex-end' }}>
+              <Chip
+                label={statusMeta.state === 'late' ? 'Due soon' : statusMeta.label}
+                size="small"
+                color={statusMeta.color === 'default' ? undefined : statusMeta.color}
+                sx={{ fontWeight: 850, ...(statusMeta.color === 'default' ? { bgcolor: '#eef3f8', color: '#526273' } : {}) }}
+              />
+              {assignment.submission?.file_url ? (
+                <Button size="small" variant="outlined" onClick={() => openSubmissionFile(assignment)}>
+                  View submission
+                </Button>
+              ) : compact ? (
+                <Button size="small" variant="outlined" onClick={() => setActiveModuleTab('assignments')} endIcon={<ChevronRightOutlined />}>
+                  Open
+                </Button>
+              ) : null}
+            </Stack>
+          </Box>
+          {!compact && (
+            <Box sx={{ mt: 1.1, pt: 1.1, borderTop: '1px solid rgba(18,60,105,0.08)' }}>
+              {assignment.attachment_url && (
+                <Button variant="outlined" size="small" onClick={() => openAssignmentFile(assignment)} sx={{ mb: 1, mr: 1 }}>
+                  {assignment.attachment_name || 'Open assignment file'}
+                </Button>
+              )}
+              {submissionsClosed ? (
+                <Alert severity="info" sx={{ py: 0.2, '& .MuiAlert-message': { py: 0.45, fontSize: 13 } }}>Closed for submissions</Alert>
+              ) : (
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={0.8} alignItems={{ xs: 'stretch', sm: 'center' }}>
+                  <Button variant="outlined" component="label" size="small" disabled={savingId === assignment.id}>
+                    {selectedFile ? selectedFile.name : 'Choose file'}
+                    <input
+                      type="file"
+                      hidden
+                      onChange={(event) => setSelectedFiles((current) => ({ ...current, [assignment.id]: event.target.files?.[0] || null }))}
+                      accept={lmsFileAccept}
+                    />
+                  </Button>
+                  {selectedFile && (
+                    <Button variant="outlined" size="small" disabled={savingId === assignment.id} onClick={() => setSelectedFiles((current) => ({ ...current, [assignment.id]: null }))}>Clear</Button>
+                  )}
+                  <Button variant="contained" color="secondary" size="small" disabled={savingId === assignment.id || !selectedFile} onClick={() => submitModuleAssignment(assignment.id)}>
+                    {savingId === assignment.id ? 'Uploading...' : assignment.submission ? 'Resubmit file' : 'Submit file'}
+                  </Button>
+                </Stack>
+              )}
+            </Box>
+          )}
+        </Box>
+      );
+    };
+
+    return (
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', xl: 'minmax(0, 1fr) 320px' }, gap: 2 }}>
+        <Stack spacing={2}>
+          <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', md: 'flex-start' }} spacing={1.5}>
+            <Stack spacing={0.75} sx={{ minWidth: 0 }}>
+              <Stack direction="row" spacing={0.8} sx={{ color: '#637083', flexWrap: 'wrap', fontSize: 12 }}>
+                <Typography sx={{ fontSize: 12 }}>My Courses</Typography>
+                <Typography sx={{ fontSize: 12 }}>/</Typography>
+                <Typography sx={{ fontSize: 12 }}>{selectedModule.course.title}</Typography>
+                <Typography sx={{ fontSize: 12 }}>/</Typography>
+                <Typography sx={{ fontSize: 12 }}>Modules</Typography>
+                <Typography sx={{ fontSize: 12 }}>/</Typography>
+                <Typography sx={{ color: 'secondary.main', fontWeight: 900, fontSize: 12 }}>{selectedModule.title}</Typography>
+              </Stack>
+              <Stack direction="row" spacing={1} alignItems="center" sx={{ flexWrap: 'wrap' }}>
+                <Typography variant="h3" sx={{ color: 'primary.dark', fontSize: { xs: '2rem', md: '2.65rem' }, lineHeight: 1.02 }}>
+                  {selectedModule.title}
+                </Typography>
+                <Chip label={`Module ${currentModuleNumber} of ${moduleOverview.length || 1}`} size="small" color="primary" variant="outlined" sx={{ fontWeight: 850 }} />
+              </Stack>
+              <Typography sx={{ color: '#526273', fontSize: 15, maxWidth: 760 }}>
+                {selectedModule.description || `${selectedModule.course.title} module content.`}
+              </Typography>
+            </Stack>
+            <Button variant="outlined" onClick={() => setSelectedModule(null)} sx={{ minWidth: 146 }}>
+              Back to modules
+            </Button>
+          </Stack>
+
+          <Box sx={{ bgcolor: '#fff', border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, p: 1.2, boxShadow: '0 12px 30px rgba(18,60,105,0.06)' }}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))', lg: 'repeat(4, minmax(0, 1fr))' }, gap: 1 }}>
+              {moduleStatCards.map((stat) => {
+                const Icon = stat.icon;
+                return (
+                  <Stack key={stat.label} direction="row" spacing={1.1} alignItems="center" sx={{ p: 0.8, borderRight: { lg: stat.label === 'Estimated time' ? 'none' : '1px solid rgba(18,60,105,0.08)' } }}>
+                    <Box sx={{ width: 48, height: 48, borderRadius: stat.progress ? '50%' : 1.1, bgcolor: stat.progress ? `conic-gradient(${stat.color} ${progress * 3.6}deg, #e8eef5 0deg)` : stat.bg, color: stat.color, display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                      {stat.progress ? <Box sx={{ width: 34, height: 34, borderRadius: '50%', bgcolor: '#fff' }} /> : <Icon fontSize="small" />}
+                    </Box>
+                    <Box sx={{ minWidth: 0 }}>
+                      <Typography sx={{ color: 'primary.dark', fontWeight: 950, lineHeight: 1 }}>{stat.value}</Typography>
+                      <Typography sx={{ color: '#526273', fontWeight: 750, fontSize: 12 }}>{stat.helper || stat.label}</Typography>
+                    </Box>
+                  </Stack>
+                );
+              })}
+            </Box>
+          </Box>
+
+          <Box sx={{ bgcolor: '#fff', border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, overflow: 'hidden' }}>
+            <Stack direction="row" spacing={1.8} sx={{ px: 1.6, pt: 1.1, borderBottom: '1px solid rgba(18,60,105,0.1)', overflowX: 'auto' }}>
+              {[
+                ['overview', 'Overview'],
+                ['materials', 'Materials'],
+                ['assignments', 'Assignments'],
+              ].map(([key, label]) => (
+                <Button key={key} onClick={() => setActiveModuleTab(key)} sx={{ color: activeModuleTab === key ? '#f05a28' : '#123c69', borderBottom: activeModuleTab === key ? '2px solid #f05a28' : '2px solid transparent', borderRadius: 0, px: 1.2, pb: 1.1, whiteSpace: 'nowrap' }}>
+                  {label}
+                </Button>
+              ))}
+            </Stack>
+            <Box sx={{ p: 1.5 }}>
+              {activeModuleTab === 'overview' && (
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' }, gap: 1.4 }}>
+                  <Box sx={{ border: '1px solid rgba(18,60,105,0.1)', borderRadius: 1.2, p: 1.4 }}>
+                    <Typography sx={{ color: 'primary.dark', fontWeight: 950, mb: 1 }}>Learning objectives</Typography>
+                    <Stack spacing={0.8}>
+                      {(moduleLearningObjectives.length ? moduleLearningObjectives : ['Complete the module materials', 'Apply the concepts in assignments', 'Track progress through each activity']).map((objective) => (
+                        <Stack key={objective} direction="row" spacing={0.8} alignItems="flex-start">
+                          <CheckCircleOutlined sx={{ color: '#f05a28', fontSize: 18, mt: 0.1 }} />
+                          <Typography sx={{ color: '#526273', fontSize: 13 }}>{objective}</Typography>
+                        </Stack>
+                      ))}
+                    </Stack>
+                  </Box>
+                  <Box sx={{ border: '1px solid rgba(18,60,105,0.1)', borderRadius: 1.2, p: 1.4 }}>
+                    <Typography sx={{ color: 'primary.dark', fontWeight: 950, mb: 1 }}>Continue learning</Typography>
+                    {continueMaterial ? (
+                      <Stack direction="row" spacing={1.2} alignItems="center">
+                        <Box sx={{ width: 52, height: 52, borderRadius: 1.2, bgcolor: '#e8f7ef', color: '#15965f', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                          <OndemandVideoOutlined />
+                        </Box>
+                        <Box sx={{ minWidth: 0, flex: 1 }}>
+                          <Typography noWrap sx={{ color: 'primary.dark', fontWeight: 950 }}>{continueMaterial.title}</Typography>
+                          <Typography sx={{ color: '#526273', fontSize: 12 }}>{materialTypeLabels[continueMaterial.material_type] || 'Material'}{continueMaterial.estimated_minutes ? ` · ${continueMaterial.estimated_minutes} min` : ''}</Typography>
+                          {continueMaterial.viewed && <Chip label="Completed" size="small" color="success" sx={{ mt: 0.6, height: 22, fontWeight: 850 }} />}
+                        </Box>
+                        <Button variant="contained" color="secondary" onClick={() => openModuleMaterial(continueMaterial)} endIcon={<ChevronRightOutlined />}>
+                          Open material
+                        </Button>
+                      </Stack>
+                    ) : (
+                      <Typography sx={{ color: '#637083', fontSize: 14 }}>No materials posted yet.</Typography>
+                    )}
+                  </Box>
+                  <Box sx={{ border: '1px solid rgba(18,60,105,0.1)', borderRadius: 1.2, p: 1.4 }}>
+                    <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
+                      <Typography sx={{ color: 'primary.dark', fontWeight: 950 }}>Materials ({selectedModule.materials.length})</Typography>
+                      <Button size="small" variant="text" onClick={() => setActiveModuleTab('materials')}>View all</Button>
+                    </Stack>
+                    <Stack spacing={1}>
+                      {selectedModule.materials.length ? selectedModule.materials.slice(0, 2).map((material) => renderModuleMaterialCard(material, true)) : <Typography sx={{ color: '#637083', fontSize: 14 }}>No materials posted for this module yet.</Typography>}
+                    </Stack>
+                  </Box>
+                  <Box sx={{ border: '1px solid rgba(18,60,105,0.1)', borderRadius: 1.2, p: 1.4 }}>
+                    <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
+                      <Typography sx={{ color: 'primary.dark', fontWeight: 950 }}>Assignments ({selectedModule.assignments.length})</Typography>
+                      <Button size="small" variant="text" onClick={() => setActiveModuleTab('assignments')}>View all</Button>
+                    </Stack>
+                    <Stack spacing={1}>
+                      {dueSoonAssignments.length ? dueSoonAssignments.slice(0, 4).map((assignment) => renderModuleAssignmentCard(assignment, true)) : <Typography sx={{ color: '#637083', fontSize: 14 }}>No assignments posted for this module yet.</Typography>}
+                    </Stack>
+                  </Box>
+                </Box>
+              )}
+              {activeModuleTab === 'materials' && (
+                <Stack spacing={1}>
+                  {selectedModule.materials.length ? selectedModule.materials.map((material) => renderModuleMaterialCard(material)) : <Typography sx={{ color: '#637083', fontSize: 14 }}>No materials posted for this module yet.</Typography>}
+                </Stack>
+              )}
+              {activeModuleTab === 'assignments' && (
+                <Stack spacing={1}>
+                  {selectedModule.assignments.length ? dueSoonAssignments.map((assignment) => renderModuleAssignmentCard(assignment)) : <Typography sx={{ color: '#637083', fontSize: 14 }}>No assignments posted for this module yet.</Typography>}
+                </Stack>
+              )}
+            </Box>
+          </Box>
+
+          <Menu anchorEl={moduleMaterialMenu.anchorEl} open={Boolean(moduleMaterialMenu.anchorEl)} onClose={closeModuleMaterialMenu}>
+            <MenuItem onClick={markMenuModuleMaterialCompleted} disabled={!moduleMaterialMenu.material || moduleMaterialMenu.material.viewed}>
+              Mark as completed
+            </MenuItem>
+          </Menu>
+        </Stack>
+
+        <Stack spacing={2}>
+          <Box sx={{ bgcolor: '#fff', border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, p: 1.4 }}>
+            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1.1 }}>
+              <Typography sx={{ color: 'primary.dark', fontWeight: 950 }}>Module navigation</Typography>
+              <Typography sx={{ color: '#526273', fontSize: 12 }}>{moduleOverview.length} module{moduleOverview.length === 1 ? '' : 's'}</Typography>
+            </Stack>
+            <Stack spacing={1}>
+              {moduleOverview.map((module, index) => {
+                const active = module.id === selectedModule.id;
+                return (
+                  <Button
+                    key={module.id}
+                    onClick={() => openModule(module, selectedModule.course)}
+                    endIcon={<ChevronRightOutlined />}
+                    sx={{ justifyContent: 'space-between', textAlign: 'left', bgcolor: active ? '#fff1ec' : '#fff', border: `1px solid ${active ? 'rgba(240,90,40,0.45)' : 'rgba(18,60,105,0.1)'}`, borderRadius: 1.2, p: 1, color: 'primary.dark' }}
+                  >
+                    <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: 0 }}>
+                      <Box sx={{ width: 32, height: 32, borderRadius: '50%', bgcolor: active ? '#f05a28' : '#eef3f8', color: active ? '#fff' : '#123c69', display: 'grid', placeItems: 'center', flexShrink: 0, fontWeight: 950 }}>{index + 1}</Box>
+                      <Box sx={{ minWidth: 0 }}>
+                        <Typography noWrap sx={{ fontWeight: 950, fontSize: 13 }}>Module {index + 1}</Typography>
+                        <Typography noWrap sx={{ color: '#526273', fontSize: 12 }}>{module.title}</Typography>
+                        {active && <Chip label="Current" size="small" color="secondary" sx={{ mt: 0.4, height: 21, color: '#fff', fontWeight: 850 }} />}
+                      </Box>
+                    </Stack>
+                  </Button>
+                );
+              })}
+            </Stack>
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, mt: 1.4 }}>
+              <Button variant="outlined" disabled={!previousModule} onClick={() => previousModule && openModule(previousModule, selectedModule.course)}>
+                Previous module
+              </Button>
+              <Button variant="contained" color="secondary" disabled={!nextModule} onClick={() => nextModule && openModule(nextModule, selectedModule.course)}>
+                Next module
+              </Button>
+            </Box>
+          </Box>
+
+          <Box sx={{ bgcolor: '#fff', border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, p: 1.4 }}>
+            <Typography sx={{ color: 'primary.dark', fontWeight: 950, mb: 1.1 }}>Module resources</Typography>
+            <Stack spacing={1}>
+              {resourceMaterials.length ? resourceMaterials.map((material) => (
+                <Button key={material.id} variant="outlined" onClick={() => openModuleMaterial(material)} endIcon={getMaterialUrl(material) ? <DownloadOutlined /> : <ChevronRightOutlined />} sx={{ justifyContent: 'space-between', minHeight: 54, textAlign: 'left' }}>
+                  <Box sx={{ minWidth: 0 }}>
+                    <Typography noWrap sx={{ color: 'primary.dark', fontWeight: 850, fontSize: 13 }}>{material.title}</Typography>
+                    <Typography noWrap sx={{ color: '#526273', fontSize: 12 }}>{materialTypeLabels[material.material_type] || 'Resource'}</Typography>
+                  </Box>
+                </Button>
+              )) : <Typography sx={{ color: '#637083', fontSize: 14 }}>No resources posted yet.</Typography>}
+            </Stack>
+          </Box>
+
+          <Box sx={{ bgcolor: '#fff', border: '1px solid rgba(18,60,105,0.12)', borderRadius: 1.5, p: 1.4 }}>
+            <Stack direction="row" spacing={1.1} alignItems="center" sx={{ mb: 1 }}>
+              <Box sx={{ width: 38, height: 38, borderRadius: 1.1, bgcolor: '#eef5ff', color: '#1b6ef3', display: 'grid', placeItems: 'center' }}>
+                <HelpOutlineOutlined fontSize="small" />
+              </Box>
+              <Box>
+                <Typography sx={{ color: 'primary.dark', fontWeight: 950 }}>Need help?</Typography>
+                <Typography sx={{ color: '#526273', fontSize: 12 }}>Reach out for support on this module.</Typography>
+              </Box>
+            </Stack>
+            <Button fullWidth variant="outlined" onClick={() => setActivePane?.('support')} endIcon={<ChevronRightOutlined />}>
+              Go to support
+            </Button>
+          </Box>
+        </Stack>
+      </Box>
+    );
 
     return (
       <Stack spacing={2.2}>
